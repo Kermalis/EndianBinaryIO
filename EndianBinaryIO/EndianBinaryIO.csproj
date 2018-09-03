@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Configurations>Release</Configurations>
+    <Authors>Kermalis</Authors>
+    <Company />
+    <PackageId>EndianBinaryIO</PackageId>
+    <Product>EndianBinaryIO</Product>
+    <AssemblyName>EndianBinaryIO</AssemblyName>
+    <RootNamespace>EndianBinaryIO</RootNamespace>
+    <Version>1.0.0.0</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>..\Build</OutputPath>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+</Project>
