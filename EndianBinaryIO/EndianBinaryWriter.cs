@@ -9,7 +9,7 @@ namespace EndianBinaryIO
     {
         public EndianBinaryWriter(Stream baseStream) : base(baseStream, false) { }
         public EndianBinaryWriter(Stream baseStream, Endianness endianness) : base(baseStream, endianness, false) { }
-        public EndianBinaryWriter(Stream baseStream, Endianness endianness, Encoding encoding) : base(baseStream, endianness, encoding, false) { }
+        public EndianBinaryWriter(Stream baseStream, Endianness endianness, EncodingType encoding) : base(baseStream, endianness, encoding, false) { }
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
 
@@ -53,9 +53,10 @@ namespace EndianBinaryIO
         {
             Write(value, Encoding);
         }
-        public void Write(char value, Encoding encoding)
+        public void Write(char value, EncodingType encodingType)
         {
-            int encodingSize = EncodingSize(encoding);
+            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize);
             Array.Copy(encoding.GetBytes(new string(value, 1)), 0, buffer, 0, encodingSize);
             WriteBytesFromBuffer(encodingSize, encodingSize);
@@ -64,17 +65,18 @@ namespace EndianBinaryIO
         {
             Write(value, 0, value.Length, Encoding);
         }
-        public void Write(char[] value, Encoding encoding)
+        public void Write(char[] value, EncodingType encodingType)
         {
-            Write(value, 0, value.Length, encoding);
+            Write(value, 0, value.Length, encodingType);
         }
         public void Write(char[] value, int offset, int count)
         {
             Write(value, offset, count, Encoding);
         }
-        public void Write(char[] value, int offset, int count, Encoding encoding)
+        public void Write(char[] value, int offset, int count, EncodingType encodingType)
         {
-            int encodingSize = EncodingSize(encoding);
+            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize * count);
             Array.Copy(encoding.GetBytes(value, offset, count), 0, buffer, 0, count * encodingSize);
             WriteBytesFromBuffer(encodingSize * count, encodingSize);
@@ -83,11 +85,11 @@ namespace EndianBinaryIO
         {
             Write(value, nullTerminated, Encoding);
         }
-        public void Write(string value, bool nullTerminated, Encoding encoding)
+        public void Write(string value, bool nullTerminated, EncodingType encodingType)
         {
-            Write(value.ToCharArray(), 0, value.Length, encoding);
+            Write(value.ToCharArray(), 0, value.Length, encodingType);
             if (nullTerminated)
-                Write('\0', encoding);
+                Write('\0', encodingType);
         }
         public void Write(short value)
         {
@@ -207,7 +209,7 @@ namespace EndianBinaryIO
 
                 int fixedLength = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
                 BooleanSize booleanSize = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
-                Encoding encoding = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding);
+                EncodingType encodingType = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), EncodingType.ASCII);
                 bool nullTerminated = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
 
                 Type memberType;
@@ -255,7 +257,7 @@ namespace EndianBinaryIO
                                         break;
                                     case 1: Write((byte[])value, 0, fixedLength); break;
                                     case 2: Write((sbyte[])value, 0, fixedLength); break;
-                                    case 3: Write((char[])value, 0, fixedLength, encoding); break;
+                                    case 3: Write((char[])value, 0, fixedLength, encodingType); break;
                                     case 4: Write((short[])value, 0, fixedLength); break;
                                     case 5: Write((ushort[])value, 0, fixedLength); break;
                                     case 6: Write((int[])value, 0, fixedLength); break;
@@ -306,7 +308,7 @@ namespace EndianBinaryIO
                                         break;
                                     case 1: Write((byte)value); break;
                                     case 2: Write((sbyte)value); break;
-                                    case 3: Write((char)value, encoding); break;
+                                    case 3: Write((char)value, encodingType); break;
                                     case 4: Write((short)value); break;
                                     case 5: Write((ushort)value); break;
                                     case 6: Write((int)value); break;
@@ -326,12 +328,12 @@ namespace EndianBinaryIO
                     else if (memberType.Name == "String")
                     {
                         if (nullTerminated)
-                            Write((string)value, true, encoding);
+                            Write((string)value, true, encodingType);
                         else
                         {
                             if (((string)value).Length != fixedLength)
                                 throw new ArgumentException("String length does not match the intended fixed length.");
-                            Write((string)value, false, encoding);
+                            Write((string)value, false, encodingType);
                         }
                     }
                     else // IBinarySerializable

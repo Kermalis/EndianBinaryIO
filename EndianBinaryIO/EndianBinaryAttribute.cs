@@ -34,7 +34,7 @@ namespace EndianBinaryIO
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public sealed class BinaryBooleanSizeAttribute : EndianBinaryAttribute
     {
-        public BinaryBooleanSizeAttribute(BooleanSize size) => Value = size;
+        public BinaryBooleanSizeAttribute(BooleanSize size = BooleanSize.U8) => Value = size;
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
@@ -53,7 +53,7 @@ namespace EndianBinaryIO
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public sealed class BinaryStringEncodingAttribute : EndianBinaryAttribute
     {
-        public BinaryStringEncodingAttribute(Encoding type) => Value = type;
+        public BinaryStringEncodingAttribute(EncodingType type = EncodingType.ASCII) => Value = type;
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }

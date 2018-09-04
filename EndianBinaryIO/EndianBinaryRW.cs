@@ -9,14 +9,14 @@ namespace EndianBinaryIO
     {
         public Stream BaseStream { get; private set; }
         public Endianness Endianness;
-        public Encoding Encoding;
+        public EncodingType Encoding;
         protected byte[] buffer;
 
         bool disposed;
 
         protected EndianBinaryReaderWriter(Stream baseStream, bool isReader) : this(baseStream, Endianness.LittleEndian, isReader) { }
-        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, bool isReader) : this(baseStream, Endianness.LittleEndian, Encoding.ASCII, isReader) { }
-        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, Encoding encoding, bool isReader)
+        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, bool isReader) : this(baseStream, Endianness.LittleEndian, EncodingType.ASCII, isReader) { }
+        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, EncodingType encoding, bool isReader)
         {
             DoNotInheritOutsideOfThisAssembly(); // Will throw an exception if inherited outside of this assembly
             if (baseStream == null)
@@ -46,7 +46,6 @@ namespace EndianBinaryIO
         }
 
         public static Endianness SystemEndianness => BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
-        public static int EncodingSize(Encoding encoding) => (encoding == Encoding.Unicode || encoding == Encoding.BigEndianUnicode) ? 2 : 1;
 
         protected static Dictionary<string, int> supportedTypes = new Dictionary<string, int>()
         {

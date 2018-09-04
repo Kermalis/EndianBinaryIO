@@ -12,5 +12,15 @@
         LittleEndian,
         BigEndian
     }
+
+    public enum EncodingType
+    {
+        ASCII,
+        UTF7,
+        UTF8,
+        UTF16,
+        BigEndianUTF16,
+        UTF32
+    }
 }
 

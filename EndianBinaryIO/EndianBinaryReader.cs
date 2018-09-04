@@ -9,7 +9,7 @@ namespace EndianBinaryIO
     {
         public EndianBinaryReader(Stream baseStream) : base(baseStream, true) { }
         public EndianBinaryReader(Stream baseStream, Endianness endianness) : base(baseStream, endianness, true) { }
-        public EndianBinaryReader(Stream baseStream, Endianness endianness, Encoding encoding) : base(baseStream, endianness, encoding, true) { }
+        public EndianBinaryReader(Stream baseStream, Endianness endianness, EncodingType encoding) : base(baseStream, endianness, encoding, true) { }
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
 
@@ -42,10 +42,10 @@ namespace EndianBinaryIO
             BaseStream.Position = pos;
             return c;
         }
-        public char PeekChar(Encoding encoding)
+        public char PeekChar(EncodingType encodingType)
         {
             long pos = BaseStream.Position;
-            var c = ReadChar(encoding);
+            var c = ReadChar(encodingType);
             BaseStream.Position = pos;
             return c;
         }
@@ -79,9 +79,10 @@ namespace EndianBinaryIO
         {
             return ReadChar(Encoding);
         }
-        public char ReadChar(Encoding encoding)
+        public char ReadChar(EncodingType encodingType)
         {
-            int encodingSize = EncodingSize(encoding);
+            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            int encodingSize = Utils.EncodingSize(encoding);
             ReadBytesIntoBuffer(encodingSize, encodingSize);
             return encoding.GetChars(buffer, 0, encodingSize)[0];
         }
@@ -89,9 +90,10 @@ namespace EndianBinaryIO
         {
             return ReadChars(count, Encoding);
         }
-        public char[] ReadChars(int count, Encoding encoding)
+        public char[] ReadChars(int count, EncodingType encodingType)
         {
-            int encodingSize = EncodingSize(encoding);
+            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            int encodingSize = Utils.EncodingSize(encoding);
             ReadBytesIntoBuffer(encodingSize * count, encodingSize);
             return encoding.GetChars(buffer, 0, encodingSize * count);
         }
@@ -99,11 +101,11 @@ namespace EndianBinaryIO
         {
             return ReadString(Encoding);
         }
-        public string ReadString(Encoding encoding)
+        public string ReadString(EncodingType encodingType)
         {
             string text = "";
             do
-                text += ReadChar(encoding);
+                text += ReadChar(encodingType);
             while (!text.EndsWith("\0", StringComparison.Ordinal));
             return text.Remove(text.Length - 1);
         }
@@ -111,9 +113,9 @@ namespace EndianBinaryIO
         {
             return ReadString(charCount, Encoding);
         }
-        public string ReadString(int charCount, Encoding encoding)
+        public string ReadString(int charCount, EncodingType encodingType)
         {
-            return new string(ReadChars(charCount, encoding));
+            return new string(ReadChars(charCount, encodingType));
         }
         public short ReadInt16()
         {
@@ -235,7 +237,7 @@ namespace EndianBinaryIO
 
                 int fixedLength = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
                 BooleanSize booleanSize = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
-                Encoding encoding = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding.ASCII);
+                EncodingType encodingType = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), EncodingType.ASCII);
                 bool nullTerminated = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
 
                 Type memberType;
@@ -280,7 +282,7 @@ namespace EndianBinaryIO
                                         }
                                     case 1: value = ReadBytes(fixedLength); break;
                                     case 2: value = ReadSBytes(fixedLength); break;
-                                    case 3: value = ReadChars(fixedLength, encoding); break;
+                                    case 3: value = ReadChars(fixedLength, encodingType); break;
                                     case 4: value = ReadInt16s(fixedLength); break;
                                     case 5: value = ReadUInt16s(fixedLength); break;
                                     case 6: value = ReadInt32s(fixedLength); break;
@@ -342,7 +344,7 @@ namespace EndianBinaryIO
                                         break;
                                     case 1: value = ReadByte(); break;
                                     case 2: value = ReadSByte(); break;
-                                    case 3: value = ReadChar(encoding); break;
+                                    case 3: value = ReadChar(encodingType); break;
                                     case 4: value = ReadInt16(); break;
                                     case 5: value = ReadUInt16(); break;
                                     case 6: value = ReadInt32(); break;
@@ -359,9 +361,9 @@ namespace EndianBinaryIO
                     else if (memberType.Name == "String")
                     {
                         if (nullTerminated)
-                            value = ReadString(encoding);
+                            value = ReadString(encodingType);
                         else
-                            value = ReadString(fixedLength, encoding);
+                            value = ReadString(fixedLength, encodingType);
                     }
                     else if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
                     {
