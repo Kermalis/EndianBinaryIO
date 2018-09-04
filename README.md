@@ -39,7 +39,7 @@ struct MyStruct : IBinarySerializable
         public void Read(EndianBinaryReader er)
         {
             Console.WriteLine("Reading MyStruct from the reader's stream with no custom logic.");
-            er.ReadObject(this);
+            this = er.ReadObject<MyStruct>();
         }
         public void Write(EndianBinaryWriter ew)
         {
@@ -52,3 +52,4 @@ struct MyStruct : IBinarySerializable
 ----
 # To Do:
 * Variable-sized length attribute
+* Something like FieldOffsetAttribute

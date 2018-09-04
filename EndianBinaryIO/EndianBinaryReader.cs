@@ -406,10 +406,14 @@ namespace Kermalis.EndianBinaryIO
             return ReadDecimals(count);
         }
 
-        public void ReadObject(object obj)
+        public T ReadObject<T>()
         {
-            Type objType = obj.GetType();
+            Type objType = typeof(T);
             MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
+
+            if (objType.GetConstructor(new Type[0]) == null)
+                throw new ArgumentException("Type does not have a constructor with no parameters. (" + objType.FullName + ")");
+            T obj = (T)objType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
 
             foreach (var memberInfo in members)
             {
@@ -535,8 +539,11 @@ namespace Kermalis.EndianBinaryIO
                                     case 9: value = ReadUInt64(); break;
                                     case 10: value = ReadSingle(); break;
                                     case 11: value = ReadDouble(); break;
-                                    default: throw new NotSupportedException(objType.Name + " is not supported.");
                                 }
+                            }
+                            else
+                            {
+                                throw new NotSupportedException(objType.Name + " is not supported.");
                             }
                         }
                     }
@@ -565,11 +572,13 @@ namespace Kermalis.EndianBinaryIO
                 else
                     ((FieldInfo)memberInfo).SetValue(obj, value);
             }
+
+            return obj;
         }
-        public void ReadObject(object obj, long offset)
+        public T ReadObject<T>(long offset)
         {
             BaseStream.Position = offset;
-            ReadObject(obj);
+            return ReadObject<T>();
         }
     }
 }
