@@ -522,9 +522,9 @@ namespace Kermalis.EndianBinaryIO
                                     case 0:
                                         switch (booleanSize)
                                         {
-                                            case BooleanSize.U8: value = ReadByte() == 1; break;
-                                            case BooleanSize.U16: value = ReadUInt16() == 1; break;
-                                            case BooleanSize.U32: value = ReadUInt32() == 1; break;
+                                            case BooleanSize.U8: value = ReadByte() != 0; break;
+                                            case BooleanSize.U16: value = ReadUInt16() != 0; break;
+                                            case BooleanSize.U32: value = ReadUInt32() != 0; break;
                                             default: throw new ArgumentException("Invalid BooleanSize value.");
                                         }
                                         break;
