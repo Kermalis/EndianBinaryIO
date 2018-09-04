@@ -29,11 +29,30 @@ namespace Kermalis.EndianBinaryIO
             buffer[0] = value;
             WriteBytesFromBuffer(1, 1);
         }
-        public void Write(byte[] value, int offset, int count)
+        public void Write(byte value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(byte[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(byte[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
+        public void Write(byte[] value, int index, int count)
         {
             SetBufferSize(count);
-            Array.Copy(value, offset, buffer, 0, count);
+            Array.Copy(value, index, buffer, 0, count);
             WriteBytesFromBuffer(count, 1);
+        }
+        public void Write(byte[] value, int index, int count, int offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(sbyte value)
         {
@@ -41,15 +60,30 @@ namespace Kermalis.EndianBinaryIO
             buffer[0] = (byte)value;
             WriteBytesFromBuffer(1, 1);
         }
-        public void Write(sbyte[] value, int offset, int count)
+        public void Write(sbyte value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(sbyte[] value, int index, int count)
         {
             SetBufferSize(count);
             for (int i = 0; i < count; i++)
-                buffer[i] = (byte)value[i + offset];
+                buffer[i] = (byte)value[i + index];
             WriteBytesFromBuffer(count, 1);
+        }
+        public void Write(sbyte[] value, int index, int count, int offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(char value)
         {
+            Write(value, Encoding);
+        }
+        public void Write(char value, long offset)
+        {
+            BaseStream.Position = offset;
             Write(value, Encoding);
         }
         public void Write(char value, EncodingType encodingType)
@@ -60,28 +94,58 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(encoding.GetBytes(new string(value, 1)), 0, buffer, 0, encodingSize);
             WriteBytesFromBuffer(encodingSize, encodingSize);
         }
+        public void Write(char value, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, encodingType);
+        }
         public void Write(char[] value)
         {
+            Write(value, 0, value.Length, Encoding);
+        }
+        public void Write(char[] value, long offset)
+        {
+            BaseStream.Position = offset;
             Write(value, 0, value.Length, Encoding);
         }
         public void Write(char[] value, EncodingType encodingType)
         {
             Write(value, 0, value.Length, encodingType);
         }
-        public void Write(char[] value, int offset, int count)
+        public void Write(char[] value, EncodingType encodingType, long offset)
         {
-            Write(value, offset, count, Encoding);
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length, encodingType);
         }
-        public void Write(char[] value, int offset, int count, EncodingType encodingType)
+        public void Write(char[] value, int index, int count)
+        {
+            Write(value, index, count, Encoding);
+        }
+        public void Write(char[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, Encoding);
+        }
+        public void Write(char[] value, int index, int count, EncodingType encodingType)
         {
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize * count);
-            Array.Copy(encoding.GetBytes(value, offset, count), 0, buffer, 0, count * encodingSize);
+            Array.Copy(encoding.GetBytes(value, index, count), 0, buffer, 0, count * encodingSize);
             WriteBytesFromBuffer(encodingSize * count, encodingSize);
+        }
+        public void Write(char[] value, int index, int count, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, encodingType);
         }
         public void Write(string value, bool nullTerminated)
         {
+            Write(value, nullTerminated, Encoding);
+        }
+        public void Write(string value, bool nullTerminated, long offset)
+        {
+            BaseStream.Position = offset;
             Write(value, nullTerminated, Encoding);
         }
         public void Write(string value, bool nullTerminated, EncodingType encodingType)
@@ -90,18 +154,33 @@ namespace Kermalis.EndianBinaryIO
             if (nullTerminated)
                 Write('\0', encodingType);
         }
+        public void Write(string value, bool nullTerminated, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, nullTerminated, encodingType);
+        }
         public void Write(short value)
         {
             SetBufferSize(2);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 2);
             WriteBytesFromBuffer(2, 2);
         }
-        public void Write(short[] value, int offset, int count)
+        public void Write(short value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(short[] value, int index, int count)
         {
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 2, 2);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 2, 2);
             WriteBytesFromBuffer(2 * count, 2);
+        }
+        public void Write(short[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(ushort value)
         {
@@ -109,12 +188,22 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 2);
             WriteBytesFromBuffer(2, 2);
         }
-        public void Write(ushort[] value, int offset, int count)
+        public void Write(ushort value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(ushort[] value, int index, int count)
         {
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 2, 2);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 2, 2);
             WriteBytesFromBuffer(2 * count, 2);
+        }
+        public void Write(ushort[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(int value)
         {
@@ -122,18 +211,33 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
             WriteBytesFromBuffer(4, 4);
         }
-        public void Write(int[] value, int offset, int count)
+        public void Write(int value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(int[] value, int index, int count)
         {
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 4, 4);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 4, 4);
             WriteBytesFromBuffer(4 * count, 4);
+        }
+        public void Write(int[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(uint value)
         {
             SetBufferSize(4);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
             WriteBytesFromBuffer(4, 4);
+        }
+        public void Write(uint value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
         }
         public void Write(uint[] value, int offset, int count)
         {
@@ -142,18 +246,33 @@ namespace Kermalis.EndianBinaryIO
                 Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 4, 4);
             WriteBytesFromBuffer(4 * count, 4);
         }
+        public void Write(uint[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
+        }
         public void Write(long value)
         {
             SetBufferSize(8);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
             WriteBytesFromBuffer(8, 8);
         }
-        public void Write(long[] value, int offset, int count)
+        public void Write(long value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(long[] value, int index, int count)
         {
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 8, 8);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
             WriteBytesFromBuffer(8 * count, 8);
+        }
+        public void Write(long[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(ulong value)
         {
@@ -161,12 +280,22 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
             WriteBytesFromBuffer(8, 8);
         }
-        public void Write(ulong[] value, int offset, int count)
+        public void Write(ulong value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(ulong[] value, int index, int count)
         {
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 8, 8);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
             WriteBytesFromBuffer(8 * count, 8);
+        }
+        public void Write(ulong[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(float value)
         {
@@ -174,12 +303,22 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
             WriteBytesFromBuffer(4, 4);
         }
-        public void Write(float[] value, int offset, int count)
+        public void Write(float value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(float[] value, int index, int count)
         {
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 4, 4);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 4, 4);
             WriteBytesFromBuffer(4 * count, 4);
+        }
+        public void Write(float[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
         public void Write(double value)
         {
@@ -187,12 +326,22 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
             WriteBytesFromBuffer(8, 8);
         }
-        public void Write(double[] value, int offset, int count)
+        public void Write(double value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(double[] value, int index, int count)
         {
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
-                Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 8, 8);
+                Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
             WriteBytesFromBuffer(8 * count, 8);
+        }
+        public void Write(double[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
         }
 
         public void WriteObject(object obj)
@@ -349,6 +498,11 @@ namespace Kermalis.EndianBinaryIO
                     }
                 }
             }
+        }
+        public void WriteObject(object obj, long offset)
+        {
+            BaseStream.Position = offset;
+            WriteObject(obj);
         }
     }
 }
