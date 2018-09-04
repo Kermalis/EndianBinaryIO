@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Reflection;
-using System.Text;
 
-namespace EndianBinaryIO
+namespace Kermalis.EndianBinaryIO
 {
     public abstract class EndianBinaryAttribute : Attribute
     {

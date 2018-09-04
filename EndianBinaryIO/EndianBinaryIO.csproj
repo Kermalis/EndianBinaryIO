@@ -8,7 +8,7 @@
     <PackageId>EndianBinaryIO</PackageId>
     <Product>EndianBinaryIO</Product>
     <AssemblyName>EndianBinaryIO</AssemblyName>
-    <RootNamespace>EndianBinaryIO</RootNamespace>
+    <RootNamespace>Kermalis.EndianBinaryIO</RootNamespace>
     <Version>1.0.0.0</Version>
   </PropertyGroup>
 

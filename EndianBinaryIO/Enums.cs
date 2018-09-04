@@ -1,4 +1,4 @@
-﻿namespace EndianBinaryIO
+﻿namespace Kermalis.EndianBinaryIO
 {
     public enum BooleanSize
     {

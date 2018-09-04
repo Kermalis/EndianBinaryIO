@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
-namespace EndianBinaryIO
+namespace Kermalis.EndianBinaryIO
 {
-    public class EndianBinaryReaderWriter : IDisposable
+    public class EndianBinaryBase : IDisposable
     {
         public Stream BaseStream { get; private set; }
         public Endianness Endianness;
@@ -13,10 +12,8 @@ namespace EndianBinaryIO
         protected byte[] buffer;
 
         bool disposed;
-
-        protected EndianBinaryReaderWriter(Stream baseStream, bool isReader) : this(baseStream, Endianness.LittleEndian, isReader) { }
-        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, bool isReader) : this(baseStream, Endianness.LittleEndian, EncodingType.ASCII, isReader) { }
-        protected EndianBinaryReaderWriter(Stream baseStream, Endianness endianness, EncodingType encoding, bool isReader)
+        
+        protected EndianBinaryBase(Stream baseStream, Endianness endianness, EncodingType encoding, bool isReader)
         {
             DoNotInheritOutsideOfThisAssembly(); // Will throw an exception if inherited outside of this assembly
             if (baseStream == null)
@@ -27,7 +24,7 @@ namespace EndianBinaryIO
             Endianness = endianness;
             Encoding = encoding;
         }
-        ~EndianBinaryReaderWriter() => Dispose(false);
+        ~EndianBinaryBase() => Dispose(false);
         public void Dispose()
         {
             Dispose(true);
@@ -72,7 +69,7 @@ namespace EndianBinaryIO
         // Prevent external inheritance
         internal virtual void DoNotInheritOutsideOfThisAssembly()
         {
-            throw new Exception("Do not inherit EndianBinaryReaderWriter.");
+            throw new Exception("Do not inherit EndianBinaryBase.");
         }
     }
 }

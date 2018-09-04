@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace EndianBinaryIO
+namespace Kermalis.EndianBinaryIO
 {
     class Utils
     {

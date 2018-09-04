@@ -20,7 +20,7 @@ struct MyStruct : IBinarySerializable
         [BinaryFixedLength(16)]
         public uint[] ArrayWith16Elements;
         
-        // Boolean that takes up 4 bytes instead of one
+        // Boolean that occupies 4 bytes instead of one
         [BinaryBooleanSize(BooleanSize.U32)]
         public bool LongBool;
         
@@ -48,3 +48,7 @@ struct MyStruct : IBinarySerializable
         }
 }
 ```
+
+----
+# To Do:
+* Variable-sized length attribute

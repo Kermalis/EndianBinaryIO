@@ -3,13 +3,12 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace EndianBinaryIO
+namespace Kermalis.EndianBinaryIO
 {
-    public sealed class EndianBinaryReader : EndianBinaryReaderWriter
+    public sealed class EndianBinaryReader : EndianBinaryBase
     {
-        public EndianBinaryReader(Stream baseStream) : base(baseStream, true) { }
-        public EndianBinaryReader(Stream baseStream, Endianness endianness) : base(baseStream, endianness, true) { }
-        public EndianBinaryReader(Stream baseStream, Endianness endianness, EncodingType encoding) : base(baseStream, endianness, encoding, true) { }
+        public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII)
+            : base(baseStream, endianness, encoding, true) { }
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
 
