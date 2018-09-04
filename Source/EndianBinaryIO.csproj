@@ -19,8 +19,4 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /f /y  &quot;$(TargetPath)&quot; &quot;$(SolutionDir)..\GBAMusicStudio\GBAMusicStudio\Dependencies\$(TargetFileName)&quot;" />
-  </Target>
-
 </Project>
