@@ -343,6 +343,29 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, index, count);
         }
+        public void Write(decimal value)
+        {
+            SetBufferSize(16);
+            Array.Copy(Utils.DecimalToBytes(value), 0, buffer, 0, 16);
+            WriteBytesFromBuffer(16, 16);
+        }
+        public void Write(decimal value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(decimal[] value, int index, int count)
+        {
+            SetBufferSize(16 * count);
+            for (int i = 0; i < count; i++)
+                Array.Copy(Utils.DecimalToBytes(value[i + index]), 0, buffer, i * 16, 16);
+            WriteBytesFromBuffer(16 * count, 16);
+        }
+        public void Write(decimal[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
+        }
 
         public void WriteObject(object obj)
         {

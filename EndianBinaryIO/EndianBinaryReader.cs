@@ -382,6 +382,29 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadDoubles(count);
         }
+        public decimal ReadDecimal()
+        {
+            ReadBytesIntoBuffer(16, 16);
+            return Utils.BytesToDecimal(buffer, 0);
+        }
+        public decimal ReadDecimal(long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadDecimal();
+        }
+        public decimal[] ReadDecimals(int count)
+        {
+            ReadBytesIntoBuffer(16 * count, 16);
+            var array = new decimal[count];
+            for (int i = 0; i < count; i++)
+                array[i] = Utils.BytesToDecimal(buffer, 16 * i);
+            return array;
+        }
+        public decimal[] ReadDecimals(int count, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadDecimals(count);
+        }
 
         public void ReadObject(object obj)
         {

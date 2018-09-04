@@ -41,9 +41,7 @@ namespace Kermalis.EndianBinaryIO
                 disposed = true;
             }
         }
-
-        public static Endianness SystemEndianness => BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
-
+        
         protected static Dictionary<string, int> supportedTypes = new Dictionary<string, int>()
         {
             { "Boolean", 0 },
@@ -61,7 +59,7 @@ namespace Kermalis.EndianBinaryIO
         };
         protected void Flip(int byteAmount, int primitiveSize)
         {
-            if (SystemEndianness != Endianness)
+            if (Utils.SystemEndianness != Endianness)
                 for (int i = 0; i < byteAmount; i += primitiveSize)
                     Array.Reverse(buffer, i, primitiveSize);
         }
