@@ -1,12 +1,11 @@
-# EndianBinaryIO
+﻿using Kermalis.EndianBinaryIO;
+using System;
 
-A C# library that can read and write primitives, arrays, and strings with specified endianness and encoding.
+#pragma warning disable CS0649
 
-The IBinarySerializable interface allows an object to be read and written in a customizable fashion.
-Also included are attributes that can make reading and writing objects less of a headache.
-
-```cs
-class MyStruct
+namespace Kermalis.EndianBinaryTesting
+{
+    class MyStruct
     {
         // Properties
         public byte VersionMajor { get; set; }
@@ -36,10 +35,4 @@ class MyStruct
         [BinaryFixedLength(10)]
         public string UTF16String;
     }
-```
-
-----
-# To Do:
-* Variable-sized length attribute
-* Something like FieldOffsetAttribute
-* Something like Marshal.SizeOf()
+}
