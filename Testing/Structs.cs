@@ -7,9 +7,9 @@ namespace Kermalis.EndianBinaryTesting
 {
     class MyStruct
     {
-        // Properties
-        public byte VersionMajor { get; set; }
-        public short VersionMinor { get; set; }
+        // Members
+        public byte VersionMajor;
+        public short VersionMinor;
 
         // Member that is ignored when reading and writing
         [BinaryIgnore(true)]
