@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -45,6 +46,13 @@ namespace Kermalis.EndianBinaryIO
             var i4 = BitConverter.ToInt32(value, startIndex + 12);
 
             return new decimal(new int[] { i1, i2, i3, i4 });
+        }
+        
+        public static void TruncateOrNot(string str, int length, ref char[] toArray)
+        {
+            toArray = new char[length];
+            var strAsChars = str.ToCharArray().Take(length).ToArray();
+            Buffer.BlockCopy(strAsChars, 0, toArray, 0, strAsChars.Length * 2);
         }
     }
 }

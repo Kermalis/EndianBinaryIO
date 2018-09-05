@@ -502,9 +502,9 @@ namespace Kermalis.EndianBinaryIO
                             Write((string)value, true, encodingType);
                         else
                         {
-                            if (((string)value).Length != fixedLength)
-                                throw new ArgumentException("String length does not match the intended fixed length.");
-                            Write((string)value, false, encodingType);
+                            char[] chars = null;
+                            Utils.TruncateOrNot((string)value, fixedLength, ref chars);
+                            Write(chars, encodingType);
                         }
                     }
                     else // IBinarySerializable
