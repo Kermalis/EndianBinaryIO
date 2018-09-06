@@ -477,6 +477,7 @@ namespace Kermalis.EndianBinaryIO
                                     case 9: value = ReadUInt64s(fixedLength); break;
                                     case 10: value = ReadSingles(fixedLength); break;
                                     case 11: value = ReadDoubles(fixedLength); break;
+                                    case 12: value = ReadDecimals(fixedLength); break;
                                 }
                             }
                             else
@@ -539,6 +540,7 @@ namespace Kermalis.EndianBinaryIO
                                     case 9: value = ReadUInt64(); break;
                                     case 10: value = ReadSingle(); break;
                                     case 11: value = ReadDouble(); break;
+                                    case 12: value = ReadDecimal(); break;
                                 }
                             }
                             else

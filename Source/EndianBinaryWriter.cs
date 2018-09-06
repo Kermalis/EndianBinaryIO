@@ -426,7 +426,7 @@ namespace Kermalis.EndianBinaryIO
                                             default: throw new ArgumentException("Invalid BooleanSize value.");
                                         }
                                         break;
-                                    case 1: Write((byte[])value, 0, fixedLength); break;
+                                    case 1: Write((byte[])value); break;
                                     case 2: Write((sbyte[])value, 0, fixedLength); break;
                                     case 3: Write((char[])value, 0, fixedLength, encodingType); break;
                                     case 4: Write((short[])value, 0, fixedLength); break;
@@ -437,6 +437,7 @@ namespace Kermalis.EndianBinaryIO
                                     case 9: Write((ulong[])value, 0, fixedLength); break;
                                     case 10: Write((float[])value, 0, fixedLength); break;
                                     case 11: Write((double[])value, 0, fixedLength); break;
+                                    case 12: Write((decimal[])value, 0, fixedLength); break;
                                 }
                             }
                             else
@@ -488,6 +489,7 @@ namespace Kermalis.EndianBinaryIO
                                     case 9: Write((ulong)value); break;
                                     case 10: Write((float)value); break;
                                     case 11: Write((double)value); break;
+                                    case 12: Write((decimal)value); break;
                                 }
                             }
                             else

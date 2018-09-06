@@ -55,7 +55,8 @@ namespace Kermalis.EndianBinaryIO
             { "Int64", 8 },
             { "UInt64", 9 },
             { "Single", 10 },
-            { "Double", 11 }
+            { "Double", 11 },
+            { "Decimal", 12 },
         };
         protected void Flip(int byteAmount, int primitiveSize)
         {
