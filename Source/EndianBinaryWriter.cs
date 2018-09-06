@@ -65,6 +65,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(sbyte[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(sbyte[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(sbyte[] value, int index, int count)
         {
             SetBufferSize(count);
@@ -170,6 +179,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(short[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(short[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(short[] value, int index, int count)
         {
             SetBufferSize(2 * count);
@@ -192,6 +210,15 @@ namespace Kermalis.EndianBinaryIO
         {
             BaseStream.Position = offset;
             Write(value);
+        }
+        public void Write(ushort[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(ushort[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
         }
         public void Write(ushort[] value, int index, int count)
         {
@@ -216,6 +243,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(int[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(int[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(int[] value, int index, int count)
         {
             SetBufferSize(4 * count);
@@ -238,6 +274,15 @@ namespace Kermalis.EndianBinaryIO
         {
             BaseStream.Position = offset;
             Write(value);
+        }
+        public void Write(uint[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(uint[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
         }
         public void Write(uint[] value, int offset, int count)
         {
@@ -262,6 +307,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(long[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(long[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(long[] value, int index, int count)
         {
             SetBufferSize(8 * count);
@@ -284,6 +338,15 @@ namespace Kermalis.EndianBinaryIO
         {
             BaseStream.Position = offset;
             Write(value);
+        }
+        public void Write(ulong[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(ulong[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
         }
         public void Write(ulong[] value, int index, int count)
         {
@@ -308,6 +371,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(float[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(float[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(float[] value, int index, int count)
         {
             SetBufferSize(4 * count);
@@ -331,6 +403,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value);
         }
+        public void Write(double[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(double[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
         public void Write(double[] value, int index, int count)
         {
             SetBufferSize(8 * count);
@@ -353,6 +434,15 @@ namespace Kermalis.EndianBinaryIO
         {
             BaseStream.Position = offset;
             Write(value);
+        }
+        public void Write(decimal[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(decimal[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
         }
         public void Write(decimal[] value, int index, int count)
         {
@@ -426,7 +516,7 @@ namespace Kermalis.EndianBinaryIO
                                             default: throw new ArgumentException("Invalid BooleanSize value.");
                                         }
                                         break;
-                                    case 1: Write((byte[])value); break;
+                                    case 1: Write((byte[])value, 0, fixedLength); break;
                                     case 2: Write((sbyte[])value, 0, fixedLength); break;
                                     case 3: Write((char[])value, 0, fixedLength, encodingType); break;
                                     case 4: Write((short[])value, 0, fixedLength); break;
