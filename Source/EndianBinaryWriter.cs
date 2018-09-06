@@ -49,7 +49,7 @@ namespace Kermalis.EndianBinaryIO
             Array.Copy(value, index, buffer, 0, count);
             WriteBytesFromBuffer(count, 1);
         }
-        public void Write(byte[] value, int index, int count, int offset)
+        public void Write(byte[] value, int index, int count, long offset)
         {
             BaseStream.Position = offset;
             Write(value, index, count);
@@ -81,7 +81,7 @@ namespace Kermalis.EndianBinaryIO
                 buffer[i] = (byte)value[i + index];
             WriteBytesFromBuffer(count, 1);
         }
-        public void Write(sbyte[] value, int index, int count, int offset)
+        public void Write(sbyte[] value, int index, int count, long offset)
         {
             BaseStream.Position = offset;
             Write(value, index, count);
