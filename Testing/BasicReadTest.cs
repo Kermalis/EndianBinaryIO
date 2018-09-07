@@ -8,7 +8,7 @@ namespace Kermalis.EndianBinaryTesting
     {
         public static void Test()
         {
-            byte[] myStructBytesLittleEndian =
+            byte[] bytes =
             {
                 0x02,
                 0xFF, 0x01,
@@ -36,28 +36,28 @@ namespace Kermalis.EndianBinaryTesting
 
                 0x42, 0x00, 0x69, 0x00, 0x6E, 0x00, 0x61, 0x00, 0x72, 0x00, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             };
-            var reader = new EndianBinaryReader(new MemoryStream(myStructBytesLittleEndian));
-            var myStructObj = reader.ReadObject<MyStruct>();
+            var reader = new EndianBinaryReader(new MemoryStream(bytes));
+            var obj = reader.ReadObject<MyStruct>();
 
             Console.WindowHeight = 32;
-            Console.WriteLine("EndianBinaryIO Basic Reader Test");
+            Console.WriteLine("EndianBinaryIO Reader Test - Basic");
             Console.WriteLine();
 
-            Console.WriteLine("Major Version: {0}", myStructObj.VersionMajor);
-            Console.WriteLine("Minor Version: {0}", myStructObj.VersionMinor);
+            Console.WriteLine("Major Version: {0}", obj.VersionMajor);
+            Console.WriteLine("Minor Version: {0}", obj.VersionMinor);
             Console.WriteLine();
-            Console.WriteLine("Ignored Member: {0}", myStructObj.DoNotReadOrWrite);
+            Console.WriteLine("Ignored Member: {0}", obj.DoNotReadOrWrite);
             Console.WriteLine();
-            Console.WriteLine("Array Length: {0}", myStructObj.ArrayWith16Elements.Length);
+            Console.WriteLine("Array Length: {0}", obj.ArrayWith16Elements.Length);
             Console.WriteLine("Array elements:");
-            foreach (var e in myStructObj.ArrayWith16Elements)
+            foreach (var e in obj.ArrayWith16Elements)
                 Console.WriteLine("\t{0}", e);
             Console.WriteLine();
-            Console.WriteLine("Long Bool: {0}", myStructObj.LongBool);
+            Console.WriteLine("Long Bool: {0}", obj.LongBool);
             Console.WriteLine();
-            Console.WriteLine("Null-Terminated String: \"{0}\"", myStructObj.NullTerminatedASCIIString);
+            Console.WriteLine("Null-Terminated String: \"{0}\"", obj.NullTerminatedASCIIString);
             Console.WriteLine();
-            Console.WriteLine("UTF-16 String: \"{0}\"", myStructObj.UTF16String);
+            Console.WriteLine("UTF-16 String: \"{0}\"", obj.UTF16String);
 
             Console.ReadKey();
         }

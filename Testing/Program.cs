@@ -2,16 +2,24 @@
 {
     class Program
     {
+        private enum TestType
+        {
+            BasicRead,
+            BasicWrite,
+            ExplicitRead,
+            ExplicitWrite
+        }
+
         static void Main(string[] args)
         {
-            bool readTest = false;
-            if (readTest)
+            TestType t = TestType.ExplicitWrite;
+
+            switch (t)
             {
-                BasicReaderTest.Test();
-            }
-            else
-            {
-                BasicWriterTest.Test();
+                case TestType.BasicRead: BasicReaderTest.Test(); break;
+                case TestType.BasicWrite: BasicWriterTest.Test(); break;
+                case TestType.ExplicitRead: ExplicitMembersReadTest.Test(); break;
+                case TestType.ExplicitWrite: ExplicitMembersWriteTest.Test(); break;
             }
         }
     }

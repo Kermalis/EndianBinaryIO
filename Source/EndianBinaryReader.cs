@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -12,12 +14,13 @@ namespace Kermalis.EndianBinaryIO
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
 
-        void ReadBytesIntoBuffer(int byteAmount, int primitiveSize)
+        void ReadBytesIntoBuffer(int count, int primitiveSize)
         {
-            if (buffer == null || buffer.Length < byteAmount)
-                buffer = new byte[byteAmount];
-            BaseStream.Read(buffer, 0, byteAmount);
-            Flip(byteAmount, primitiveSize);
+            int byteCount = count * primitiveSize;
+            if (buffer == null || buffer.Length < byteCount)
+                buffer = new byte[byteCount];
+            BaseStream.Read(buffer, 0, byteCount);
+            Flip(byteCount, primitiveSize);
         }
 
         public byte PeekByte()
@@ -69,6 +72,39 @@ namespace Kermalis.EndianBinaryIO
             return PeekChar(encodingType);
         }
 
+        public bool ReadBoolean(BooleanSize size)
+        {
+            switch (size)
+            {
+                case BooleanSize.U8:
+                    ReadBytesIntoBuffer(1, 1);
+                    return buffer[0] != 0;
+                case BooleanSize.U16:
+                    ReadBytesIntoBuffer(1, 2);
+                    return BitConverter.ToInt16(buffer, 0) != 0;
+                case BooleanSize.U32:
+                    ReadBytesIntoBuffer(1, 4);
+                    return BitConverter.ToInt32(buffer, 0) != 0;
+                default: throw new ArgumentException("Invalid BooleanSize value.");
+            }
+        }
+        public bool ReadBoolean(BooleanSize size, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadBoolean(size);
+        }
+        public bool[] ReadBooleans(int count, BooleanSize size)
+        {
+            var array = new bool[count];
+            for (int i = 0; i < count; i++)
+                array[i] = ReadBoolean(size);
+            return array;
+        }
+        public bool[] ReadBooleans(int count, BooleanSize size, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadBooleans(count, size);
+        }
         public byte ReadByte()
         {
             ReadBytesIntoBuffer(1, 1);
@@ -127,7 +163,7 @@ namespace Kermalis.EndianBinaryIO
         {
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
-            ReadBytesIntoBuffer(encodingSize, encodingSize);
+            ReadBytesIntoBuffer(1, encodingSize);
             return encoding.GetChars(buffer, 0, encodingSize)[0];
         }
         public char ReadChar(EncodingType encodingType, long offset)
@@ -148,7 +184,7 @@ namespace Kermalis.EndianBinaryIO
         {
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
-            ReadBytesIntoBuffer(encodingSize * count, encodingSize);
+            ReadBytesIntoBuffer(count, encodingSize);
             return encoding.GetChars(buffer, 0, encodingSize * count);
         }
         public char[] ReadChars(int count, EncodingType encodingType, long offset)
@@ -198,7 +234,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public short ReadInt16()
         {
-            ReadBytesIntoBuffer(2, 2);
+            ReadBytesIntoBuffer(1, 2);
             return BitConverter.ToInt16(buffer, 0);
         }
         public short ReadInt16(long offset)
@@ -208,7 +244,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public short[] ReadInt16s(int count)
         {
-            ReadBytesIntoBuffer(2 * count, 2);
+            ReadBytesIntoBuffer(count, 2);
             var array = new short[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToInt16(buffer, 2 * i);
@@ -221,7 +257,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public ushort ReadUInt16()
         {
-            ReadBytesIntoBuffer(2, 2);
+            ReadBytesIntoBuffer(1, 2);
             return BitConverter.ToUInt16(buffer, 0);
         }
         public ushort ReadUInt16(long offset)
@@ -231,7 +267,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public ushort[] ReadUInt16s(int count)
         {
-            ReadBytesIntoBuffer(2 * count, 2);
+            ReadBytesIntoBuffer(count, 2);
             var array = new ushort[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToUInt16(buffer, 2 * i);
@@ -244,7 +280,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public int ReadInt32()
         {
-            ReadBytesIntoBuffer(4, 4);
+            ReadBytesIntoBuffer(1, 4);
             return BitConverter.ToInt32(buffer, 0);
         }
         public int ReadInt32(long offset)
@@ -254,7 +290,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public int[] ReadInt32s(int count)
         {
-            ReadBytesIntoBuffer(4 * count, 4);
+            ReadBytesIntoBuffer(count, 4);
             var array = new int[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToInt32(buffer, 4 * i);
@@ -267,7 +303,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public uint ReadUInt32()
         {
-            ReadBytesIntoBuffer(4, 4);
+            ReadBytesIntoBuffer(1, 4);
             return BitConverter.ToUInt32(buffer, 0);
         }
         public uint ReadUInt32(long offset)
@@ -277,7 +313,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public uint[] ReadUInt32s(int count)
         {
-            ReadBytesIntoBuffer(4 * count, 4);
+            ReadBytesIntoBuffer(count, 4);
             var array = new uint[count];
             for (int i = 0; i < count; i++)
             {
@@ -292,7 +328,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public long ReadInt64()
         {
-            ReadBytesIntoBuffer(8, 8);
+            ReadBytesIntoBuffer(1, 8);
             return BitConverter.ToInt64(buffer, 0);
         }
         public long ReadInt64(long offset)
@@ -302,7 +338,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public long[] ReadInt64s(int count)
         {
-            ReadBytesIntoBuffer(8 * count, 8);
+            ReadBytesIntoBuffer(count, 8);
             var array = new long[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToInt64(buffer, 8 * i);
@@ -315,7 +351,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public ulong ReadUInt64()
         {
-            ReadBytesIntoBuffer(8, 8);
+            ReadBytesIntoBuffer(1, 8);
             return BitConverter.ToUInt64(buffer, 0);
         }
         public ulong ReadUInt64(long offset)
@@ -325,7 +361,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public ulong[] ReadUInt64s(int count)
         {
-            ReadBytesIntoBuffer(8 * count, 8);
+            ReadBytesIntoBuffer(count, 8);
             var array = new ulong[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToUInt64(buffer, 8 * i);
@@ -338,7 +374,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public float ReadSingle()
         {
-            ReadBytesIntoBuffer(4, 4);
+            ReadBytesIntoBuffer(1, 4);
             return BitConverter.ToSingle(buffer, 0);
         }
         public float ReadSingle(long offset)
@@ -348,7 +384,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public float[] ReadSingles(int count)
         {
-            ReadBytesIntoBuffer(4 * count, 4);
+            ReadBytesIntoBuffer(count, 4);
             var array = new float[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToSingle(buffer, 4 * i);
@@ -361,7 +397,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public double ReadDouble()
         {
-            ReadBytesIntoBuffer(8, 8);
+            ReadBytesIntoBuffer(1, 8);
             return BitConverter.ToDouble(buffer, 0);
         }
         public double ReadDouble(long offset)
@@ -371,7 +407,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public double[] ReadDoubles(int count)
         {
-            ReadBytesIntoBuffer(8 * count, 8);
+            ReadBytesIntoBuffer(count, 8);
             var array = new double[count];
             for (int i = 0; i < count; i++)
                 array[i] = BitConverter.ToDouble(buffer, 8 * i);
@@ -384,7 +420,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public decimal ReadDecimal()
         {
-            ReadBytesIntoBuffer(16, 16);
+            ReadBytesIntoBuffer(1, 16);
             return Utils.BytesToDecimal(buffer, 0);
         }
         public decimal ReadDecimal(long offset)
@@ -394,7 +430,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public decimal[] ReadDecimals(int count)
         {
-            ReadBytesIntoBuffer(16 * count, 16);
+            ReadBytesIntoBuffer(count, 16);
             var array = new decimal[count];
             for (int i = 0; i < count; i++)
                 array[i] = Utils.BytesToDecimal(buffer, 16 * i);
@@ -408,167 +444,132 @@ namespace Kermalis.EndianBinaryIO
 
         public T ReadObject<T>()
         {
-            Type objType = typeof(T);
+            return (T)ReadObject(typeof(T));
+        }
+        public object ReadObject(Type objType)
+        {
+            // Get members
             MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
-
-            if (objType.GetConstructor(new Type[0]) == null)
-                throw new ArgumentException("Type does not have a constructor with no parameters. (" + objType.FullName + ")");
-            T obj = (T)objType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+            // Check for a StructLayoutAttribute
+            bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
+            // Create the object; will throw if no parameterless constructor is found
+            object obj = objType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+            // Store this object's start offset
+            long objectStart = BaseStream.Position;
 
             foreach (var memberInfo in members)
             {
-                // Members with the ignore attribute get skipped
-                if (EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
+                // Members with an IgnoreAttribute get skipped
+                if (Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
                     continue;
 
-                int fixedLength = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
-                BooleanSize booleanSize = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
-                EncodingType encodingType = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding);
-                bool nullTerminated = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
+                int fixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
+                BooleanSize booleanSize = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
+                EncodingType encodingType = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding);
+                bool nullTerminated = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
 
+                // Determine member's start offset
+                long memberStart = ordered ?
+                    objectStart + Utils.AttributeValueOrDefault(memberInfo, typeof(FieldOffsetAttribute), -1) :
+                    BaseStream.Position;
+
+                // Get member's type
                 Type memberType;
                 object value = null;
                 if (memberInfo.MemberType == MemberTypes.Property)
                     memberType = ((PropertyInfo)memberInfo).PropertyType;
-                else // Field
+                else
                     memberType = ((FieldInfo)memberInfo).FieldType;
 
                 if (memberType.IsArray)
                 {
+                    // Get array type
                     Type elementType = memberType.GetElementType();
-
-                    if (elementType.IsPrimitive)
+                    if (elementType.IsEnum)
+                        elementType = elementType.GetEnumUnderlyingType();
+                    switch (elementType.Name)
                     {
-                        if (elementType.Name != null)
-                        {
-                            if (supportedTypes.TryGetValue(elementType.Name, out int typeID))
+                        case "Boolean": value = ReadBooleans(fixedLength, booleanSize, memberStart); break;
+                        case "Byte": value = ReadBytes(fixedLength, memberStart); break;
+                        case "SByte": value = ReadSBytes(fixedLength, memberStart); break;
+                        case "Char": value = ReadChars(fixedLength, encodingType, memberStart); break;
+                        case "Int16": value = ReadInt16s(fixedLength, memberStart); break;
+                        case "UInt16": value = ReadUInt16s(fixedLength, memberStart); break;
+                        case "Int32": value = ReadInt32s(fixedLength, memberStart); break;
+                        case "UInt32": value = ReadUInt32s(fixedLength, memberStart); break;
+                        case "Int64": value = ReadInt64s(fixedLength, memberStart); break;
+                        case "UInt64": value = ReadUInt64s(fixedLength, memberStart); break;
+                        case "Single": value = ReadSingles(fixedLength, memberStart); break;
+                        case "Double": value = ReadDoubles(fixedLength, memberStart); break;
+                        case "Decimal": value = ReadDecimals(fixedLength, memberStart); break;
+                        case "String": throw new ArgumentException("Cannot read an array of strings yet.");
+                        default:
+                            // Create the array
+                            value = Array.CreateInstance(elementType, fixedLength);
+                            if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                             {
-                                switch (typeID)
+                                if (elementType.GetConstructor(new Type[0]) == null)
+                                    throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + elementType.FullName + ")");
+                                BaseStream.Position = memberStart;
+                                for (int i = 0; i < fixedLength; i++)
                                 {
-                                    case 0:
-                                        {
-                                            value = new bool[fixedLength];
-                                            switch (booleanSize)
-                                            {
-                                                case BooleanSize.U8:
-                                                    for (int j = 0; j < fixedLength; j++)
-                                                        ((bool[])value)[j] = ReadByte() == 1;
-                                                    break;
-                                                case BooleanSize.U16:
-                                                    for (int j = 0; j < fixedLength; j++)
-                                                        ((bool[])value)[j] = ReadUInt16() == 1;
-                                                    break;
-                                                case BooleanSize.U32:
-                                                    for (int j = 0; j < fixedLength; j++)
-                                                        ((bool[])value)[j] = ReadUInt32() == 1;
-                                                    break;
-                                                default: throw new ArgumentException("Invalid BooleanSize value.");
-                                            }
-                                            break;
-                                        }
-                                    case 1: value = ReadBytes(fixedLength); break;
-                                    case 2: value = ReadSBytes(fixedLength); break;
-                                    case 3: value = ReadChars(fixedLength, encodingType); break;
-                                    case 4: value = ReadInt16s(fixedLength); break;
-                                    case 5: value = ReadUInt16s(fixedLength); break;
-                                    case 6: value = ReadInt32s(fixedLength); break;
-                                    case 7: value = ReadUInt32s(fixedLength); break;
-                                    case 8: value = ReadInt64s(fixedLength); break;
-                                    case 9: value = ReadUInt64s(fixedLength); break;
-                                    case 10: value = ReadSingles(fixedLength); break;
-                                    case 11: value = ReadDoubles(fixedLength); break;
-                                    case 12: value = ReadDecimals(fixedLength); break;
+                                    IBinarySerializable binarySerializable = (IBinarySerializable)elementType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+                                    binarySerializable.Read(this);
+                                    ((Array)value).SetValue(binarySerializable, i);
                                 }
                             }
-                            else
+                            else // Element is not a supported primitive or IBinarySerializable, so create the array's objects
                             {
-                                throw new NotSupportedException(objType.Name + " is not supported.");
+                                BaseStream.Position = memberStart;
+                                for (int i = 0; i < fixedLength; i++)
+                                    ((Array)value).SetValue(ReadObject(elementType), i);
                             }
-                        }
-                    }
-                    else
-                    {
-                        value = Array.CreateInstance(elementType, fixedLength);
-                        if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
-                        {
-                            if (elementType.GetConstructor(new Type[0]) == null)
-                                throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + elementType.FullName + ")");
-                            for (int j = 0; j < fixedLength; j++)
-                            {
-                                IBinarySerializable binarySerializable = (IBinarySerializable)elementType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
-                                binarySerializable.Read(this);
-                                ((Array)value).SetValue(binarySerializable, j);
-                            }
-                        }
-                        else // Element is not a supported primitive or IBinarySerializable, so create the array's objects
-                        {
-                            for (int i = 0; i < fixedLength; i++)
-                                ((Array)value).SetValue(elementType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[] { this }), i);
-                        }
+                            break;
                     }
                 }
-                else // Member is not an array
+                else
                 {
                     if (memberType.IsEnum)
                         memberType = memberType.GetEnumUnderlyingType();
-
-                    if (memberType.IsPrimitive)
+                    switch (memberType.Name)
                     {
-                        if (memberType.Name != null)
-                        {
-                            if (supportedTypes.TryGetValue(memberType.Name, out int typeID))
-                            {
-                                switch (typeID)
-                                {
-                                    case 0:
-                                        switch (booleanSize)
-                                        {
-                                            case BooleanSize.U8: value = ReadByte() != 0; break;
-                                            case BooleanSize.U16: value = ReadUInt16() != 0; break;
-                                            case BooleanSize.U32: value = ReadUInt32() != 0; break;
-                                            default: throw new ArgumentException("Invalid BooleanSize value.");
-                                        }
-                                        break;
-                                    case 1: value = ReadByte(); break;
-                                    case 2: value = ReadSByte(); break;
-                                    case 3: value = ReadChar(encodingType); break;
-                                    case 4: value = ReadInt16(); break;
-                                    case 5: value = ReadUInt16(); break;
-                                    case 6: value = ReadInt32(); break;
-                                    case 7: value = ReadUInt32(); break;
-                                    case 8: value = ReadInt64(); break;
-                                    case 9: value = ReadUInt64(); break;
-                                    case 10: value = ReadSingle(); break;
-                                    case 11: value = ReadDouble(); break;
-                                    case 12: value = ReadDecimal(); break;
-                                }
-                            }
+                        case "Boolean": value = ReadBoolean(booleanSize, memberStart); break;
+                        case "Byte": value = ReadByte(memberStart); break;
+                        case "SByte": value = ReadSByte(memberStart); break;
+                        case "Char": value = ReadChar(encodingType, memberStart); break;
+                        case "Int16": value = ReadInt16(memberStart); break;
+                        case "UInt16": value = ReadUInt16(memberStart); break;
+                        case "Int32": value = ReadInt32(memberStart); break;
+                        case "UInt32": value = ReadUInt32(memberStart); break;
+                        case "Int64": value = ReadInt64(memberStart); break;
+                        case "UInt64": value = ReadUInt64(memberStart); break;
+                        case "Single": value = ReadSingle(memberStart); break;
+                        case "Double": value = ReadDouble(memberStart); break;
+                        case "Decimal": value = ReadDecimal(memberStart); break;
+                        case "String":
+                            if (nullTerminated)
+                                value = ReadString(encodingType, memberStart);
                             else
+                                value = ReadString(fixedLength, encodingType, memberStart);
+                            break;
+                        default:
+                            if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
                             {
-                                throw new NotSupportedException(objType.Name + " is not supported.");
+                                if (memberType.GetConstructor(new Type[0]) == null)
+                                    throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + memberType.FullName + ")");
+                                value = memberType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+                                BaseStream.Position = memberStart;
+                                ((IBinarySerializable)value).Read(this);
                             }
-                        }
-                    }
-                    else if (memberType.Name == "String")
-                    {
-                        if (nullTerminated)
-                            value = ReadString(encodingType);
-                        else
-                            value = ReadString(fixedLength, encodingType);
-                    }
-                    else if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
-                    {
-                        if (memberType.GetConstructor(new Type[0]) == null)
-                            throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + memberType.FullName + ")");
-                        value = memberType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
-                        ((IBinarySerializable)value).Read(this);
-                    }
-                    else // Member is not a supported primitive, string, or IBinarySerializable, so create the specified object
-                    {
-                        value = memberType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[] { this });
+                            else // Member is not a supported primitive, string, or IBinarySerializable, so create the specified object
+                            {
+                                value = ReadObject(memberType, memberStart);
+                            }
+                            break;
                     }
                 }
 
+                // Set the value into the object member
                 if (memberInfo.MemberType == MemberTypes.Property)
                     ((PropertyInfo)memberInfo).SetValue(obj, value, null);
                 else
@@ -581,6 +582,11 @@ namespace Kermalis.EndianBinaryIO
         {
             BaseStream.Position = offset;
             return ReadObject<T>();
+        }
+        public object ReadObject(Type objType, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadObject(objType);
         }
     }
 }

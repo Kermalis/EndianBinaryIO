@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -17,12 +18,59 @@ namespace Kermalis.EndianBinaryIO
             if (buffer == null || buffer.Length < size)
                 buffer = new byte[size];
         }
-        void WriteBytesFromBuffer(int byteAmount, int primitiveSize)
+        void WriteBytesFromBuffer(int count, int primitiveSize)
         {
-            Flip(byteAmount, primitiveSize);
-            BaseStream.Write(buffer, 0, byteAmount);
+            int byteCount = count * primitiveSize;
+            Flip(byteCount, primitiveSize);
+            BaseStream.Write(buffer, 0, byteCount);
         }
 
+        public void Write(bool value, BooleanSize size)
+        {
+            switch (size)
+            {
+                case BooleanSize.U8:
+                    SetBufferSize(1);
+                    buffer[0] = value ? (byte)1 : (byte)0;
+                    WriteBytesFromBuffer(1, 1);
+                    break;
+                case BooleanSize.U16:
+                    SetBufferSize(2);
+                    Array.Copy(BitConverter.GetBytes(value ? (short)1 : (short)0), 0, buffer, 0, 2);
+                    WriteBytesFromBuffer(1, 2);
+                    break;
+                case BooleanSize.U32:
+                    SetBufferSize(4);
+                    Array.Copy(BitConverter.GetBytes(value ? 1u : 0u), 0, buffer, 0, 4);
+                    WriteBytesFromBuffer(1, 4);
+                    break;
+                default: throw new ArgumentException("Invalid BooleanSize value.");
+            }
+        }
+        public void Write(bool value, BooleanSize size, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, size);
+        }
+        public void Write(bool[] value, BooleanSize size)
+        {
+            Write(value, 0, value.Length, size);
+        }
+        public void Write(bool[] value, BooleanSize size, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length, size);
+        }
+        public void Write(bool[] value, int index, int count, BooleanSize size)
+        {
+            for (int i = index; i < count; i++)
+                Write(value[i], size);
+        }
+        public void Write(bool[] value, int index, int count, BooleanSize size, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, size);
+        }
         public void Write(byte value)
         {
             SetBufferSize(1);
@@ -101,7 +149,7 @@ namespace Kermalis.EndianBinaryIO
             int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize);
             Array.Copy(encoding.GetBytes(new string(value, 1)), 0, buffer, 0, encodingSize);
-            WriteBytesFromBuffer(encodingSize, encodingSize);
+            WriteBytesFromBuffer(1, encodingSize);
         }
         public void Write(char value, EncodingType encodingType, long offset)
         {
@@ -141,7 +189,7 @@ namespace Kermalis.EndianBinaryIO
             int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize * count);
             Array.Copy(encoding.GetBytes(value, index, count), 0, buffer, 0, count * encodingSize);
-            WriteBytesFromBuffer(encodingSize * count, encodingSize);
+            WriteBytesFromBuffer(count, encodingSize);
         }
         public void Write(char[] value, int index, int count, EncodingType encodingType, long offset)
         {
@@ -159,7 +207,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(string value, bool nullTerminated, EncodingType encodingType)
         {
-            Write(value.ToCharArray(), 0, value.Length, encodingType);
+            Write(value.ToCharArray(), encodingType);
             if (nullTerminated)
                 Write('\0', encodingType);
         }
@@ -172,7 +220,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(2);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 2);
-            WriteBytesFromBuffer(2, 2);
+            WriteBytesFromBuffer(1, 2);
         }
         public void Write(short value, long offset)
         {
@@ -193,7 +241,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 2, 2);
-            WriteBytesFromBuffer(2 * count, 2);
+            WriteBytesFromBuffer(count, 2);
         }
         public void Write(short[] value, int index, int count, long offset)
         {
@@ -204,7 +252,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(2);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 2);
-            WriteBytesFromBuffer(2, 2);
+            WriteBytesFromBuffer(1, 2);
         }
         public void Write(ushort value, long offset)
         {
@@ -225,7 +273,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 2, 2);
-            WriteBytesFromBuffer(2 * count, 2);
+            WriteBytesFromBuffer(count, 2);
         }
         public void Write(ushort[] value, int index, int count, long offset)
         {
@@ -236,7 +284,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(4);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
-            WriteBytesFromBuffer(4, 4);
+            WriteBytesFromBuffer(1, 4);
         }
         public void Write(int value, long offset)
         {
@@ -257,7 +305,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 4, 4);
-            WriteBytesFromBuffer(4 * count, 4);
+            WriteBytesFromBuffer(count, 4);
         }
         public void Write(int[] value, int index, int count, long offset)
         {
@@ -268,7 +316,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(4);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
-            WriteBytesFromBuffer(4, 4);
+            WriteBytesFromBuffer(1, 4);
         }
         public void Write(uint value, long offset)
         {
@@ -289,7 +337,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + offset]), 0, buffer, i * 4, 4);
-            WriteBytesFromBuffer(4 * count, 4);
+            WriteBytesFromBuffer(count, 4);
         }
         public void Write(uint[] value, int index, int count, long offset)
         {
@@ -300,7 +348,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(8);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
-            WriteBytesFromBuffer(8, 8);
+            WriteBytesFromBuffer(1, 8);
         }
         public void Write(long value, long offset)
         {
@@ -321,7 +369,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
-            WriteBytesFromBuffer(8 * count, 8);
+            WriteBytesFromBuffer(count, 8);
         }
         public void Write(long[] value, int index, int count, long offset)
         {
@@ -332,7 +380,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(8);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
-            WriteBytesFromBuffer(8, 8);
+            WriteBytesFromBuffer(1, 8);
         }
         public void Write(ulong value, long offset)
         {
@@ -353,7 +401,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
-            WriteBytesFromBuffer(8 * count, 8);
+            WriteBytesFromBuffer(count, 8);
         }
         public void Write(ulong[] value, int index, int count, long offset)
         {
@@ -364,7 +412,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(4);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 4);
-            WriteBytesFromBuffer(4, 4);
+            WriteBytesFromBuffer(1, 4);
         }
         public void Write(float value, long offset)
         {
@@ -385,7 +433,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 4, 4);
-            WriteBytesFromBuffer(4 * count, 4);
+            WriteBytesFromBuffer(count, 4);
         }
         public void Write(float[] value, int index, int count, long offset)
         {
@@ -396,7 +444,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(8);
             Array.Copy(BitConverter.GetBytes(value), 0, buffer, 0, 8);
-            WriteBytesFromBuffer(8, 8);
+            WriteBytesFromBuffer(1, 8);
         }
         public void Write(double value, long offset)
         {
@@ -417,7 +465,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(BitConverter.GetBytes(value[i + index]), 0, buffer, i * 8, 8);
-            WriteBytesFromBuffer(8 * count, 8);
+            WriteBytesFromBuffer(count, 8);
         }
         public void Write(double[] value, int index, int count, long offset)
         {
@@ -428,7 +476,7 @@ namespace Kermalis.EndianBinaryIO
         {
             SetBufferSize(16);
             Array.Copy(Utils.DecimalToBytes(value), 0, buffer, 0, 16);
-            WriteBytesFromBuffer(16, 16);
+            WriteBytesFromBuffer(1, 16);
         }
         public void Write(decimal value, long offset)
         {
@@ -449,7 +497,7 @@ namespace Kermalis.EndianBinaryIO
             SetBufferSize(16 * count);
             for (int i = 0; i < count; i++)
                 Array.Copy(Utils.DecimalToBytes(value[i + index]), 0, buffer, i * 16, 16);
-            WriteBytesFromBuffer(16 * count, 16);
+            WriteBytesFromBuffer(count, 16);
         }
         public void Write(decimal[] value, int index, int count, long offset)
         {
@@ -459,20 +507,32 @@ namespace Kermalis.EndianBinaryIO
 
         public void WriteObject(object obj)
         {
+            // Get type
             Type objType = obj.GetType();
+            // Get members
             MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
+            // Check for a StructLayoutAttribute
+            bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
+            // Store this object's start offset
+            long objectStart = BaseStream.Position;
 
             foreach (var memberInfo in members)
             {
-                // Members with the ignore attribute get skipped
-                if (EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
+                // Members with an IgnoreAttribute get skipped
+                if (Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
                     continue;
 
-                int fixedLength = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
-                BooleanSize booleanSize = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
-                EncodingType encodingType = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding);
-                bool nullTerminated = EndianBinaryAttribute.ValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
+                int fixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryFixedLengthAttribute), 0);
+                BooleanSize booleanSize = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
+                EncodingType encodingType = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringEncodingAttribute), Encoding);
+                bool nullTerminated = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), false);
 
+                // Determine member's start offset
+                long memberStart = ordered ?
+                    objectStart + Utils.AttributeValueOrDefault(memberInfo, typeof(FieldOffsetAttribute), -1) :
+                    BaseStream.Position;
+
+                // Get member's type
                 Type memberType;
                 object value = null;
                 if (memberInfo.MemberType == MemberTypes.Property)
@@ -480,7 +540,7 @@ namespace Kermalis.EndianBinaryIO
                     memberType = ((PropertyInfo)memberInfo).PropertyType;
                     value = ((PropertyInfo)memberInfo).GetValue(obj, null);
                 }
-                else // Field
+                else
                 {
                     memberType = ((FieldInfo)memberInfo).FieldType;
                     value = ((FieldInfo)memberInfo).GetValue(obj);
@@ -488,128 +548,71 @@ namespace Kermalis.EndianBinaryIO
 
                 if (memberType.IsArray)
                 {
+                    // Get array type
                     Type elementType = memberType.GetElementType();
-
-                    if (elementType.IsPrimitive)
+                    if (elementType.IsEnum)
+                        elementType = elementType.GetEnumUnderlyingType();
+                    switch (elementType.Name)
                     {
-                        if (elementType.Name != null)
-                        {
-                            if (supportedTypes.TryGetValue(elementType.Name, out int typeID))
-                            {
-                                switch (typeID)
-                                {
-                                    case 0:
-                                        switch (booleanSize)
-                                        {
-                                            case BooleanSize.U8:
-                                                for (int j = 0; j < fixedLength; j++)
-                                                    Write(((bool[])value)[j] ? (sbyte)1 : (sbyte)0);
-                                                break;
-                                            case BooleanSize.U16:
-                                                for (int j = 0; j < fixedLength; j++)
-                                                    Write(((bool[])value)[j] ? (ushort)1 : (ushort)0);
-                                                break;
-                                            case BooleanSize.U32:
-                                                for (int j = 0; j < fixedLength; j++)
-                                                    Write(((bool[])value)[j] ? 1u : 0u);
-                                                break;
-                                            default: throw new ArgumentException("Invalid BooleanSize value.");
-                                        }
-                                        break;
-                                    case 1: Write((byte[])value, 0, fixedLength); break;
-                                    case 2: Write((sbyte[])value, 0, fixedLength); break;
-                                    case 3: Write((char[])value, 0, fixedLength, encodingType); break;
-                                    case 4: Write((short[])value, 0, fixedLength); break;
-                                    case 5: Write((ushort[])value, 0, fixedLength); break;
-                                    case 6: Write((int[])value, 0, fixedLength); break;
-                                    case 7: Write((uint[])value, 0, fixedLength); break;
-                                    case 8: Write((long[])value, 0, fixedLength); break;
-                                    case 9: Write((ulong[])value, 0, fixedLength); break;
-                                    case 10: Write((float[])value, 0, fixedLength); break;
-                                    case 11: Write((double[])value, 0, fixedLength); break;
-                                    case 12: Write((decimal[])value, 0, fixedLength); break;
-                                }
-                            }
-                            else
-                            {
-                                throw new NotSupportedException(objType.Name + " is not supported.");
-                            }
-                        }
-                    }
-                    else // If the element is not a primitive, it should be an IBinarySerializable
-                    {
-                        if (!typeof(IBinarySerializable).IsAssignableFrom(elementType))
-                            throw new ArgumentException("This class is not serializable. (" + elementType.FullName + ")");
-                        if (elementType.GetConstructor(new Type[0]) == null)
-                            throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + elementType.FullName + ")");
-                        for (int j = 0; j < fixedLength; j++)
-                            ((IBinarySerializable)((Array)value).GetValue(j)).Write(this);
+                        case "Boolean": Write((bool[])value, 0, fixedLength, booleanSize, memberStart); break;
+                        case "Byte": Write((byte[])value, 0, fixedLength, memberStart); break;
+                        case "SByte": Write((sbyte[])value, 0, fixedLength, memberStart); break;
+                        case "Char": Write((char[])value, 0, fixedLength, encodingType, memberStart); break;
+                        case "Int16": Write((short[])value, 0, fixedLength, memberStart); break;
+                        case "UInt16": Write((ushort[])value, 0, fixedLength, memberStart); break;
+                        case "Int32": Write((int[])value, 0, fixedLength, memberStart); break;
+                        case "UInt32": Write((uint[])value, 0, fixedLength, memberStart); break;
+                        case "Int64": Write((long[])value, 0, fixedLength, memberStart); break;
+                        case "UInt64": Write((ulong[])value, 0, fixedLength, memberStart); break;
+                        case "Single": Write((float[])value, 0, fixedLength, memberStart); break;
+                        case "Double": Write((double[])value, 0, fixedLength, memberStart); break;
+                        case "Decimal": Write((decimal[])value, 0, fixedLength, memberStart); break;
+                        case "String":
+                            throw new ArgumentException("Cannot write an array of strings yet.");
+                        default: // IBinarySerializable
+                            if (!typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                                throw new ArgumentException("\"" + elementType.FullName + "\" cannot be written to the stream.");
+                            BaseStream.Position = memberStart;
+                            for (int i = 0; i < fixedLength; i++)
+                                ((IBinarySerializable)((Array)value).GetValue(i)).Write(this);
+                            break;
                     }
                 }
-                else // Member is not an array
+                else
                 {
                     if (memberType.IsEnum)
                         memberType = memberType.GetEnumUnderlyingType();
-
-                    if (memberType.IsPrimitive)
+                    switch (memberType.Name)
                     {
-                        if (memberType.Name != null)
-                        {
-                            if (supportedTypes.TryGetValue(memberType.Name, out int typeID))
-                            {
-                                switch (typeID)
-                                {
-                                    case 0:
-                                        switch (booleanSize)
-                                        {
-                                            case BooleanSize.U8: Write(((bool)value) ? (byte)1 : (byte)0); break;
-                                            case BooleanSize.U16: Write(((bool)value) ? (ushort)1 : (ushort)0); break;
-                                            case BooleanSize.U32: Write(((bool)value) ? 1u : 0u); break;
-                                            default: throw new ArgumentException("Invalid BooleanSize value.");
-                                        }
-                                        break;
-                                    case 1: Write((byte)value); break;
-                                    case 2: Write((sbyte)value); break;
-                                    case 3: Write((char)value, encodingType); break;
-                                    case 4: Write((short)value); break;
-                                    case 5: Write((ushort)value); break;
-                                    case 6: Write((int)value); break;
-                                    case 7: Write((uint)value); break;
-                                    case 8: Write((long)value); break;
-                                    case 9: Write((ulong)value); break;
-                                    case 10: Write((float)value); break;
-                                    case 11: Write((double)value); break;
-                                    case 12: Write((decimal)value); break;
-                                }
-                            }
+                        case "Boolean": Write((bool)value, booleanSize, memberStart); break;
+                        case "Byte": Write((byte)value, memberStart); break;
+                        case "SByte": Write((sbyte)value, memberStart); break;
+                        case "Char": Write((char)value, encodingType, memberStart); break;
+                        case "Int16": Write((short)value, memberStart); break;
+                        case "UInt16": Write((ushort)value, memberStart); break;
+                        case "Int32": Write((int)value, memberStart); break;
+                        case "UInt32": Write((uint)value, memberStart); break;
+                        case "Int64": Write((long)value, memberStart); break;
+                        case "UInt64": Write((ulong)value, memberStart); break;
+                        case "Single": Write((float)value, memberStart); break;
+                        case "Double": Write((double)value, memberStart); break;
+                        case "Decimal": Write((decimal)value, memberStart); break;
+                        case "String":
+                            if (nullTerminated)
+                                Write((string)value, true, encodingType, memberStart);
                             else
                             {
-                                throw new NotSupportedException(objType.Name + " is not supported!");
+                                char[] chars = null;
+                                Utils.TruncateOrNot((string)value, fixedLength, ref chars);
+                                Write(chars, encodingType, memberStart);
                             }
-                        }
-                    }
-                    else if (memberType.Name == "String")
-                    {
-                        if (nullTerminated)
-                            Write((string)value, true, encodingType);
-                        else
-                        {
-                            char[] chars = null;
-                            Utils.TruncateOrNot((string)value, fixedLength, ref chars);
-                            Write(chars, encodingType);
-                        }
-                    }
-                    else // IBinarySerializable
-                    {
-                        if (!typeof(IBinarySerializable).IsAssignableFrom(memberType))
-                        {
-                            throw new ArgumentException("This class is not serializable. (" + memberType.FullName + ")");
-                        }
-                        if (memberType.GetConstructor(new Type[0]) == null)
-                        {
-                            throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + memberType.FullName + ")");
-                        }
-                        ((IBinarySerializable)value).Write(this);
+                            break;
+                        default: // IBinarySerializable
+                            if (!typeof(IBinarySerializable).IsAssignableFrom(memberType))
+                                throw new ArgumentException("\"" + memberType.FullName + "\" cannot be written to the stream.");
+                            BaseStream.Position = memberStart;
+                            ((IBinarySerializable)value).Write(this);
+                            break;
                     }
                 }
             }

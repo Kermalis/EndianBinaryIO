@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -53,6 +54,14 @@ namespace Kermalis.EndianBinaryIO
             toArray = new char[length];
             var strAsChars = str.ToCharArray().Take(length).ToArray();
             Buffer.BlockCopy(strAsChars, 0, toArray, 0, strAsChars.Length * 2);
+        }
+        public static T AttributeValueOrDefault<T>(ICustomAttributeProvider obj, Type attributeType, T defaultValue)
+        {
+            object[] attributes = obj.GetCustomAttributes(attributeType, true);
+            if (attributes.Length == 0)
+                return defaultValue;
+            MemberInfo valueMember = attributeType.GetMember("Value")[0];
+            return (T)((PropertyInfo)valueMember).GetValue(attributes[0]);
         }
     }
 }

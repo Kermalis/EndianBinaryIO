@@ -1,5 +1,6 @@
 ﻿using Kermalis.EndianBinaryIO;
 using System;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CS0649
 
@@ -34,5 +35,28 @@ namespace Kermalis.EndianBinaryTesting
         [BinaryStringEncoding(EncodingType.UTF16)]
         [BinaryFixedLength(10)]
         public string UTF16String;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    class MyExplicitStruct
+    {
+        [BinaryIgnore(true)]
+        [FieldOffset(4)]
+        public string IgnoredString = "Everyone ignores me.";
+
+        [FieldOffset(0)]
+        public int Int1;
+        [FieldOffset(0)]
+        public short Short1;
+        [FieldOffset(2)]
+        public short Short2;
+        [FieldOffset(0)]
+        public byte Byte1;
+        [FieldOffset(1)]
+        public byte Byte2;
+        [FieldOffset(2)]
+        public byte Byte3;
+        [FieldOffset(3)]
+        public byte Byte4;
     }
 }

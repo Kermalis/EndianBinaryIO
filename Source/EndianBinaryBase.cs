@@ -42,26 +42,10 @@ namespace Kermalis.EndianBinaryIO
             }
         }
         
-        protected static Dictionary<string, int> supportedTypes = new Dictionary<string, int>()
-        {
-            { "Boolean", 0 },
-            { "Byte", 1 },
-            { "SByte", 2 },
-            { "Char", 3 },
-            { "Int16", 4 },
-            { "UInt16", 5 },
-            { "Int32", 6 },
-            { "UInt32", 7 },
-            { "Int64", 8 },
-            { "UInt64", 9 },
-            { "Single", 10 },
-            { "Double", 11 },
-            { "Decimal", 12 },
-        };
-        protected void Flip(int byteAmount, int primitiveSize)
+        protected void Flip(int byteCount, int primitiveSize)
         {
             if (Utils.SystemEndianness != Endianness)
-                for (int i = 0; i < byteAmount; i += primitiveSize)
+                for (int i = 0; i < byteCount; i += primitiveSize)
                     Array.Reverse(buffer, i, primitiveSize);
         }
 

@@ -8,8 +8,8 @@ namespace Kermalis.EndianBinaryTesting
     {
         public static void Test()
         {
-            var outBytes = new byte[150];
-            var writer = new EndianBinaryWriter(new MemoryStream(outBytes));
+            var bytes = new byte[150];
+            var writer = new EndianBinaryWriter(new MemoryStream(bytes));
             writer.WriteObject(new MyStruct()
             {
                 VersionMajor = 2,
@@ -27,11 +27,11 @@ namespace Kermalis.EndianBinaryTesting
                 UTF16String = "Binary"
             });
 
-            Console.WriteLine("EndianBinaryIO Basic Writer Test");
+            Console.WriteLine("EndianBinaryIO Writer Test - Basic");
             Console.WriteLine();
 
-            Console.WriteLine("Little-endian bytes of a \"MyStruct\":");
-            TestUtils.PrintBytes(outBytes);
+            Console.WriteLine("Little endian bytes of a \"MyStruct\":");
+            TestUtils.PrintBytes(bytes);
 
             Console.ReadKey();
         }

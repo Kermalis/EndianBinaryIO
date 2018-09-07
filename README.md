@@ -4,6 +4,7 @@ A C# library that can read and write primitives, arrays, and strings with specif
 
 The IBinarySerializable interface allows an object to be read and written in a customizable fashion.
 Also included are attributes that can make reading and writing objects less of a headache.
+For example, classes and structs in C# cannot have ignored members when marshalling, but EndianBinaryIO has a BinaryIgnoreAttribute that will ignore members when reading and writing.
 
 ----
 # Example:
@@ -40,7 +41,7 @@ Also included are attributes that can make reading and writing objects less of a
         public string UTF16String;
     }
 ```
-### Byte Representation:
+### Byte Representation (Little Endian):
 ```cs
     0x02,
     0xFF, 0x01,
@@ -72,5 +73,5 @@ Also included are attributes that can make reading and writing objects less of a
 ----
 # To Do:
 * Variable-sized length attribute
-* Something like FieldOffsetAttribute
 * Something like Marshal.SizeOf()
+* Separate FixedLength for arrays and strings so they can work together and be more clear
