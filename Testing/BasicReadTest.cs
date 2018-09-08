@@ -10,7 +10,7 @@ namespace Kermalis.EndianBinaryTesting
         {
             byte[] bytes =
             {
-                0x02,
+                0x00, 0x08,
                 0xFF, 0x01,
 
                 0x00, 0x00, 0x00, 0x00,
@@ -37,19 +37,19 @@ namespace Kermalis.EndianBinaryTesting
                 0x42, 0x00, 0x69, 0x00, 0x6E, 0x00, 0x61, 0x00, 0x72, 0x00, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             };
             var reader = new EndianBinaryReader(new MemoryStream(bytes));
-            var obj = reader.ReadObject<MyStruct>();
+            var obj = reader.ReadObject<MyBasicStruct>();
 
             Console.WindowHeight = 32;
             Console.WriteLine("EndianBinaryIO Reader Test - Basic");
             Console.WriteLine();
 
-            Console.WriteLine("Major Version: {0}", obj.VersionMajor);
-            Console.WriteLine("Minor Version: {0}", obj.VersionMinor);
+            Console.WriteLine("Type: {0}", obj.Type);
+            Console.WriteLine("Version: {0}", obj.Version);
             Console.WriteLine();
             Console.WriteLine("Ignored Member: {0}", obj.DoNotReadOrWrite);
             Console.WriteLine();
             Console.WriteLine("Array Length: {0}", obj.ArrayWith16Elements.Length);
-            Console.WriteLine("Array elements:");
+            Console.WriteLine("Array Elements:");
             foreach (var e in obj.ArrayWith16Elements)
                 Console.WriteLine("\t{0}", e);
             Console.WriteLine();

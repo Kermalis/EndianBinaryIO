@@ -37,6 +37,8 @@
     <Compile Include="BasicWriteTest.cs" />
     <Compile Include="ExplicitMembersReadTest.cs" />
     <Compile Include="ExplicitMembersWriteTest.cs" />
+    <Compile Include="LengthsReadTest.cs" />
+    <Compile Include="LengthsWriteTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structs.cs" />
     <Compile Include="Program.cs" />

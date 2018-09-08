@@ -28,21 +28,9 @@ namespace Kermalis.EndianBinaryIO
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryFixedLengthAttribute : EndianBinaryAttribute
+    public sealed class BinaryEncodingAttribute : EndianBinaryAttribute
     {
-        public BinaryFixedLengthAttribute(int length)
-        {
-            if (length <= 0)
-                throw new ArgumentException("BinaryFixedLengthAttribute must be greater than 0.");
-            Value = length;
-        }
-
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
-    }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryStringEncodingAttribute : EndianBinaryAttribute
-    {
-        public BinaryStringEncodingAttribute(EncodingType type = EncodingType.ASCII) => Value = type;
+        public BinaryEncodingAttribute(EncodingType type = EncodingType.ASCII) => Value = type;
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
@@ -50,6 +38,31 @@ namespace Kermalis.EndianBinaryIO
     public sealed class BinaryStringNullTerminatedAttribute : EndianBinaryAttribute
     {
         public BinaryStringNullTerminatedAttribute(bool nullTerminated = true) => Value = nullTerminated;
+
+        internal override void DoNotInheritOutsideOfThisAssembly() { }
+    }
+    
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+    public sealed class BinaryArrayFixedLengthAttribute : EndianBinaryAttribute
+    {
+        public BinaryArrayFixedLengthAttribute(int length)
+        {
+            if (length <= 0)
+                throw new ArgumentException("BinaryArrayFixedLengthAttribute must be greater than 0.");
+            Value = length;
+        }
+
+        internal override void DoNotInheritOutsideOfThisAssembly() { }
+    }
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+    public sealed class BinaryStringFixedLengthAttribute : EndianBinaryAttribute
+    {
+        public BinaryStringFixedLengthAttribute(int length)
+        {
+            if (length <= 0)
+                throw new ArgumentException("BinaryStringFixedLengthAttribute must be greater than 0.");
+            Value = length;
+        }
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }

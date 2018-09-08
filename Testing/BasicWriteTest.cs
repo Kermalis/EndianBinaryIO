@@ -10,10 +10,10 @@ namespace Kermalis.EndianBinaryTesting
         {
             var bytes = new byte[150];
             var writer = new EndianBinaryWriter(new MemoryStream(bytes));
-            writer.WriteObject(new MyStruct()
+            writer.WriteObject(new MyBasicStruct()
             {
-                VersionMajor = 2,
-                VersionMinor = 511,
+                Type = ShortSizedEnum.Val2,
+                Version = 511,
 
                 ArrayWith16Elements = new uint[16]
                 {

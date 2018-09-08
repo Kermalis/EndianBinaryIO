@@ -7,12 +7,14 @@
             BasicRead,
             BasicWrite,
             ExplicitRead,
-            ExplicitWrite
+            ExplicitWrite,
+            LengthsRead,
+            LengthsWrite,
         }
 
         static void Main(string[] args)
         {
-            TestType t = TestType.ExplicitWrite;
+            TestType t = TestType.LengthsRead;
 
             switch (t)
             {
@@ -20,6 +22,8 @@
                 case TestType.BasicWrite: BasicWriterTest.Test(); break;
                 case TestType.ExplicitRead: ExplicitMembersReadTest.Test(); break;
                 case TestType.ExplicitWrite: ExplicitMembersWriteTest.Test(); break;
+                case TestType.LengthsRead: LengthsReadTest.Test(); break;
+                case TestType.LengthsWrite: LengthsWriteTest.Test(); break;
             }
         }
     }

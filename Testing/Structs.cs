@@ -6,18 +6,24 @@ using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryTesting
 {
-    class MyStruct
+    enum ShortSizedEnum : short
+    {
+        Val1 = 0x40,
+        Val2 = 0x800,
+    }
+
+    class MyBasicStruct
     {
         // Members
-        public byte VersionMajor;
-        public short VersionMinor;
+        public ShortSizedEnum Type;
+        public short Version;
 
         // Member that is ignored when reading and writing
         [BinaryIgnore(true)]
         public double DoNotReadOrWrite = Math.PI;
 
         // Arrays work as well
-        [BinaryFixedLength(16)]
+        [BinaryArrayFixedLength(16)]
         public uint[] ArrayWith16Elements;
 
         // Boolean that occupies 4 bytes instead of one
@@ -27,13 +33,13 @@ namespace Kermalis.EndianBinaryTesting
         // String encoded in ASCII
         // Reads chars until the stream encounters a '\0'
         // Writing will append a '\0' at the end of the string
-        [BinaryStringEncoding(EncodingType.ASCII)]
+        [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringNullTerminated(true)]
         public string NullTerminatedASCIIString;
 
         // String encoded in UTF-16 that will only read/write 10 chars
-        [BinaryStringEncoding(EncodingType.UTF16)]
-        [BinaryFixedLength(10)]
+        [BinaryEncoding(EncodingType.UTF16)]
+        [BinaryStringFixedLength(10)]
         public string UTF16String;
     }
 
@@ -58,5 +64,18 @@ namespace Kermalis.EndianBinaryTesting
         public byte Byte3;
         [FieldOffset(3)]
         public byte Byte4;
+    }
+
+    class MyLengthyStruct
+    {
+        [BinaryArrayFixedLength(3)]
+        [BinaryEncoding(EncodingType.ASCII)]
+        [BinaryStringNullTerminated(true)]
+        public string[] NullTerminatedStringArray;
+
+        [BinaryArrayFixedLength(3)]
+        [BinaryEncoding(EncodingType.ASCII)]
+        [BinaryStringFixedLength(5)]
+        public string[] SizedStringArray;
     }
 }
