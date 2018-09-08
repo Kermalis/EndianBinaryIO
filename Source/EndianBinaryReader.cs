@@ -529,7 +529,7 @@ namespace Kermalis.EndianBinaryIO
 
                 if (memberType.IsArray)
                 {
-                    if (arrayLength < 1)
+                    if (arrayLength < 0)
                         throw new ArgumentOutOfRangeException("An array in \"" + objType.FullName + "\" attempted to be read with an invalid length.");
                     // Get array type
                     Type elementType = memberType.GetElementType();
