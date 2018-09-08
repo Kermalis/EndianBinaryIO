@@ -78,5 +78,5 @@ For example, classes and structs in C# cannot have ignored members when marshall
 
 ----
 # To Do:
-* Variable-sized length attribute
 * Something like Marshal.SizeOf()
+* Alignment

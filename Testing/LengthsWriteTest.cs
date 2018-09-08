@@ -20,6 +20,12 @@ namespace Kermalis.EndianBinaryTesting
                 SizedStringArray = new string[]
                 {
                     "Seeya", "Bye", "Adios"
+                },
+
+                VariableLengthField = 2,
+                VariableSizedArray = new ShortSizedEnum[]
+                {
+                    ShortSizedEnum.Val1, ShortSizedEnum.Val2
                 }
             });
 

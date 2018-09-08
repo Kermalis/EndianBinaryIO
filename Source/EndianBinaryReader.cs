@@ -448,7 +448,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public object ReadObject(Type objType)
         {
-            // Get members
+            // Get public non-static fields and properties
             MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
             // Check for a StructLayoutAttribute
             bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
@@ -469,8 +469,48 @@ namespace Kermalis.EndianBinaryIO
 
                 int arrayFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
                 int stringFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                int arrayLength = arrayFixedLength;
-                int stringLength = stringFixedLength;
+                string arrayVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
+                int arrayVariableLength = 0;
+                if (!string.IsNullOrEmpty(arrayVariableLengthMember))
+                {
+                    var matchingAnchors = objType.GetMember(arrayVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
+                    if (matchingAnchors.Length != 1)
+                    {
+                        throw new MissingMemberException("A member in \"" + objType.FullName + "\" has an invalid variable array length anchor.");
+                    }
+                    else
+                    {
+                        var anchor = matchingAnchors[0];
+                        if (anchor.MemberType == MemberTypes.Property)
+                            arrayVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                        else
+                            arrayVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                    }
+                }
+                string stringVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
+                int stringVariableLength = 0;
+                if (!string.IsNullOrEmpty(stringVariableLengthMember))
+                {
+                    var matchingAnchors = objType.GetMember(stringVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
+                    if (matchingAnchors.Length != 1)
+                    {
+                        throw new MissingMemberException("A member in \"" + objType.FullName + "\" has an invalid variable string length anchor.");
+                    }
+                    else
+                    {
+                        var anchor = matchingAnchors[0];
+                        if (anchor.MemberType == MemberTypes.Property)
+                            stringVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                        else
+                            stringVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                    }
+                }
+                if ((arrayFixedLength > 0 && arrayVariableLength > 0)
+                    || (stringFixedLength > 0 && stringVariableLength > 0))
+                    throw new ArgumentException("A member in \"" + objType.FullName + "\" has two length attributes.");
+                // One will be 0 and the other will be the intended length. If both are 0 and the reader attempts to read an array, it will throw in the next block
+                int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
+                int stringLength = Math.Max(stringFixedLength, stringVariableLength);
                 if (stringLength > 0)
                     nullTerminated = false;
 
@@ -489,8 +529,8 @@ namespace Kermalis.EndianBinaryIO
 
                 if (memberType.IsArray)
                 {
-                    if (arrayLength == 0)
-                        throw new ArgumentOutOfRangeException("An array attempted to be read without a BinaryArrayFixedLengthAttribute.");
+                    if (arrayLength < 1)
+                        throw new ArgumentOutOfRangeException("An array in \"" + objType.FullName + "\" attempted to be read with an invalid length.");
                     // Get array type
                     Type elementType = memberType.GetElementType();
                     if (elementType.IsEnum)

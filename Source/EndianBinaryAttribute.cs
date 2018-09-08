@@ -41,7 +41,7 @@ namespace Kermalis.EndianBinaryIO
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
-    
+
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public sealed class BinaryArrayFixedLengthAttribute : EndianBinaryAttribute
     {
@@ -55,6 +55,13 @@ namespace Kermalis.EndianBinaryIO
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+    public sealed class BinaryArrayVariableLengthAttribute : EndianBinaryAttribute
+    {
+        public BinaryArrayVariableLengthAttribute(string anchor) => Value = anchor;
+
+        internal override void DoNotInheritOutsideOfThisAssembly() { }
+    }
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public sealed class BinaryStringFixedLengthAttribute : EndianBinaryAttribute
     {
         public BinaryStringFixedLengthAttribute(int length)
@@ -63,6 +70,13 @@ namespace Kermalis.EndianBinaryIO
                 throw new ArgumentException("BinaryStringFixedLengthAttribute must be greater than 0.");
             Value = length;
         }
+
+        internal override void DoNotInheritOutsideOfThisAssembly() { }
+    }
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+    public sealed class BinaryStringVariableLengthAttribute : EndianBinaryAttribute
+    {
+        public BinaryStringVariableLengthAttribute(string anchor) => Value = anchor;
 
         internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
