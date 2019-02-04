@@ -13,9 +13,13 @@ namespace Kermalis.EndianBinaryTesting
                 {
                     Console.Write(',');
                     if (i % perRow == perRow - 1)
+                    {
                         Console.WriteLine();
+                    }
                     else
+                    {
                         Console.Write(' ');
+                    }
                 }
             }
             Console.WriteLine();

@@ -13,8 +13,8 @@ namespace Kermalis.EndianBinaryTesting
                 0xF0, 0xD0, 0x90, 0x70,
             };
             var reader = new EndianBinaryReader(new MemoryStream(bytes));
-            var obj = reader.ReadObject<MyExplicitStruct>();
-            
+            MyExplicitStruct obj = reader.ReadObject<MyExplicitStruct>();
+
             Console.WriteLine("EndianBinaryIO Reader Test - Explicit Members");
             Console.WriteLine();
 

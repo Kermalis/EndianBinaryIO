@@ -37,7 +37,7 @@ namespace Kermalis.EndianBinaryTesting
                 0x42, 0x00, 0x69, 0x00, 0x6E, 0x00, 0x61, 0x00, 0x72, 0x00, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             };
             var reader = new EndianBinaryReader(new MemoryStream(bytes));
-            var obj = reader.ReadObject<MyBasicStruct>();
+            MyBasicStruct obj = reader.ReadObject<MyBasicStruct>();
 
             Console.WindowHeight = 32;
             Console.WriteLine("EndianBinaryIO Reader Test - Basic");
@@ -50,8 +50,10 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine();
             Console.WriteLine("Array Length: {0}", obj.ArrayWith16Elements.Length);
             Console.WriteLine("Array Elements:");
-            foreach (var e in obj.ArrayWith16Elements)
+            foreach (uint e in obj.ArrayWith16Elements)
+            {
                 Console.WriteLine("\t{0}", e);
+            }
             Console.WriteLine();
             Console.WriteLine("Long Bool: {0}", obj.LongBool);
             Console.WriteLine();

@@ -23,26 +23,32 @@ namespace Kermalis.EndianBinaryTesting
                 0x00, 0x08,
             };
             var reader = new EndianBinaryReader(new MemoryStream(bytes));
-            var obj = reader.ReadObject<MyLengthyStruct>();
+            MyLengthyStruct obj = reader.ReadObject<MyLengthyStruct>();
 
             Console.WriteLine("EndianBinaryIO Reader Test - Lengths");
             Console.WriteLine();
 
             Console.WriteLine("Null Terminated String Array Length: {0}", obj.NullTerminatedStringArray.Length);
             Console.WriteLine("Array Elements:");
-            foreach (var e in obj.NullTerminatedStringArray)
+            foreach (string e in obj.NullTerminatedStringArray)
+            {
                 Console.WriteLine("\t\"{0}\"", e);
+            }
             Console.WriteLine();
             Console.WriteLine("Sized String Array Length: {0}", obj.SizedStringArray.Length);
             Console.WriteLine("Array Elements:");
-            foreach (var e in obj.SizedStringArray)
+            foreach (string e in obj.SizedStringArray)
+            {
                 Console.WriteLine("\t\"{0}\"", e);
+            }
             Console.WriteLine();
             Console.WriteLine("Variable Length: {0}", obj.VariableLengthField);
             Console.WriteLine("Variable Sized Array Length: {0}", obj.VariableSizedArray.Length);
             Console.WriteLine("Array Elements:");
-            foreach (var e in obj.VariableSizedArray)
+            foreach (ShortSizedEnum e in obj.VariableSizedArray)
+            {
                 Console.WriteLine("\t{0}", e);
+            }
 
             Console.ReadKey();
         }

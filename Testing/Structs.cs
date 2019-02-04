@@ -77,7 +77,7 @@ namespace Kermalis.EndianBinaryTesting
         [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringFixedLength(5)]
         public string[] SizedStringArray;
-        
+
         public byte VariableLengthField;
         [BinaryArrayVariableLength("VariableLengthField")]
         public ShortSizedEnum[] VariableSizedArray;

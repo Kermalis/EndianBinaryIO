@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Kermalis.EndianBinaryIO
@@ -12,14 +11,18 @@ namespace Kermalis.EndianBinaryIO
         protected byte[] buffer;
 
         bool disposed;
-        
+
         protected EndianBinaryBase(Stream baseStream, Endianness endianness, EncodingType encoding, bool isReader)
         {
             DoNotInheritOutsideOfThisAssembly(); // Will throw an exception if inherited outside of this assembly
             if (baseStream == null)
-                throw new ArgumentNullException("baseStream");
+            {
+                throw new ArgumentNullException(nameof(baseStream));
+            }
             if ((isReader && !baseStream.CanRead) || (!isReader && !baseStream.CanWrite))
-                throw new ArgumentException("baseStream");
+            {
+                throw new ArgumentException(nameof(baseStream));
+            }
             BaseStream = baseStream;
             Endianness = endianness;
             Encoding = encoding;
@@ -35,18 +38,26 @@ namespace Kermalis.EndianBinaryIO
             if (!disposed)
             {
                 if (disposing)
+                {
                     if (BaseStream != null)
+                    {
                         BaseStream.Close();
+                    }
+                }
                 buffer = null;
                 disposed = true;
             }
         }
-        
+
         protected void Flip(int byteCount, int primitiveSize)
         {
             if (Utils.SystemEndianness != Endianness)
+            {
                 for (int i = 0; i < byteCount; i += primitiveSize)
+                {
                     Array.Reverse(buffer, i, primitiveSize);
+                }
+            }
         }
 
         // Prevent external inheritance

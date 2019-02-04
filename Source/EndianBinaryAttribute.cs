@@ -48,7 +48,9 @@ namespace Kermalis.EndianBinaryIO
         public BinaryArrayFixedLengthAttribute(int length)
         {
             if (length <= 0)
-                throw new ArgumentException("BinaryArrayFixedLengthAttribute must be greater than 0.");
+            {
+                throw new ArgumentOutOfRangeException(nameof(length), "BinaryArrayFixedLengthAttribute must be greater than 0.");
+            }
             Value = length;
         }
 
@@ -67,7 +69,9 @@ namespace Kermalis.EndianBinaryIO
         public BinaryStringFixedLengthAttribute(int length)
         {
             if (length <= 0)
-                throw new ArgumentException("BinaryStringFixedLengthAttribute must be greater than 0.");
+            {
+                throw new ArgumentOutOfRangeException(nameof(length), "BinaryStringFixedLengthAttribute must be greater than 0.");
+            }
             Value = length;
         }
 
