@@ -518,12 +518,28 @@ namespace Kermalis.EndianBinaryIO
         }
         public object ReadObject(Type objType)
         {
+            // Create the object; will throw if no parameterless constructor is found
+            object obj = objType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
+            ReadIntoObject(obj);
+            return obj;
+        }
+        public T ReadObject<T>(long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadObject<T>();
+        }
+        public object ReadObject(Type objType, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadObject(objType);
+        }
+        public void ReadIntoObject(object obj)
+        {
+            Type objType = obj.GetType();
             // Get public non-static fields and properties
             MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
             // Check for a StructLayoutAttribute
             bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
-            // Create the object; will throw if no parameterless constructor is found
-            object obj = objType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
             // Store this object's start offset
             long objectStart = BaseStream.Position;
 
@@ -751,18 +767,11 @@ namespace Kermalis.EndianBinaryIO
                     ((FieldInfo)memberInfo).SetValue(obj, value);
                 }
             }
-
-            return obj;
         }
-        public T ReadObject<T>(long offset)
+        public void ReadIntoObject(object obj, long offset)
         {
             BaseStream.Position = offset;
-            return ReadObject<T>();
-        }
-        public object ReadObject(Type objType, long offset)
-        {
-            BaseStream.Position = offset;
-            return ReadObject(objType);
+            ReadIntoObject(obj);
         }
     }
 }
