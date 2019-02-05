@@ -6,12 +6,53 @@ using System.Text;
 
 namespace Kermalis.EndianBinaryIO
 {
-    public sealed class EndianBinaryWriter : EndianBinaryBase
+    public class EndianBinaryWriter : IDisposable
     {
-        public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII)
-            : base(baseStream, endianness, encoding, false) { }
+        public Stream BaseStream { get; private set; }
+        public Endianness Endianness { get; set; }
+        public EncodingType Encoding { get; set; }
+        private byte[] buffer;
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        bool disposed;
+
+        public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII)
+        {
+            if (baseStream == null)
+            {
+                throw new ArgumentNullException(nameof(baseStream));
+            }
+            if (!baseStream.CanWrite)
+            {
+                throw new ArgumentException(nameof(baseStream));
+            }
+            BaseStream = baseStream;
+            Endianness = endianness;
+            Encoding = encoding;
+        }
+        ~EndianBinaryWriter()
+        {
+            Dispose(false);
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (BaseStream != null)
+                    {
+                        BaseStream.Close();
+                    }
+                }
+                buffer = null;
+                disposed = true;
+            }
+        }
 
         void SetBufferSize(int size)
         {
@@ -23,7 +64,7 @@ namespace Kermalis.EndianBinaryIO
         void WriteBytesFromBuffer(int primitiveCount, int primitiveSize)
         {
             int byteCount = primitiveCount * primitiveSize;
-            Flip(byteCount, primitiveSize);
+            Utils.Flip(buffer, Endianness, byteCount, primitiveSize);
             BaseStream.Write(buffer, 0, byteCount);
         }
 

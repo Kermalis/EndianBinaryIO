@@ -6,12 +6,53 @@ using System.Text;
 
 namespace Kermalis.EndianBinaryIO
 {
-    public sealed class EndianBinaryReader : EndianBinaryBase
+    public class EndianBinaryReader : IDisposable
     {
-        public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII)
-            : base(baseStream, endianness, encoding, true) { }
+        public Stream BaseStream { get; private set; }
+        public Endianness Endianness { get; set; }
+        public EncodingType Encoding { get; set; }
+        private byte[] buffer;
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        bool disposed;
+
+        public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII)
+        {
+            if (baseStream == null)
+            {
+                throw new ArgumentNullException(nameof(baseStream));
+            }
+            if (!baseStream.CanRead)
+            {
+                throw new ArgumentException(nameof(baseStream));
+            }
+            BaseStream = baseStream;
+            Endianness = endianness;
+            Encoding = encoding;
+        }
+        ~EndianBinaryReader()
+        {
+            Dispose(false);
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (BaseStream != null)
+                    {
+                        BaseStream.Close();
+                    }
+                }
+                buffer = null;
+                disposed = true;
+            }
+        }
 
         void ReadBytesIntoBuffer(int primitiveCount, int primitiveSize)
         {
@@ -21,7 +62,7 @@ namespace Kermalis.EndianBinaryIO
                 buffer = new byte[byteCount];
             }
             BaseStream.Read(buffer, 0, byteCount);
-            Flip(byteCount, primitiveSize);
+            Utils.Flip(buffer, Endianness, byteCount, primitiveSize);
         }
 
         public byte PeekByte()

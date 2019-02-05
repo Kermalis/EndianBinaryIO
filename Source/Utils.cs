@@ -69,5 +69,16 @@ namespace Kermalis.EndianBinaryIO
             MemberInfo valueMember = attributeType.GetMember("Value")[0];
             return (T)((PropertyInfo)valueMember).GetValue(attributes[0]);
         }
+
+        public static void Flip(byte[] buffer, Endianness targetEndianness, int byteCount, int primitiveSize)
+        {
+            if (SystemEndianness != targetEndianness)
+            {
+                for (int i = 0; i < byteCount; i += primitiveSize)
+                {
+                    Array.Reverse(buffer, i, primitiveSize);
+                }
+            }
+        }
     }
 }
