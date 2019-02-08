@@ -520,7 +520,14 @@ namespace Kermalis.EndianBinaryIO
         {
             // Create the object; will throw if no parameterless constructor is found
             object obj = objType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
-            ReadIntoObject(obj);
+            if (typeof(IBinarySerializable).IsAssignableFrom(objType))
+            {
+                ((IBinarySerializable)obj).Read(this);
+            }
+            else
+            {
+                ReadIntoObject(obj);
+            }
             return obj;
         }
         public T ReadObject<T>(long offset)
@@ -665,13 +672,9 @@ namespace Kermalis.EndianBinaryIO
                                 BaseStream.Position = memberStart;
                                 if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                 {
-                                    if (elementType.GetConstructor(new Type[0]) == null)
-                                    {
-                                        throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + elementType.FullName + ")");
-                                    }
                                     for (int i = 0; i < arrayLength; i++)
                                     {
-                                        IBinarySerializable serializable = (IBinarySerializable)elementType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+                                        var serializable = (IBinarySerializable)elementType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
                                         serializable.Read(this);
                                         ((Array)value).SetValue(serializable, i);
                                     }
@@ -740,11 +743,7 @@ namespace Kermalis.EndianBinaryIO
                             {
                                 if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
                                 {
-                                    if (memberType.GetConstructor(new Type[0]) == null)
-                                    {
-                                        throw new ArgumentException("A type implementing IBinarySerializable must have a constructor with no parameters. (" + memberType.FullName + ")");
-                                    }
-                                    value = memberType.InvokeMember("", BindingFlags.CreateInstance, null, null, new object[0]);
+                                    value = memberType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
                                     BaseStream.Position = memberStart;
                                     ((IBinarySerializable)value).Read(this);
                                 }
