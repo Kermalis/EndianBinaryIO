@@ -11,7 +11,7 @@ namespace Kermalis.EndianBinaryIO
         public Stream BaseStream { get; private set; }
         public Endianness Endianness { get; set; }
         public EncodingType Encoding { get; set; }
-        private byte[] buffer;
+        byte[] buffer;
 
         bool disposed;
 
@@ -520,14 +520,7 @@ namespace Kermalis.EndianBinaryIO
         {
             // Create the object; will throw if no parameterless constructor is found
             object obj = objType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
-            if (typeof(IBinarySerializable).IsAssignableFrom(objType))
-            {
-                ((IBinarySerializable)obj).Read(this);
-            }
-            else
-            {
-                ReadIntoObject(obj);
-            }
+            ReadIntoObject(obj);
             return obj;
         }
         public T ReadObject<T>(long offset)
@@ -542,228 +535,240 @@ namespace Kermalis.EndianBinaryIO
         }
         public void ReadIntoObject(object obj)
         {
-            Type objType = obj.GetType();
-            // Get public non-static fields and properties
-            MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
-            // Check for a StructLayoutAttribute
-            bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
-            // Store this object's start offset
-            long objectStart = BaseStream.Position;
-
-            foreach (MemberInfo memberInfo in members)
+            if (obj == null)
             {
-                // Members with an IgnoreAttribute get skipped
-                if (Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
-                {
-                    continue;
-                }
+                throw new ArgumentNullException(nameof(obj));
+            }
+            Type objType = obj.GetType();
+            if (typeof(IBinarySerializable).IsAssignableFrom(objType))
+            {
+                ((IBinarySerializable)obj).Read(this);
+            }
+            else
+            {
+                // Get public non-static fields and properties
+                MemberInfo[] members = objType.FindMembers(MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, null, null);
+                // Check for a StructLayoutAttribute
+                bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
+                // Store this object's start offset
+                long objectStart = BaseStream.Position;
 
-                BooleanSize booleanSize = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
-                EncodingType encodingType = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryEncodingAttribute), Encoding);
-                bool nullTerminated = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), true);
-
-                int arrayFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
-                int stringFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                string arrayVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
-                int arrayVariableLength = 0;
-                if (!string.IsNullOrEmpty(arrayVariableLengthMember))
+                foreach (MemberInfo memberInfo in members)
                 {
-                    MemberInfo[] matchingAnchors = objType.GetMember(arrayVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
-                    if (matchingAnchors.Length != 1)
+                    // Members with an IgnoreAttribute get skipped
+                    if (Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryIgnoreAttribute), false))
                     {
-                        throw new MissingMemberException("A member in \"" + objType.FullName + "\" has an invalid variable array length anchor.");
+                        continue;
                     }
-                    else
+
+                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize.U8);
+                    EncodingType encodingType = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryEncodingAttribute), Encoding);
+                    bool nullTerminated = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringNullTerminatedAttribute), true);
+
+                    int arrayFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
+                    int stringFixedLength = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringFixedLengthAttribute), 0);
+                    string arrayVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
+                    int arrayVariableLength = 0;
+                    if (!string.IsNullOrEmpty(arrayVariableLengthMember))
                     {
-                        MemberInfo anchor = matchingAnchors[0];
-                        if (anchor.MemberType == MemberTypes.Property)
+                        MemberInfo[] matchingAnchors = objType.GetMember(arrayVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
+                        if (matchingAnchors.Length != 1)
                         {
-                            arrayVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                            throw new MissingMemberException($"A member in \"{objType.FullName}\" has an invalid variable array length anchor.");
                         }
                         else
                         {
-                            arrayVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                            MemberInfo anchor = matchingAnchors[0];
+                            if (anchor.MemberType == MemberTypes.Property)
+                            {
+                                arrayVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                            }
+                            else
+                            {
+                                arrayVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                            }
                         }
                     }
-                }
-                string stringVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
-                int stringVariableLength = 0;
-                if (!string.IsNullOrEmpty(stringVariableLengthMember))
-                {
-                    MemberInfo[] matchingAnchors = objType.GetMember(stringVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
-                    if (matchingAnchors.Length != 1)
+                    string stringVariableLengthMember = Utils.AttributeValueOrDefault(memberInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
+                    int stringVariableLength = 0;
+                    if (!string.IsNullOrEmpty(stringVariableLengthMember))
                     {
-                        throw new MissingMemberException("A member in \"" + objType.FullName + "\" has an invalid variable string length anchor.");
-                    }
-                    else
-                    {
-                        MemberInfo anchor = matchingAnchors[0];
-                        if (anchor.MemberType == MemberTypes.Property)
+                        MemberInfo[] matchingAnchors = objType.GetMember(stringVariableLengthMember, MemberTypes.Field | MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public);
+                        if (matchingAnchors.Length != 1)
                         {
-                            stringVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                            throw new MissingMemberException($"A member in \"{objType.FullName}\" has an invalid variable string length anchor.");
                         }
                         else
                         {
-                            stringVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                            MemberInfo anchor = matchingAnchors[0];
+                            if (anchor.MemberType == MemberTypes.Property)
+                            {
+                                stringVariableLength = Convert.ToInt32(((PropertyInfo)anchor).GetValue(obj, null));
+                            }
+                            else
+                            {
+                                stringVariableLength = Convert.ToInt32(((FieldInfo)anchor).GetValue(obj));
+                            }
                         }
                     }
-                }
-                if ((arrayFixedLength > 0 && arrayVariableLength > 0)
-                    || (stringFixedLength > 0 && stringVariableLength > 0))
-                {
-                    throw new ArgumentException("A member in \"" + objType.FullName + "\" has two length attributes.");
-                }
-                // One will be 0 and the other will be the intended length. If both are 0 and the reader attempts to read an array, it will throw in the next block
-                int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
-                int stringLength = Math.Max(stringFixedLength, stringVariableLength);
-                if (stringLength > 0)
-                {
-                    nullTerminated = false;
-                }
-                // Determine member's start offset
-                long memberStart = ordered ?
-                    objectStart + Utils.AttributeValueOrDefault(memberInfo, typeof(FieldOffsetAttribute), -1) :
-                    BaseStream.Position;
+                    if ((arrayFixedLength > 0 && arrayVariableLength > 0)
+                        || (stringFixedLength > 0 && stringVariableLength > 0))
+                    {
+                        throw new ArgumentException($"A member in \"{objType.FullName}\" has two length attributes.");
+                    }
+                    // One will be 0 and the other will be the intended length. If both are 0 and the reader attempts to read an array, it will throw in the next block
+                    int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
+                    int stringLength = Math.Max(stringFixedLength, stringVariableLength);
+                    if (stringLength > 0)
+                    {
+                        nullTerminated = false;
+                    }
+                    // Determine member's start offset
+                    long memberStart = ordered ?
+                        objectStart + Utils.AttributeValueOrDefault(memberInfo, typeof(FieldOffsetAttribute), -1) :
+                        BaseStream.Position;
 
-                // Get member's type
-                Type memberType;
-                object value = null;
-                if (memberInfo.MemberType == MemberTypes.Property)
-                {
-                    memberType = ((PropertyInfo)memberInfo).PropertyType;
-                }
-                else
-                {
-                    memberType = ((FieldInfo)memberInfo).FieldType;
-                }
+                    // Get member's type
+                    Type memberType;
+                    object value = null;
+                    if (memberInfo.MemberType == MemberTypes.Property)
+                    {
+                        memberType = ((PropertyInfo)memberInfo).PropertyType;
+                    }
+                    else
+                    {
+                        memberType = ((FieldInfo)memberInfo).FieldType;
+                    }
 
-                if (memberType.IsArray)
-                {
-                    if (arrayLength < 0)
+                    if (memberType.IsArray)
                     {
-                        throw new ArgumentOutOfRangeException("An array in \"" + objType.FullName + "\" attempted to be read with an invalid length.");
-                    }
-                    // Get array type
-                    Type elementType = memberType.GetElementType();
-                    if (elementType.IsEnum)
-                    {
-                        elementType = elementType.GetEnumUnderlyingType();
-                    }
-                    switch (elementType.Name)
-                    {
-                        case "Boolean": value = ReadBooleans(arrayLength, booleanSize, memberStart); break;
-                        case "Byte": value = ReadBytes(arrayLength, memberStart); break;
-                        case "SByte": value = ReadSBytes(arrayLength, memberStart); break;
-                        case "Char": value = ReadChars(arrayLength, encodingType, memberStart); break;
-                        case "Int16": value = ReadInt16s(arrayLength, memberStart); break;
-                        case "UInt16": value = ReadUInt16s(arrayLength, memberStart); break;
-                        case "Int32": value = ReadInt32s(arrayLength, memberStart); break;
-                        case "UInt32": value = ReadUInt32s(arrayLength, memberStart); break;
-                        case "Int64": value = ReadInt64s(arrayLength, memberStart); break;
-                        case "UInt64": value = ReadUInt64s(arrayLength, memberStart); break;
-                        case "Single": value = ReadSingles(arrayLength, memberStart); break;
-                        case "Double": value = ReadDoubles(arrayLength, memberStart); break;
-                        case "Decimal": value = ReadDecimals(arrayLength, memberStart); break;
-                        default:
-                            {
-                                // Create the array
-                                value = Array.CreateInstance(elementType, arrayLength);
-                                // Set position to the start of the array
-                                BaseStream.Position = memberStart;
-                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                        if (arrayLength < 0)
+                        {
+                            throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be read with an invalid length.");
+                        }
+                        // Get array type
+                        Type elementType = memberType.GetElementType();
+                        if (elementType.IsEnum)
+                        {
+                            elementType = elementType.GetEnumUnderlyingType();
+                        }
+                        switch (elementType.Name)
+                        {
+                            case "Boolean": value = ReadBooleans(arrayLength, booleanSize, memberStart); break;
+                            case "Byte": value = ReadBytes(arrayLength, memberStart); break;
+                            case "SByte": value = ReadSBytes(arrayLength, memberStart); break;
+                            case "Char": value = ReadChars(arrayLength, encodingType, memberStart); break;
+                            case "Int16": value = ReadInt16s(arrayLength, memberStart); break;
+                            case "UInt16": value = ReadUInt16s(arrayLength, memberStart); break;
+                            case "Int32": value = ReadInt32s(arrayLength, memberStart); break;
+                            case "UInt32": value = ReadUInt32s(arrayLength, memberStart); break;
+                            case "Int64": value = ReadInt64s(arrayLength, memberStart); break;
+                            case "UInt64": value = ReadUInt64s(arrayLength, memberStart); break;
+                            case "Single": value = ReadSingles(arrayLength, memberStart); break;
+                            case "Double": value = ReadDoubles(arrayLength, memberStart); break;
+                            case "Decimal": value = ReadDecimals(arrayLength, memberStart); break;
+                            default:
                                 {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        var serializable = (IBinarySerializable)elementType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
-                                        serializable.Read(this);
-                                        ((Array)value).SetValue(serializable, i);
-                                    }
-                                }
-                                else if (elementType.Name == "String")
-                                {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        string str;
-                                        if (nullTerminated)
-                                        {
-                                            str = ReadString(encodingType);
-                                        }
-                                        else
-                                        {
-                                            str = ReadString(stringLength, encodingType);
-                                        } ((Array)value).SetValue(str, i);
-                                    }
-                                }
-                                else // Element is not a supported type so try to read the array's objects
-                                {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        object elementObj = ReadObject(elementType);
-                                        ((Array)value).SetValue(elementObj, i);
-                                    }
-                                }
-                                break;
-                            }
-                    }
-                }
-                else
-                {
-                    if (memberType.IsEnum)
-                    {
-                        memberType = memberType.GetEnumUnderlyingType();
-                    }
-                    switch (memberType.Name)
-                    {
-                        case "Boolean": value = ReadBoolean(booleanSize, memberStart); break;
-                        case "Byte": value = ReadByte(memberStart); break;
-                        case "SByte": value = ReadSByte(memberStart); break;
-                        case "Char": value = ReadChar(encodingType, memberStart); break;
-                        case "Int16": value = ReadInt16(memberStart); break;
-                        case "UInt16": value = ReadUInt16(memberStart); break;
-                        case "Int32": value = ReadInt32(memberStart); break;
-                        case "UInt32": value = ReadUInt32(memberStart); break;
-                        case "Int64": value = ReadInt64(memberStart); break;
-                        case "UInt64": value = ReadUInt64(memberStart); break;
-                        case "Single": value = ReadSingle(memberStart); break;
-                        case "Double": value = ReadDouble(memberStart); break;
-                        case "Decimal": value = ReadDecimal(memberStart); break;
-                        case "String":
-                            {
-                                if (nullTerminated)
-                                {
-                                    value = ReadString(encodingType, memberStart);
-                                }
-                                else
-                                {
-                                    value = ReadString(stringLength, encodingType, memberStart);
-                                }
-                                break;
-                            }
-                        default:
-                            {
-                                if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
-                                {
-                                    value = memberType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
+                                    // Create the array
+                                    value = Array.CreateInstance(elementType, arrayLength);
+                                    // Set position to the start of the array
                                     BaseStream.Position = memberStart;
-                                    ((IBinarySerializable)value).Read(this);
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                                    {
+                                        for (int i = 0; i < arrayLength; i++)
+                                        {
+                                            var serializable = (IBinarySerializable)elementType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
+                                            serializable.Read(this);
+                                            ((Array)value).SetValue(serializable, i);
+                                        }
+                                    }
+                                    else if (elementType.Name == "String")
+                                    {
+                                        for (int i = 0; i < arrayLength; i++)
+                                        {
+                                            string str;
+                                            if (nullTerminated)
+                                            {
+                                                str = ReadString(encodingType);
+                                            }
+                                            else
+                                            {
+                                                str = ReadString(stringLength, encodingType);
+                                            }
+                                            ((Array)value).SetValue(str, i);
+                                        }
+                                    }
+                                    else // Element is not a supported type so try to read the array's objects
+                                    {
+                                        for (int i = 0; i < arrayLength; i++)
+                                        {
+                                            object elementObj = ReadObject(elementType);
+                                            ((Array)value).SetValue(elementObj, i);
+                                        }
+                                    }
+                                    break;
                                 }
-                                else // Element is not a supported type so try to read the object
-                                {
-                                    value = ReadObject(memberType, memberStart);
-                                }
-                                break;
-                            }
+                        }
                     }
-                }
+                    else
+                    {
+                        if (memberType.IsEnum)
+                        {
+                            memberType = memberType.GetEnumUnderlyingType();
+                        }
+                        switch (memberType.Name)
+                        {
+                            case "Boolean": value = ReadBoolean(booleanSize, memberStart); break;
+                            case "Byte": value = ReadByte(memberStart); break;
+                            case "SByte": value = ReadSByte(memberStart); break;
+                            case "Char": value = ReadChar(encodingType, memberStart); break;
+                            case "Int16": value = ReadInt16(memberStart); break;
+                            case "UInt16": value = ReadUInt16(memberStart); break;
+                            case "Int32": value = ReadInt32(memberStart); break;
+                            case "UInt32": value = ReadUInt32(memberStart); break;
+                            case "Int64": value = ReadInt64(memberStart); break;
+                            case "UInt64": value = ReadUInt64(memberStart); break;
+                            case "Single": value = ReadSingle(memberStart); break;
+                            case "Double": value = ReadDouble(memberStart); break;
+                            case "Decimal": value = ReadDecimal(memberStart); break;
+                            case "String":
+                                {
+                                    if (nullTerminated)
+                                    {
+                                        value = ReadString(encodingType, memberStart);
+                                    }
+                                    else
+                                    {
+                                        value = ReadString(stringLength, encodingType, memberStart);
+                                    }
+                                    break;
+                                }
+                            default:
+                                {
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(memberType))
+                                    {
+                                        value = memberType.InvokeMember(string.Empty, BindingFlags.CreateInstance, null, null, new object[0]);
+                                        BaseStream.Position = memberStart;
+                                        ((IBinarySerializable)value).Read(this);
+                                    }
+                                    else // Element is not a supported type so try to read the object
+                                    {
+                                        value = ReadObject(memberType, memberStart);
+                                    }
+                                    break;
+                                }
+                        }
+                    }
 
-                // Set the value into the object member
-                if (memberInfo.MemberType == MemberTypes.Property)
-                {
-                    ((PropertyInfo)memberInfo).SetValue(obj, value, null);
-                }
-                else
-                {
-                    ((FieldInfo)memberInfo).SetValue(obj, value);
+                    // Set the value into the object member
+                    if (memberInfo.MemberType == MemberTypes.Property)
+                    {
+                        ((PropertyInfo)memberInfo).SetValue(obj, value, null);
+                    }
+                    else
+                    {
+                        ((FieldInfo)memberInfo).SetValue(obj, value);
+                    }
                 }
             }
         }
