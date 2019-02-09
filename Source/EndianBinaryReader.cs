@@ -8,7 +8,7 @@ namespace Kermalis.EndianBinaryIO
 {
     public class EndianBinaryReader : IDisposable
     {
-        public Stream BaseStream { get; private set; }
+        public Stream BaseStream { get; }
         public Endianness Endianness { get; set; }
         public EncodingType Encoding { get; set; }
         byte[] buffer;
@@ -29,25 +29,17 @@ namespace Kermalis.EndianBinaryIO
             Endianness = endianness;
             Encoding = encoding;
         }
-        ~EndianBinaryReader()
-        {
-            Dispose(false);
-        }
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
-        void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
             {
                 if (disposing)
                 {
-                    if (BaseStream != null)
-                    {
-                        BaseStream.Close();
-                    }
+                    BaseStream.Dispose();
                 }
                 buffer = null;
                 disposed = true;

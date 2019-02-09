@@ -13,7 +13,7 @@ For example, classes and structs in C# cannot have ignored members when marshall
     enum ShortSizedEnum : short
     {
         Val1 = 0x40,
-        Val2 = 0x800,
+        Val2 = 0x800
     }
 
     class MyBasicStruct
