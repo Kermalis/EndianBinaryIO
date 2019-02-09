@@ -8,32 +8,34 @@ namespace Kermalis.EndianBinaryTesting
     {
         public static void Test()
         {
-            var bytes = new byte[40];
-            var writer = new EndianBinaryWriter(new MemoryStream(bytes));
-            writer.WriteObject(new MyLengthyStruct()
-            {
-                NullTerminatedStringArray = new string[]
-                {
-                    "Hi", "Hello", "Hola"
-                },
-
-                SizedStringArray = new string[]
-                {
-                    "Seeya", "Bye", "Adios"
-                },
-
-                VariableLengthField = 2,
-                VariableSizedArray = new ShortSizedEnum[]
-                {
-                    ShortSizedEnum.Val1, ShortSizedEnum.Val2
-                }
-            });
-
             Console.WriteLine("EndianBinaryIO Writer Test - Lengths");
             Console.WriteLine();
 
-            Console.WriteLine("Little endian bytes of a \"MyLengthyStruct\":");
-            TestUtils.PrintBytes(bytes);
+            var bytes = new byte[40];
+            using (var writer = new EndianBinaryWriter(new MemoryStream(bytes)))
+            {
+                writer.WriteObject(new MyLengthyStruct()
+                {
+                    NullTerminatedStringArray = new string[]
+                    {
+                        "Hi", "Hello", "Hola"
+                    },
+
+                    SizedStringArray = new string[]
+                    {
+                        "Seeya", "Bye", "Adios"
+                    },
+
+                    VariableLengthField = 2,
+                    VariableSizedArray = new ShortSizedEnum[]
+                    {
+                        ShortSizedEnum.Val1, ShortSizedEnum.Val2
+                    }
+                });
+
+                Console.WriteLine("Little endian bytes of a \"MyLengthyStruct\":");
+                TestUtils.PrintBytes(bytes);
+            }
 
             Console.ReadKey();
         }

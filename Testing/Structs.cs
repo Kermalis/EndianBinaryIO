@@ -2,23 +2,21 @@
 using System;
 using System.Runtime.InteropServices;
 
-#pragma warning disable CS0649
-
 namespace Kermalis.EndianBinaryTesting
 {
     enum ShortSizedEnum : short
     {
         Val1 = 0x40,
-        Val2 = 0x800,
+        Val2 = 0x800
     }
 
     class MyBasicStruct
     {
-        // Members
+        // Fields
         public ShortSizedEnum Type;
         public short Version;
 
-        // Member that is ignored when reading and writing
+        // Field that is ignored when reading and writing
         [BinaryIgnore(true)]
         public double DoNotReadOrWrite = Math.PI;
 
@@ -79,7 +77,7 @@ namespace Kermalis.EndianBinaryTesting
         public string[] SizedStringArray;
 
         public byte VariableLengthField;
-        [BinaryArrayVariableLength("VariableLengthField")]
+        [BinaryArrayVariableLength(nameof(VariableLengthField))]
         public ShortSizedEnum[] VariableSizedArray;
     }
 }

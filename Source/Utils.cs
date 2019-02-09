@@ -59,15 +59,10 @@ namespace Kermalis.EndianBinaryIO
             char[] strAsChars = str.ToCharArray().Take(length).ToArray();
             Buffer.BlockCopy(strAsChars, 0, toArray, 0, strAsChars.Length * 2);
         }
-        public static T AttributeValueOrDefault<T>(ICustomAttributeProvider obj, Type attributeType, T defaultValue)
+        public static T AttributeValueOrDefault<T>(FieldInfo fieldInfo, Type attributeType, T defaultValue)
         {
-            object[] attributes = obj.GetCustomAttributes(attributeType, true);
-            if (attributes.Length == 0)
-            {
-                return defaultValue;
-            }
-            MemberInfo valueMember = attributeType.GetMember("Value")[0];
-            return (T)((PropertyInfo)valueMember).GetValue(attributes[0]);
+            object[] attributes = fieldInfo.GetCustomAttributes(attributeType, true);
+            return attributes.Length == 0 ? defaultValue : (T)attributeType.GetProperty("Value").GetValue(attributes[0]);
         }
 
         public static void Flip(byte[] buffer, Endianness targetEndianness, int byteCount, int primitiveSize)

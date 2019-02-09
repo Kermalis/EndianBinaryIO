@@ -2,86 +2,92 @@
 
 namespace Kermalis.EndianBinaryIO
 {
-    public abstract class EndianBinaryAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryIgnoreAttribute : Attribute
     {
-        public object Value { get; protected set; }
+        public bool Value { get; }
 
-        // Prevent external inheritance
-        internal virtual void DoNotInheritOutsideOfThisAssembly()
+        public BinaryIgnoreAttribute(bool ignore = true)
         {
-            throw new Exception("Do not inherit EndianBinaryAttribute.");
+            Value = ignore;
         }
     }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryIgnoreAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryBooleanSizeAttribute : Attribute
     {
-        public BinaryIgnoreAttribute(bool ignore = true) => Value = ignore;
+        public BooleanSize Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        public BinaryBooleanSizeAttribute(BooleanSize booleanSize = BooleanSize.U8)
+        {
+            Value = booleanSize;
+        }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryBooleanSizeAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryEncodingAttribute : Attribute
     {
-        public BinaryBooleanSizeAttribute(BooleanSize size = BooleanSize.U8) => Value = size;
+        public EncodingType Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        public BinaryEncodingAttribute(EncodingType encodingType = EncodingType.ASCII)
+        {
+            Value = encodingType;
+        }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryEncodingAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryStringNullTerminatedAttribute : Attribute
     {
-        public BinaryEncodingAttribute(EncodingType type = EncodingType.ASCII) => Value = type;
+        public bool Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        public BinaryStringNullTerminatedAttribute(bool nullTerminated = true)
+        {
+            Value = nullTerminated;
+        }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryStringNullTerminatedAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryArrayFixedLengthAttribute : Attribute
     {
-        public BinaryStringNullTerminatedAttribute(bool nullTerminated = true) => Value = nullTerminated;
+        public int Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryArrayFixedLengthAttribute : EndianBinaryAttribute
-    {
         public BinaryArrayFixedLengthAttribute(int length)
         {
             if (length <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), "BinaryArrayFixedLengthAttribute must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
             Value = length;
         }
-
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryArrayVariableLengthAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryArrayVariableLengthAttribute : Attribute
     {
-        public BinaryArrayVariableLengthAttribute(string anchor) => Value = anchor;
+        public string Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        public BinaryArrayVariableLengthAttribute(string anchor)
+        {
+            Value = anchor;
+        }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryStringFixedLengthAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryStringFixedLengthAttribute : Attribute
     {
+        public int Value { get; }
+
         public BinaryStringFixedLengthAttribute(int length)
         {
             if (length <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), "BinaryStringFixedLengthAttribute must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
             Value = length;
         }
-
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
     }
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public sealed class BinaryStringVariableLengthAttribute : EndianBinaryAttribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class BinaryStringVariableLengthAttribute : Attribute
     {
-        public BinaryStringVariableLengthAttribute(string anchor) => Value = anchor;
+        public string Value { get; }
 
-        internal override void DoNotInheritOutsideOfThisAssembly() { }
+        public BinaryStringVariableLengthAttribute(string anchor)
+        {
+            Value = anchor;
+        }
     }
 }

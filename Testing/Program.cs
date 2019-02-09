@@ -14,7 +14,7 @@
 
         static void Main(string[] args)
         {
-            TestType t = TestType.LengthsWrite;
+            TestType t = TestType.BasicRead;
 
             switch (t)
             {
