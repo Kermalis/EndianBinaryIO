@@ -18,11 +18,11 @@ For example, classes and structs in C# cannot have ignored members when marshall
 
     class MyBasicStruct
     {
-        // Members
+        // Fields
         public ShortSizedEnum Type;
         public short Version;
 
-        // Member that is ignored when reading and writing
+        // Field that is ignored when reading and writing
         [BinaryIgnore(true)]
         public double DoNotReadOrWrite = Math.PI;
 
@@ -81,3 +81,4 @@ For example, classes and structs in C# cannot have ignored members when marshall
 * Something like Marshal.SizeOf()
 * Alignment
 * Documentation
+* Int24
