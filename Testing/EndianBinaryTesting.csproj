@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Configurations>Debug</Configurations>
+    <Configurations>Debug;Release</Configurations>
     <Authors>Kermalis</Authors>
     <Company />
     <PackageId>EndianBinaryTesting</PackageId>

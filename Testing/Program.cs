@@ -9,7 +9,7 @@
             ExplicitRead,
             ExplicitWrite,
             LengthsRead,
-            LengthsWrite,
+            LengthsWrite
         }
 
         static void Main(string[] args)

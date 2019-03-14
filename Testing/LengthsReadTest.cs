@@ -11,7 +11,7 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine("EndianBinaryIO Reader Test - Lengths");
             Console.WriteLine();
 
-            byte[] bytes = new byte[]
+            var bytes = new byte[34]
             {
                 0x48, 0x69, 0x00,
                 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00,
@@ -23,9 +23,10 @@ namespace Kermalis.EndianBinaryTesting
 
                 0x02,
                 0x40, 0x00,
-                0x00, 0x08,
+                0x00, 0x08
             };
-            using (var reader = new EndianBinaryReader(new MemoryStream(bytes)))
+            using (var stream = new MemoryStream(bytes))
+            using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
             {
                 MyLengthyStruct obj = reader.ReadObject<MyLengthyStruct>();
 

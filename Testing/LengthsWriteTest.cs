@@ -11,23 +11,24 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine("EndianBinaryIO Writer Test - Lengths");
             Console.WriteLine();
 
-            var bytes = new byte[40];
-            using (var writer = new EndianBinaryWriter(new MemoryStream(bytes)))
+            var bytes = new byte[34];
+            using (var stream = new MemoryStream(bytes))
+            using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.WriteObject(new MyLengthyStruct()
+                writer.WriteObject(new MyLengthyStruct
                 {
-                    NullTerminatedStringArray = new string[]
+                    NullTerminatedStringArray = new string[3]
                     {
                         "Hi", "Hello", "Hola"
                     },
 
-                    SizedStringArray = new string[]
+                    SizedStringArray = new string[3]
                     {
                         "Seeya", "Bye", "Adios"
                     },
 
                     VariableLengthField = 2,
-                    VariableSizedArray = new ShortSizedEnum[]
+                    VariableSizedArray = new ShortSizedEnum[2]
                     {
                         ShortSizedEnum.Val1, ShortSizedEnum.Val2
                     }

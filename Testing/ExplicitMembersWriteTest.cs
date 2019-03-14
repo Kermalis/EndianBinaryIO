@@ -12,7 +12,8 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine();
 
             var bytes = new byte[4];
-            using (var writer = new EndianBinaryWriter(new MemoryStream(bytes)))
+            using (var stream = new MemoryStream(bytes))
+            using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
                 writer.WriteObject(new MyExplicitStruct
                 {
