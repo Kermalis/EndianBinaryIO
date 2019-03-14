@@ -648,8 +648,8 @@ namespace Kermalis.EndianBinaryIO
                     // Determine the field's start offset
                     long fieldStart = ordered ? objectStart + Utils.AttributeValueOrDefault(fieldInfo, typeof(FieldOffsetAttribute), 0) : BaseStream.Position;
 
-                    object value = null;
                     Type fieldType = fieldInfo.FieldType;
+                    object value = fieldInfo.GetValue(obj);
 
                     if (fieldType.IsArray)
                     {
