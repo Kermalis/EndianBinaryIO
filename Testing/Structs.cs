@@ -45,7 +45,7 @@ namespace Kermalis.EndianBinaryTesting
     class MyExplicitStruct
     {
         [BinaryIgnore(true)]
-        [FieldOffset(4)]
+        [FieldOffset(8)]
         public string IgnoredString = "Everyone ignores me.";
 
         [FieldOffset(0)]
