@@ -44,7 +44,7 @@ namespace Kermalis.EndianBinaryTesting
                     Console.WriteLine("\t\"{0}\"", e);
                 }
                 Console.WriteLine();
-                Console.WriteLine("Variable Length: {0}", obj.VariableLengthField);
+                Console.WriteLine("Variable Length Property: {0}", obj.VariableLengthProperty);
                 Console.WriteLine("Variable Sized Array Length: {0}", obj.VariableSizedArray.Length);
                 Console.WriteLine("Array Elements:");
                 foreach (ShortSizedEnum e in obj.VariableSizedArray)

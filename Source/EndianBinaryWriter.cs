@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -708,7 +707,6 @@ namespace Kermalis.EndianBinaryIO
             {
                 throw new ArgumentNullException(nameof(obj));
             }
-            // Get type
             Type objType = obj.GetType();
             if (typeof(IBinarySerializable).IsAssignableFrom(objType))
             {
@@ -716,49 +714,42 @@ namespace Kermalis.EndianBinaryIO
             }
             else
             {
-                // Get public non-static fields
-                FieldInfo[] fields = objType.GetFields(BindingFlags.Instance | BindingFlags.Public);
-                // Check for a StructLayoutAttribute
-                bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
-                // Store this object's start offset
-                long objectStart = BaseStream.Position;
-
-                foreach (FieldInfo fieldInfo in fields)
+                // Get public non-static properties
+                foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
-                    // Fields with an IgnoreAttribute get skipped
-                    if (Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryIgnoreAttribute), false))
+                    if (Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
                     {
                         continue;
                     }
 
-                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                    EncodingType encodingType = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryEncodingAttribute), Encoding);
-                    bool nullTerminated = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringNullTerminatedAttribute), true);
+                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                    EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                    bool nullTerminated = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), true);
 
-                    int arrayFixedLength = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
-                    int stringFixedLength = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                    string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
+                    int arrayFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
+                    int stringFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), 0);
+                    string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
                     int arrayVariableLength = 0;
                     if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
                     {
-                        FieldInfo anchor = objType.GetField(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                        PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
                         if (anchor == null)
                         {
-                            throw new MissingMemberException($"A field in \"{objType.FullName}\" has an invalid variable array length anchor.");
+                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor.");
                         }
                         else
                         {
                             arrayVariableLength = Convert.ToInt32(anchor.GetValue(obj));
                         }
                     }
-                    string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
+                    string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
                     int stringVariableLength = 0;
                     if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
                     {
-                        FieldInfo anchor = objType.GetField(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                        PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
                         if (anchor == null)
                         {
-                            throw new MissingMemberException($"A field in \"{objType.FullName}\" has an invalid variable string length anchor.");
+                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor.");
                         }
                         else
                         {
@@ -768,51 +759,48 @@ namespace Kermalis.EndianBinaryIO
                     if ((arrayFixedLength > 0 && arrayVariableLength > 0)
                         || (stringFixedLength > 0 && stringVariableLength > 0))
                     {
-                        throw new ArgumentException($"A field in \"{objType.FullName}\" has two length attributes.");
+                        throw new ArgumentException($"A property in \"{objType.FullName}\" has two length attributes.");
                     }
-                    // One will be 0 and the other will be the intended length. If both are 0 and the reader attempts to write an array, it will throw in the next block
+                    // One will be 0 and the other will be the intended length, so it is safe to use Math.Max to get the intended length
                     int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
                     int stringLength = Math.Max(stringFixedLength, stringVariableLength);
                     if (stringLength > 0)
                     {
                         nullTerminated = false;
                     }
-                    // Determine the field's start offset
-                    long fieldStart = ordered ? objectStart + Utils.AttributeValueOrDefault(fieldInfo, typeof(FieldOffsetAttribute), 0) : BaseStream.Position;
 
-                    Type fieldType = fieldInfo.FieldType;
-                    object value = fieldInfo.GetValue(obj);
+                    Type propertyType = propertyInfo.PropertyType;
+                    object value = propertyInfo.GetValue(obj);
 
-                    if (fieldType.IsArray)
+                    if (propertyType.IsArray)
                     {
                         if (arrayLength < 0)
                         {
                             throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be written with an invalid length.");
                         }
                         // Get array type
-                        Type elementType = fieldType.GetElementType();
+                        Type elementType = propertyType.GetElementType();
                         if (elementType.IsEnum)
                         {
                             elementType = elementType.GetEnumUnderlyingType();
                         }
                         switch (elementType.Name)
                         {
-                            case "Boolean": Write((bool[])value, 0, arrayLength, booleanSize, fieldStart); break;
-                            case "Byte": Write((byte[])value, 0, arrayLength, fieldStart); break;
-                            case "SByte": Write((sbyte[])value, 0, arrayLength, fieldStart); break;
-                            case "Char": Write((char[])value, 0, arrayLength, encodingType, fieldStart); break;
-                            case "Int16": Write((short[])value, 0, arrayLength, fieldStart); break;
-                            case "UInt16": Write((ushort[])value, 0, arrayLength, fieldStart); break;
-                            case "Int32": Write((int[])value, 0, arrayLength, fieldStart); break;
-                            case "UInt32": Write((uint[])value, 0, arrayLength, fieldStart); break;
-                            case "Int64": Write((long[])value, 0, arrayLength, fieldStart); break;
-                            case "UInt64": Write((ulong[])value, 0, arrayLength, fieldStart); break;
-                            case "Single": Write((float[])value, 0, arrayLength, fieldStart); break;
-                            case "Double": Write((double[])value, 0, arrayLength, fieldStart); break;
-                            case "Decimal": Write((decimal[])value, 0, arrayLength, fieldStart); break;
-                            default: // IBinarySerializable
+                            case "Boolean": Write((bool[])value, 0, arrayLength, booleanSize); break;
+                            case "Byte": Write((byte[])value, 0, arrayLength); break;
+                            case "SByte": Write((sbyte[])value, 0, arrayLength); break;
+                            case "Char": Write((char[])value, 0, arrayLength, encodingType); break;
+                            case "Int16": Write((short[])value, 0, arrayLength); break;
+                            case "UInt16": Write((ushort[])value, 0, arrayLength); break;
+                            case "Int32": Write((int[])value, 0, arrayLength); break;
+                            case "UInt32": Write((uint[])value, 0, arrayLength); break;
+                            case "Int64": Write((long[])value, 0, arrayLength); break;
+                            case "UInt64": Write((ulong[])value, 0, arrayLength); break;
+                            case "Single": Write((float[])value, 0, arrayLength); break;
+                            case "Double": Write((double[])value, 0, arrayLength); break;
+                            case "Decimal": Write((decimal[])value, 0, arrayLength); break;
+                            default:
                                 {
-                                    BaseStream.Position = fieldStart;
                                     if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                     {
                                         for (int i = 0; i < arrayLength; i++)
@@ -850,48 +838,47 @@ namespace Kermalis.EndianBinaryIO
                     }
                     else
                     {
-                        if (fieldType.IsEnum)
+                        if (propertyType.IsEnum)
                         {
-                            fieldType = fieldType.GetEnumUnderlyingType();
+                            propertyType = propertyType.GetEnumUnderlyingType();
                         }
-                        switch (fieldType.Name)
+                        switch (propertyType.Name)
                         {
-                            case "Boolean": Write((bool)value, booleanSize, fieldStart); break;
-                            case "Byte": Write((byte)value, fieldStart); break;
-                            case "SByte": Write((sbyte)value, fieldStart); break;
-                            case "Char": Write((char)value, encodingType, fieldStart); break;
-                            case "Int16": Write((short)value, fieldStart); break;
-                            case "UInt16": Write((ushort)value, fieldStart); break;
-                            case "Int32": Write((int)value, fieldStart); break;
-                            case "UInt32": Write((uint)value, fieldStart); break;
-                            case "Int64": Write((long)value, fieldStart); break;
-                            case "UInt64": Write((ulong)value, fieldStart); break;
-                            case "Single": Write((float)value, fieldStart); break;
-                            case "Double": Write((double)value, fieldStart); break;
-                            case "Decimal": Write((decimal)value, fieldStart); break;
+                            case "Boolean": Write((bool)value, booleanSize); break;
+                            case "Byte": Write((byte)value); break;
+                            case "SByte": Write((sbyte)value); break;
+                            case "Char": Write((char)value, encodingType); break;
+                            case "Int16": Write((short)value); break;
+                            case "UInt16": Write((ushort)value); break;
+                            case "Int32": Write((int)value); break;
+                            case "UInt32": Write((uint)value); break;
+                            case "Int64": Write((long)value); break;
+                            case "UInt64": Write((ulong)value); break;
+                            case "Single": Write((float)value); break;
+                            case "Double": Write((double)value); break;
+                            case "Decimal": Write((decimal)value); break;
                             case "String":
                                 {
                                     if (nullTerminated)
                                     {
-                                        Write((string)value, true, encodingType, fieldStart);
+                                        Write((string)value, true, encodingType);
                                     }
                                     else
                                     {
                                         TruncateString((string)value, stringLength, out char[] chars);
-                                        Write(chars, encodingType, fieldStart);
+                                        Write(chars, encodingType);
                                     }
                                     break;
                                 }
-                            default: // IBinarySerializable
+                            default:
                                 {
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(fieldType))
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
                                     {
-                                        BaseStream.Position = fieldStart;
                                         ((IBinarySerializable)value).Write(this);
                                     }
-                                    else // Field's type is not supported so try to write the object
+                                    else // property's type is not supported so try to write the object
                                     {
-                                        WriteObject(value, fieldStart);
+                                        WriteObject(value);
                                     }
                                     break;
                                 }

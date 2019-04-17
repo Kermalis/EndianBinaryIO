@@ -48,7 +48,7 @@ namespace Kermalis.EndianBinaryTesting
                 Console.WriteLine("Type: {0}", obj.Type);
                 Console.WriteLine("Version: {0}", obj.Version);
                 Console.WriteLine();
-                Console.WriteLine("Ignored Member: {0}", obj.DoNotReadOrWrite);
+                Console.WriteLine("Ignored Property: {0}", obj.DoNotReadOrWrite);
                 Console.WriteLine();
                 Console.WriteLine("Array Length: {0}", obj.ArrayWith16Elements.Length);
                 Console.WriteLine("Array Elements:");
@@ -57,7 +57,7 @@ namespace Kermalis.EndianBinaryTesting
                     Console.WriteLine("\t{0}", e);
                 }
                 Console.WriteLine();
-                Console.WriteLine("Long Bool: {0}", obj.LongBool);
+                Console.WriteLine("Bool 32: {0}", obj.Bool32);
                 Console.WriteLine();
                 Console.WriteLine("Null-Terminated String: \"{0}\"", obj.NullTerminatedASCIIString);
                 Console.WriteLine();

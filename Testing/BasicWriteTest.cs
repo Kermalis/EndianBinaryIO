@@ -25,14 +25,14 @@ namespace Kermalis.EndianBinaryTesting
                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
                     },
 
-                    LongBool = false,
+                    Bool32 = false,
 
                     NullTerminatedASCIIString = "EndianBinaryIO",
 
                     UTF16String = "Kermalis"
                 });
 
-                Console.WriteLine("Little endian bytes of a \"MyStruct\":");
+                Console.WriteLine("Little endian bytes of a \"{0}\":", nameof(MyBasicStruct));
                 TestUtils.PrintBytes(bytes);
             }
 

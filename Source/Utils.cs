@@ -154,9 +154,9 @@ namespace Kermalis.EndianBinaryIO
             return new decimal(new int[] { i1, i2, i3, i4 });
         }
 
-        public static T AttributeValueOrDefault<T>(FieldInfo fieldInfo, Type attributeType, T defaultValue)
+        public static T AttributeValueOrDefault<T>(PropertyInfo propertyInfo, Type attributeType, T defaultValue)
         {
-            object[] attributes = fieldInfo.GetCustomAttributes(attributeType, true);
+            object[] attributes = propertyInfo.GetCustomAttributes(attributeType, true);
             return attributes.Length == 0 ? defaultValue : (T)attributeType.GetProperty("Value").GetValue(attributes[0]);
         }
 

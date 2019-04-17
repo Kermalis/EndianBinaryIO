@@ -27,14 +27,14 @@ namespace Kermalis.EndianBinaryTesting
                         "Seeya", "Bye", "Adios"
                     },
 
-                    VariableLengthField = 2,
+                    VariableLengthProperty = 2,
                     VariableSizedArray = new ShortSizedEnum[2]
                     {
                         ShortSizedEnum.Val1, ShortSizedEnum.Val2
                     }
                 });
 
-                Console.WriteLine("Little endian bytes of a \"MyLengthyStruct\":");
+                Console.WriteLine("Little endian bytes of a \"{0}\":", nameof(MyLengthyStruct));
                 TestUtils.PrintBytes(bytes);
             }
 

@@ -1,10 +1,10 @@
 # EndianBinaryIO
 
-A C# library that can read and write primitives, enums, arrays, and strings with specified endianness and encoding.
+A C# library that can read and write primitives, enums, arrays, and strings with specified endianness, string encoding, and boolean sizes.
 
 The IBinarySerializable interface allows an object to be read and written in a customizable fashion.
 Also included are attributes that can make reading and writing objects less of a headache.
-For example, classes and structs in C# cannot have ignored members when marshalling, but EndianBinaryIO has a BinaryIgnoreAttribute that will ignore members when reading and writing.
+For example, classes and structs in C# cannot have ignored members when marshalling, but EndianBinaryIO has a BinaryIgnoreAttribute that will ignore properties when reading and writing.
 
 ----
 # Example:
@@ -18,33 +18,33 @@ For example, classes and structs in C# cannot have ignored members when marshall
 
     class MyBasicStruct
     {
-        // Fields
-        public ShortSizedEnum Type;
-        public short Version;
+        // Properties
+        public ShortSizedEnum Type { get; set; }
+        public short Version { get; set; }
 
-        // Field that is ignored when reading and writing
+        // Property that is ignored when reading and writing
         [BinaryIgnore(true)]
-        public double DoNotReadOrWrite = Math.PI;
+        public double DoNotReadOrWrite { get; set; } = Math.PI;
 
         // Arrays work as well
         [BinaryArrayFixedLength(16)]
-        public uint[] ArrayWith16Elements;
+        public uint[] ArrayWith16Elements { get; set; }
 
         // Boolean that occupies 4 bytes instead of one
         [BinaryBooleanSize(BooleanSize.U32)]
-        public bool LongBool;
+        public bool Bool32 { get; set; }
 
         // String encoded in ASCII
         // Reads chars until the stream encounters a '\0'
         // Writing will append a '\0' at the end of the string
         [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringNullTerminated(true)]
-        public string NullTerminatedASCIIString;
+        public string NullTerminatedASCIIString { get; set; }
 
         // String encoded in UTF-16 that will only read/write 10 chars
         [BinaryEncoding(EncodingType.UTF16)]
         [BinaryStringFixedLength(10)]
-        public string UTF16String;
+        public string UTF16String { get; set; }
     }
 ```
 ### Byte Representation (Little Endian):

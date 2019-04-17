@@ -2,7 +2,7 @@
 
 namespace Kermalis.EndianBinaryIO
 {
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryIgnoreAttribute : Attribute
     {
         public bool Value { get; }
@@ -12,7 +12,7 @@ namespace Kermalis.EndianBinaryIO
             Value = ignore;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryBooleanSizeAttribute : Attribute
     {
         public BooleanSize Value { get; }
@@ -22,7 +22,7 @@ namespace Kermalis.EndianBinaryIO
             Value = booleanSize;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryEncodingAttribute : Attribute
     {
         public EncodingType Value { get; }
@@ -32,7 +32,7 @@ namespace Kermalis.EndianBinaryIO
             Value = encodingType;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryStringNullTerminatedAttribute : Attribute
     {
         public bool Value { get; }
@@ -42,7 +42,7 @@ namespace Kermalis.EndianBinaryIO
             Value = nullTerminated;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryArrayFixedLengthAttribute : Attribute
     {
         public int Value { get; }
@@ -56,7 +56,7 @@ namespace Kermalis.EndianBinaryIO
             Value = length;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryArrayVariableLengthAttribute : Attribute
     {
         public string Value { get; }
@@ -66,7 +66,7 @@ namespace Kermalis.EndianBinaryIO
             Value = anchor;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryStringFixedLengthAttribute : Attribute
     {
         public int Value { get; }
@@ -80,7 +80,7 @@ namespace Kermalis.EndianBinaryIO
             Value = length;
         }
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryStringVariableLengthAttribute : Attribute
     {
         public string Value { get; }

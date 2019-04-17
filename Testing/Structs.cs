@@ -1,6 +1,5 @@
 ﻿using Kermalis.EndianBinaryIO;
 using System;
-using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryTesting
 {
@@ -12,56 +11,33 @@ namespace Kermalis.EndianBinaryTesting
 
     class MyBasicStruct
     {
-        // Fields
-        public ShortSizedEnum Type;
-        public short Version;
+        // Properties
+        public ShortSizedEnum Type { get; set; }
+        public short Version { get; set; }
 
-        // Field that is ignored when reading and writing
+        // Property that is ignored when reading and writing
         [BinaryIgnore(true)]
-        public double DoNotReadOrWrite = Math.PI;
+        public double DoNotReadOrWrite { get; set; } = Math.PI;
 
         // Arrays work as well
         [BinaryArrayFixedLength(16)]
-        public uint[] ArrayWith16Elements;
+        public uint[] ArrayWith16Elements { get; set; }
 
         // Boolean that occupies 4 bytes instead of one
         [BinaryBooleanSize(BooleanSize.U32)]
-        public bool LongBool;
+        public bool Bool32 { get; set; }
 
         // String encoded in ASCII
         // Reads chars until the stream encounters a '\0'
         // Writing will append a '\0' at the end of the string
         [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringNullTerminated(true)]
-        public string NullTerminatedASCIIString;
+        public string NullTerminatedASCIIString { get; set; }
 
         // String encoded in UTF-16 that will only read/write 10 chars
         [BinaryEncoding(EncodingType.UTF16)]
         [BinaryStringFixedLength(10)]
-        public string UTF16String;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    class MyExplicitStruct
-    {
-        [BinaryIgnore(true)]
-        [FieldOffset(8)]
-        public string IgnoredString = "Everyone ignores me.";
-
-        [FieldOffset(0)]
-        public int Int1;
-        [FieldOffset(0)]
-        public short Short1;
-        [FieldOffset(2)]
-        public short Short2;
-        [FieldOffset(0)]
-        public byte Byte1;
-        [FieldOffset(1)]
-        public byte Byte2;
-        [FieldOffset(2)]
-        public byte Byte3;
-        [FieldOffset(3)]
-        public byte Byte4;
+        public string UTF16String { get; set; }
     }
 
     class MyLengthyStruct
@@ -69,15 +45,15 @@ namespace Kermalis.EndianBinaryTesting
         [BinaryArrayFixedLength(3)]
         [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringNullTerminated(true)]
-        public string[] NullTerminatedStringArray;
+        public string[] NullTerminatedStringArray { get; set; }
 
         [BinaryArrayFixedLength(3)]
         [BinaryEncoding(EncodingType.ASCII)]
         [BinaryStringFixedLength(5)]
-        public string[] SizedStringArray;
+        public string[] SizedStringArray { get; set; }
 
-        public byte VariableLengthField;
-        [BinaryArrayVariableLength(nameof(VariableLengthField))]
-        public ShortSizedEnum[] VariableSizedArray;
+        public byte VariableLengthProperty { get; set; }
+        [BinaryArrayVariableLength(nameof(VariableLengthProperty))]
+        public ShortSizedEnum[] VariableSizedArray { get; set; }
     }
 }

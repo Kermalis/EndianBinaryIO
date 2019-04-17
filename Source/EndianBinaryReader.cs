@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO
@@ -563,49 +562,41 @@ namespace Kermalis.EndianBinaryIO
             }
             else
             {
-                // Get public non-static fields
-                FieldInfo[] fields = objType.GetFields(BindingFlags.Instance | BindingFlags.Public);
-                // Check for a StructLayoutAttribute
-                bool ordered = objType.StructLayoutAttribute.Value == LayoutKind.Explicit;
-                // Store this object's start offset
-                long objectStart = BaseStream.Position;
-
-                foreach (FieldInfo fieldInfo in fields)
+                foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
-                    // Fields with an IgnoreAttribute get skipped
-                    if (Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryIgnoreAttribute), false))
+                    if (Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
                     {
                         continue;
                     }
 
-                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                    EncodingType encodingType = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryEncodingAttribute), Encoding);
-                    bool nullTerminated = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringNullTerminatedAttribute), true);
+                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                    EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                    bool nullTerminated = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), true);
 
-                    int arrayFixedLength = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
-                    int stringFixedLength = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                    string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
+                    int arrayFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
+                    int stringFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), 0);
+                    string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
                     int arrayVariableLength = 0;
                     if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
                     {
-                        FieldInfo anchor = objType.GetField(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                        PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
                         if (anchor == null)
                         {
-                            throw new MissingMemberException($"A field in \"{objType.FullName}\" has an invalid variable array length anchor.");
+                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor.");
                         }
                         else
                         {
                             arrayVariableLength = Convert.ToInt32(anchor.GetValue(obj));
                         }
                     }
-                    string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(fieldInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
+                    string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
                     int stringVariableLength = 0;
                     if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
                     {
-                        FieldInfo anchor = objType.GetField(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                        PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
                         if (anchor == null)
                         {
-                            throw new MissingMemberException($"A field in \"{objType.FullName}\" has an invalid variable string length anchor.");
+                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor.");
                         }
                         else
                         {
@@ -615,54 +606,50 @@ namespace Kermalis.EndianBinaryIO
                     if ((arrayFixedLength > 0 && arrayVariableLength > 0)
                         || (stringFixedLength > 0 && stringVariableLength > 0))
                     {
-                        throw new ArgumentException($"A field in \"{objType.FullName}\" has two length attributes.");
+                        throw new ArgumentException($"A property in \"{objType.FullName}\" has two length attributes.");
                     }
-                    // One will be 0 and the other will be the intended length. If both are 0 and the reader attempts to read an array, it will throw in the next block
+                    // One will be 0 and the other will be the intended length, so it is safe to use Math.Max to get the intended length
                     int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
                     int stringLength = Math.Max(stringFixedLength, stringVariableLength);
                     if (stringLength > 0)
                     {
                         nullTerminated = false;
                     }
-                    // Determine the field's start offset
-                    long fieldStart = ordered ? objectStart + Utils.AttributeValueOrDefault(fieldInfo, typeof(FieldOffsetAttribute), 0) : BaseStream.Position;
 
-                    Type fieldType = fieldInfo.FieldType;
+                    Type propertyType = propertyInfo.PropertyType;
                     object value;
 
-                    if (fieldType.IsArray)
+                    if (propertyType.IsArray)
                     {
                         if (arrayLength < 0)
                         {
                             throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be read with an invalid length.");
                         }
                         // Get array type
-                        Type elementType = fieldType.GetElementType();
+                        Type elementType = propertyType.GetElementType();
                         if (elementType.IsEnum)
                         {
                             elementType = elementType.GetEnumUnderlyingType();
                         }
                         switch (elementType.Name)
                         {
-                            case "Boolean": value = ReadBooleans(arrayLength, booleanSize, fieldStart); break;
-                            case "Byte": value = ReadBytes(arrayLength, fieldStart); break;
-                            case "SByte": value = ReadSBytes(arrayLength, fieldStart); break;
-                            case "Char": value = ReadChars(arrayLength, encodingType, fieldStart); break;
-                            case "Int16": value = ReadInt16s(arrayLength, fieldStart); break;
-                            case "UInt16": value = ReadUInt16s(arrayLength, fieldStart); break;
-                            case "Int32": value = ReadInt32s(arrayLength, fieldStart); break;
-                            case "UInt32": value = ReadUInt32s(arrayLength, fieldStart); break;
-                            case "Int64": value = ReadInt64s(arrayLength, fieldStart); break;
-                            case "UInt64": value = ReadUInt64s(arrayLength, fieldStart); break;
-                            case "Single": value = ReadSingles(arrayLength, fieldStart); break;
-                            case "Double": value = ReadDoubles(arrayLength, fieldStart); break;
-                            case "Decimal": value = ReadDecimals(arrayLength, fieldStart); break;
+                            case "Boolean": value = ReadBooleans(arrayLength, booleanSize); break;
+                            case "Byte": value = ReadBytes(arrayLength); break;
+                            case "SByte": value = ReadSBytes(arrayLength); break;
+                            case "Char": value = ReadChars(arrayLength, encodingType); break;
+                            case "Int16": value = ReadInt16s(arrayLength); break;
+                            case "UInt16": value = ReadUInt16s(arrayLength); break;
+                            case "Int32": value = ReadInt32s(arrayLength); break;
+                            case "UInt32": value = ReadUInt32s(arrayLength); break;
+                            case "Int64": value = ReadInt64s(arrayLength); break;
+                            case "UInt64": value = ReadUInt64s(arrayLength); break;
+                            case "Single": value = ReadSingles(arrayLength); break;
+                            case "Double": value = ReadDoubles(arrayLength); break;
+                            case "Decimal": value = ReadDecimals(arrayLength); break;
                             default:
                                 {
                                     // Create the array
                                     value = Array.CreateInstance(elementType, arrayLength);
-                                    // Set position to the start of the array
-                                    BaseStream.Position = fieldStart;
                                     if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                     {
                                         for (int i = 0; i < arrayLength; i++)
@@ -702,56 +689,55 @@ namespace Kermalis.EndianBinaryIO
                     }
                     else
                     {
-                        if (fieldType.IsEnum)
+                        if (propertyType.IsEnum)
                         {
-                            fieldType = fieldType.GetEnumUnderlyingType();
+                            propertyType = propertyType.GetEnumUnderlyingType();
                         }
-                        switch (fieldType.Name)
+                        switch (propertyType.Name)
                         {
-                            case "Boolean": value = ReadBoolean(booleanSize, fieldStart); break;
-                            case "Byte": value = ReadByte(fieldStart); break;
-                            case "SByte": value = ReadSByte(fieldStart); break;
-                            case "Char": value = ReadChar(encodingType, fieldStart); break;
-                            case "Int16": value = ReadInt16(fieldStart); break;
-                            case "UInt16": value = ReadUInt16(fieldStart); break;
-                            case "Int32": value = ReadInt32(fieldStart); break;
-                            case "UInt32": value = ReadUInt32(fieldStart); break;
-                            case "Int64": value = ReadInt64(fieldStart); break;
-                            case "UInt64": value = ReadUInt64(fieldStart); break;
-                            case "Single": value = ReadSingle(fieldStart); break;
-                            case "Double": value = ReadDouble(fieldStart); break;
-                            case "Decimal": value = ReadDecimal(fieldStart); break;
+                            case "Boolean": value = ReadBoolean(booleanSize); break;
+                            case "Byte": value = ReadByte(); break;
+                            case "SByte": value = ReadSByte(); break;
+                            case "Char": value = ReadChar(encodingType); break;
+                            case "Int16": value = ReadInt16(); break;
+                            case "UInt16": value = ReadUInt16(); break;
+                            case "Int32": value = ReadInt32(); break;
+                            case "UInt32": value = ReadUInt32(); break;
+                            case "Int64": value = ReadInt64(); break;
+                            case "UInt64": value = ReadUInt64(); break;
+                            case "Single": value = ReadSingle(); break;
+                            case "Double": value = ReadDouble(); break;
+                            case "Decimal": value = ReadDecimal(); break;
                             case "String":
                                 {
                                     if (nullTerminated)
                                     {
-                                        value = ReadStringNullTerminated(encodingType, fieldStart);
+                                        value = ReadStringNullTerminated(encodingType);
                                     }
                                     else
                                     {
-                                        value = ReadString(stringLength, encodingType, fieldStart);
+                                        value = ReadString(stringLength, encodingType);
                                     }
                                     break;
                                 }
                             default:
                                 {
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(fieldType))
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
                                     {
-                                        value = Activator.CreateInstance(fieldType);
-                                        BaseStream.Position = fieldStart;
+                                        value = Activator.CreateInstance(propertyType);
                                         ((IBinarySerializable)value).Read(this);
                                     }
-                                    else // The field's type is not supported so try to read the object
+                                    else // The property's type is not supported so try to read the object
                                     {
-                                        value = ReadObject(fieldType, fieldStart);
+                                        value = ReadObject(propertyType);
                                     }
                                     break;
                                 }
                         }
                     }
 
-                    // Set the value into the field
-                    fieldInfo.SetValue(obj, value);
+                    // Set the value into the property
+                    propertyInfo.SetValue(obj, value);
                 }
             }
         }
