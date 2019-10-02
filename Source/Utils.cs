@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Kermalis.EndianBinaryIO
 {
-    class Utils
+    internal sealed class Utils
     {
-        public static Endianness SystemEndianness => BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
+        public static Endianness SystemEndianness { get; } = BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
 
         public static Encoding EncodingFromEnum(EncodingType encodingType)
         {

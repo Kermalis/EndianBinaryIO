@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Kermalis.EndianBinaryTesting
 {
-    class BasicReaderTest
+    internal sealed class BasicReaderTest
     {
         public static void Test()
         {
@@ -12,7 +12,7 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine("EndianBinaryIO Reader Test - Basic");
             Console.WriteLine();
 
-            var bytes = new byte[107]
+            byte[] bytes = new byte[107]
             {
                 0x00, 0x08,
                 0xFF, 0x01,

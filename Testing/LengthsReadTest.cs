@@ -4,14 +4,14 @@ using System.IO;
 
 namespace Kermalis.EndianBinaryTesting
 {
-    class LengthsReadTest
+    internal sealed class LengthsReadTest
     {
         public static void Test()
         {
             Console.WriteLine("EndianBinaryIO Reader Test - Lengths");
             Console.WriteLine();
 
-            var bytes = new byte[34]
+            byte[] bytes = new byte[34]
             {
                 0x48, 0x69, 0x00,
                 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00,

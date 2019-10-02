@@ -2,7 +2,7 @@
 {
     public interface IBinarySerializable
     {
-        void Read(EndianBinaryReader er);
-        void Write(EndianBinaryWriter ew);
+        void Read(EndianBinaryReader r);
+        void Write(EndianBinaryWriter w);
     }
 }

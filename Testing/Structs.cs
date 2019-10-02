@@ -3,13 +3,13 @@ using System;
 
 namespace Kermalis.EndianBinaryTesting
 {
-    enum ShortSizedEnum : short
+    internal enum ShortSizedEnum : short
     {
         Val1 = 0x40,
         Val2 = 0x800
     }
 
-    class MyBasicStruct
+    internal sealed class MyBasicStruct
     {
         // Properties
         public ShortSizedEnum Type { get; set; }
@@ -40,7 +40,7 @@ namespace Kermalis.EndianBinaryTesting
         public string UTF16String { get; set; }
     }
 
-    class MyLengthyStruct
+    internal sealed class MyLengthyStruct
     {
         [BinaryArrayFixedLength(3)]
         [BinaryEncoding(EncodingType.ASCII)]

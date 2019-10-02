@@ -11,9 +11,9 @@ namespace Kermalis.EndianBinaryIO
         public Endianness Endianness { get; set; }
         public EncodingType Encoding { get; set; }
         public BooleanSize BooleanSize { get; set; }
-        byte[] buffer;
 
-        bool disposed;
+        private byte[] _buffer;
+        private bool _isDisposed;
 
         public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII, BooleanSize booleanSize = BooleanSize.U8)
         {
@@ -32,33 +32,26 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Dispose()
         {
-            Dispose(true);
-        }
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
+            if (!_isDisposed)
             {
-                if (disposing)
-                {
-                    BaseStream.Dispose();
-                }
-                buffer = null;
-                disposed = true;
+                BaseStream.Dispose();
+                _buffer = null;
+                _isDisposed = true;
             }
         }
 
-        void ReadBytesIntoBuffer(int primitiveCount, int primitiveSize)
+        private void ReadBytesIntoBuffer(int primitiveCount, int primitiveSize)
         {
             int byteCount = primitiveCount * primitiveSize;
-            if (buffer == null || buffer.Length < byteCount)
+            if (_buffer == null || _buffer.Length < byteCount)
             {
-                buffer = new byte[byteCount];
+                _buffer = new byte[byteCount];
             }
-            if (BaseStream.Read(buffer, 0, byteCount) != byteCount)
+            if (BaseStream.Read(_buffer, 0, byteCount) != byteCount)
             {
                 throw new EndOfStreamException();
             }
-            Utils.FlipPrimitives(buffer, Endianness, byteCount, primitiveSize);
+            Utils.FlipPrimitives(_buffer, Endianness, byteCount, primitiveSize);
         }
 
         public byte PeekByte()
@@ -124,20 +117,20 @@ namespace Kermalis.EndianBinaryIO
             switch (booleanSize)
             {
                 case BooleanSize.U8:
-                    {
-                        ReadBytesIntoBuffer(1, 1);
-                        return buffer[0] != 0;
-                    }
+                {
+                    ReadBytesIntoBuffer(1, 1);
+                    return _buffer[0] != 0;
+                }
                 case BooleanSize.U16:
-                    {
-                        ReadBytesIntoBuffer(1, 2);
-                        return Utils.BytesToInt16(buffer, 0) != 0;
-                    }
+                {
+                    ReadBytesIntoBuffer(1, 2);
+                    return Utils.BytesToInt16(_buffer, 0) != 0;
+                }
                 case BooleanSize.U32:
-                    {
-                        ReadBytesIntoBuffer(1, 4);
-                        return Utils.BytesToInt32(buffer, 0) != 0;
-                    }
+                {
+                    ReadBytesIntoBuffer(1, 4);
+                    return Utils.BytesToInt32(_buffer, 0) != 0;
+                }
                 default: throw new ArgumentOutOfRangeException(nameof(booleanSize));
             }
         }
@@ -157,7 +150,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public bool[] ReadBooleans(int count, BooleanSize size)
         {
-            var array = new bool[count];
+            bool[] array = new bool[count];
             for (int i = 0; i < count; i++)
             {
                 array[i] = ReadBoolean(size);
@@ -172,7 +165,7 @@ namespace Kermalis.EndianBinaryIO
         public byte ReadByte()
         {
             ReadBytesIntoBuffer(1, 1);
-            return buffer[0];
+            return _buffer[0];
         }
         public byte ReadByte(long offset)
         {
@@ -182,10 +175,10 @@ namespace Kermalis.EndianBinaryIO
         public byte[] ReadBytes(int count)
         {
             ReadBytesIntoBuffer(count, 1);
-            var array = new byte[count];
+            byte[] array = new byte[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = buffer[i];
+                array[i] = _buffer[i];
             }
             return array;
         }
@@ -197,7 +190,7 @@ namespace Kermalis.EndianBinaryIO
         public sbyte ReadSByte()
         {
             ReadBytesIntoBuffer(1, 1);
-            return (sbyte)buffer[0];
+            return (sbyte)_buffer[0];
         }
         public sbyte ReadSByte(long offset)
         {
@@ -207,10 +200,10 @@ namespace Kermalis.EndianBinaryIO
         public sbyte[] ReadSBytes(int count)
         {
             ReadBytesIntoBuffer(count, 1);
-            var array = new sbyte[count];
+            sbyte[] array = new sbyte[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = (sbyte)buffer[i];
+                array[i] = (sbyte)_buffer[i];
             }
             return array;
         }
@@ -233,7 +226,7 @@ namespace Kermalis.EndianBinaryIO
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
             ReadBytesIntoBuffer(1, encodingSize);
-            return encoding.GetChars(buffer, 0, encodingSize)[0];
+            return encoding.GetChars(_buffer, 0, encodingSize)[0];
         }
         public char ReadChar(EncodingType encodingType, long offset)
         {
@@ -254,7 +247,7 @@ namespace Kermalis.EndianBinaryIO
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
             ReadBytesIntoBuffer(count, encodingSize);
-            return encoding.GetChars(buffer, 0, encodingSize * count);
+            return encoding.GetChars(_buffer, 0, encodingSize * count);
         }
         public char[] ReadChars(int count, EncodingType encodingType, long offset)
         {
@@ -306,7 +299,7 @@ namespace Kermalis.EndianBinaryIO
         public short ReadInt16()
         {
             ReadBytesIntoBuffer(1, 2);
-            return Utils.BytesToInt16(buffer, 0);
+            return Utils.BytesToInt16(_buffer, 0);
         }
         public short ReadInt16(long offset)
         {
@@ -316,10 +309,10 @@ namespace Kermalis.EndianBinaryIO
         public short[] ReadInt16s(int count)
         {
             ReadBytesIntoBuffer(count, 2);
-            var array = new short[count];
+            short[] array = new short[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToInt16(buffer, 2 * i);
+                array[i] = Utils.BytesToInt16(_buffer, 2 * i);
             }
             return array;
         }
@@ -331,7 +324,7 @@ namespace Kermalis.EndianBinaryIO
         public ushort ReadUInt16()
         {
             ReadBytesIntoBuffer(1, 2);
-            return (ushort)Utils.BytesToInt16(buffer, 0);
+            return (ushort)Utils.BytesToInt16(_buffer, 0);
         }
         public ushort ReadUInt16(long offset)
         {
@@ -341,10 +334,10 @@ namespace Kermalis.EndianBinaryIO
         public ushort[] ReadUInt16s(int count)
         {
             ReadBytesIntoBuffer(count, 2);
-            var array = new ushort[count];
+            ushort[] array = new ushort[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = (ushort)Utils.BytesToInt16(buffer, 2 * i);
+                array[i] = (ushort)Utils.BytesToInt16(_buffer, 2 * i);
             }
             return array;
         }
@@ -356,7 +349,7 @@ namespace Kermalis.EndianBinaryIO
         public int ReadInt32()
         {
             ReadBytesIntoBuffer(1, 4);
-            return Utils.BytesToInt32(buffer, 0);
+            return Utils.BytesToInt32(_buffer, 0);
         }
         public int ReadInt32(long offset)
         {
@@ -366,10 +359,10 @@ namespace Kermalis.EndianBinaryIO
         public int[] ReadInt32s(int count)
         {
             ReadBytesIntoBuffer(count, 4);
-            var array = new int[count];
+            int[] array = new int[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToInt32(buffer, 4 * i);
+                array[i] = Utils.BytesToInt32(_buffer, 4 * i);
             }
             return array;
         }
@@ -381,7 +374,7 @@ namespace Kermalis.EndianBinaryIO
         public uint ReadUInt32()
         {
             ReadBytesIntoBuffer(1, 4);
-            return (uint)Utils.BytesToInt32(buffer, 0);
+            return (uint)Utils.BytesToInt32(_buffer, 0);
         }
         public uint ReadUInt32(long offset)
         {
@@ -391,10 +384,10 @@ namespace Kermalis.EndianBinaryIO
         public uint[] ReadUInt32s(int count)
         {
             ReadBytesIntoBuffer(count, 4);
-            var array = new uint[count];
+            uint[] array = new uint[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = (uint)Utils.BytesToInt32(buffer, 4 * i);
+                array[i] = (uint)Utils.BytesToInt32(_buffer, 4 * i);
             }
             return array;
         }
@@ -406,7 +399,7 @@ namespace Kermalis.EndianBinaryIO
         public long ReadInt64()
         {
             ReadBytesIntoBuffer(1, 8);
-            return Utils.BytesToInt64(buffer, 0);
+            return Utils.BytesToInt64(_buffer, 0);
         }
         public long ReadInt64(long offset)
         {
@@ -416,10 +409,10 @@ namespace Kermalis.EndianBinaryIO
         public long[] ReadInt64s(int count)
         {
             ReadBytesIntoBuffer(count, 8);
-            var array = new long[count];
+            long[] array = new long[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToInt64(buffer, 8 * i);
+                array[i] = Utils.BytesToInt64(_buffer, 8 * i);
             }
             return array;
         }
@@ -431,7 +424,7 @@ namespace Kermalis.EndianBinaryIO
         public ulong ReadUInt64()
         {
             ReadBytesIntoBuffer(1, 8);
-            return (ulong)Utils.BytesToInt64(buffer, 0);
+            return (ulong)Utils.BytesToInt64(_buffer, 0);
         }
         public ulong ReadUInt64(long offset)
         {
@@ -441,10 +434,10 @@ namespace Kermalis.EndianBinaryIO
         public ulong[] ReadUInt64s(int count)
         {
             ReadBytesIntoBuffer(count, 8);
-            var array = new ulong[count];
+            ulong[] array = new ulong[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = (ulong)Utils.BytesToInt64(buffer, 8 * i);
+                array[i] = (ulong)Utils.BytesToInt64(_buffer, 8 * i);
             }
             return array;
         }
@@ -456,7 +449,7 @@ namespace Kermalis.EndianBinaryIO
         public float ReadSingle()
         {
             ReadBytesIntoBuffer(1, 4);
-            return Utils.BytesToSingle(buffer, 0);
+            return Utils.BytesToSingle(_buffer, 0);
         }
         public float ReadSingle(long offset)
         {
@@ -466,10 +459,10 @@ namespace Kermalis.EndianBinaryIO
         public float[] ReadSingles(int count)
         {
             ReadBytesIntoBuffer(count, 4);
-            var array = new float[count];
+            float[] array = new float[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToSingle(buffer, 4 * i);
+                array[i] = Utils.BytesToSingle(_buffer, 4 * i);
             }
             return array;
         }
@@ -481,7 +474,7 @@ namespace Kermalis.EndianBinaryIO
         public double ReadDouble()
         {
             ReadBytesIntoBuffer(1, 8);
-            return Utils.BytesToDouble(buffer, 0);
+            return Utils.BytesToDouble(_buffer, 0);
         }
         public double ReadDouble(long offset)
         {
@@ -491,10 +484,10 @@ namespace Kermalis.EndianBinaryIO
         public double[] ReadDoubles(int count)
         {
             ReadBytesIntoBuffer(count, 8);
-            var array = new double[count];
+            double[] array = new double[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToDouble(buffer, 8 * i);
+                array[i] = Utils.BytesToDouble(_buffer, 8 * i);
             }
             return array;
         }
@@ -506,7 +499,7 @@ namespace Kermalis.EndianBinaryIO
         public decimal ReadDecimal()
         {
             ReadBytesIntoBuffer(1, 16);
-            return Utils.BytesToDecimal(buffer, 0);
+            return Utils.BytesToDecimal(_buffer, 0);
         }
         public decimal ReadDecimal(long offset)
         {
@@ -516,10 +509,10 @@ namespace Kermalis.EndianBinaryIO
         public decimal[] ReadDecimals(int count)
         {
             ReadBytesIntoBuffer(count, 16);
-            var array = new decimal[count];
+            decimal[] array = new decimal[count];
             for (int i = 0; i < count; i++)
             {
-                array[i] = Utils.BytesToDecimal(buffer, 16 * i);
+                array[i] = Utils.BytesToDecimal(_buffer, 16 * i);
             }
             return array;
         }
@@ -647,44 +640,44 @@ namespace Kermalis.EndianBinaryIO
                             case "Double": value = ReadDoubles(arrayLength); break;
                             case "Decimal": value = ReadDecimals(arrayLength); break;
                             default:
+                            {
+                                // Create the array
+                                value = Array.CreateInstance(elementType, arrayLength);
+                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                 {
-                                    // Create the array
-                                    value = Array.CreateInstance(elementType, arrayLength);
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                                    for (int i = 0; i < arrayLength; i++)
                                     {
-                                        for (int i = 0; i < arrayLength; i++)
-                                        {
-                                            var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
-                                            serializable.Read(this);
-                                            ((Array)value).SetValue(serializable, i);
-                                        }
+                                        var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
+                                        serializable.Read(this);
+                                        ((Array)value).SetValue(serializable, i);
                                     }
-                                    else if (elementType.Name == "String")
-                                    {
-                                        for (int i = 0; i < arrayLength; i++)
-                                        {
-                                            string str;
-                                            if (nullTerminated)
-                                            {
-                                                str = ReadStringNullTerminated(encodingType);
-                                            }
-                                            else
-                                            {
-                                                str = ReadString(stringLength, encodingType);
-                                            }
-                                            ((Array)value).SetValue(str, i);
-                                        }
-                                    }
-                                    else // Element's type is not supported so try to read the array's objects
-                                    {
-                                        for (int i = 0; i < arrayLength; i++)
-                                        {
-                                            object elementObj = ReadObject(elementType);
-                                            ((Array)value).SetValue(elementObj, i);
-                                        }
-                                    }
-                                    break;
                                 }
+                                else if (elementType.Name == "String")
+                                {
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        string str;
+                                        if (nullTerminated)
+                                        {
+                                            str = ReadStringNullTerminated(encodingType);
+                                        }
+                                        else
+                                        {
+                                            str = ReadString(stringLength, encodingType);
+                                        }
+                                        ((Array)value).SetValue(str, i);
+                                    }
+                                }
+                                else // Element's type is not supported so try to read the array's objects
+                                {
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        object elementObj = ReadObject(elementType);
+                                        ((Array)value).SetValue(elementObj, i);
+                                    }
+                                }
+                                break;
+                            }
                         }
                     }
                     else
@@ -709,30 +702,30 @@ namespace Kermalis.EndianBinaryIO
                             case "Double": value = ReadDouble(); break;
                             case "Decimal": value = ReadDecimal(); break;
                             case "String":
+                            {
+                                if (nullTerminated)
                                 {
-                                    if (nullTerminated)
-                                    {
-                                        value = ReadStringNullTerminated(encodingType);
-                                    }
-                                    else
-                                    {
-                                        value = ReadString(stringLength, encodingType);
-                                    }
-                                    break;
+                                    value = ReadStringNullTerminated(encodingType);
                                 }
+                                else
+                                {
+                                    value = ReadString(stringLength, encodingType);
+                                }
+                                break;
+                            }
                             default:
+                            {
+                                if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
                                 {
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
-                                    {
-                                        value = Activator.CreateInstance(propertyType);
-                                        ((IBinarySerializable)value).Read(this);
-                                    }
-                                    else // The property's type is not supported so try to read the object
-                                    {
-                                        value = ReadObject(propertyType);
-                                    }
-                                    break;
+                                    value = Activator.CreateInstance(propertyType);
+                                    ((IBinarySerializable)value).Read(this);
                                 }
+                                else // The property's type is not supported so try to read the object
+                                {
+                                    value = ReadObject(propertyType);
+                                }
+                                break;
+                            }
                         }
                     }
 

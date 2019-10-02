@@ -1,6 +1,6 @@
 ﻿namespace Kermalis.EndianBinaryTesting
 {
-    class Program
+    internal sealed class Program
     {
         private enum TestType
         {
@@ -10,7 +10,7 @@
             LengthsWrite
         }
 
-        static void Main(string[] args)
+        private static void Main()
         {
             TestType t = TestType.BasicRead;
 

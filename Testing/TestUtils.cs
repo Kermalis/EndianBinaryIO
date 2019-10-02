@@ -2,7 +2,7 @@
 
 namespace Kermalis.EndianBinaryTesting
 {
-    class TestUtils
+    internal sealed class TestUtils
     {
         public static void PrintBytes(byte[] bytes, int perRow = 8)
         {

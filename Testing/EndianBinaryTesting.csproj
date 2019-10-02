@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Configurations>Debug;Release</Configurations>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Kermalis.EndianBinaryTesting</RootNamespace>
     <Authors>Kermalis</Authors>
-    <Company />
+    <Copyright>Kermalis</Copyright>
     <PackageId>EndianBinaryTesting</PackageId>
     <Product>EndianBinaryTesting</Product>
     <AssemblyName>EndianBinaryTesting</AssemblyName>
-    <RootNamespace>Kermalis.EndianBinaryTesting</RootNamespace>
     <Version>1.0.0.0</Version>
-    <OutputType>Exe</OutputType>
+    <RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
+    <NoWarn />
+    <StartupObject>Kermalis.EndianBinaryTesting.Program</StartupObject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

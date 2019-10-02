@@ -4,14 +4,14 @@ using System.IO;
 
 namespace Kermalis.EndianBinaryTesting
 {
-    class BasicWriterTest
+    internal sealed class BasicWriterTest
     {
         public static void Test()
         {
             Console.WriteLine("EndianBinaryIO Writer Test - Basic");
             Console.WriteLine();
 
-            var bytes = new byte[107];
+            byte[] bytes = new byte[107];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
