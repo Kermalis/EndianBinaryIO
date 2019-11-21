@@ -11,14 +11,16 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine("EndianBinaryIO Writer Test - Basic");
             Console.WriteLine();
 
-            byte[] bytes = new byte[107];
+            byte[] bytes = new byte[108];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.WriteObject(new MyBasicStruct
+                var obj = new MyBasicStruct
                 {
                     Type = ShortSizedEnum.Val2,
                     Version = 511,
+
+                    DoNotReadOrWrite = ByteSizedEnum.Val1,
 
                     ArrayWith16Elements = new uint[16]
                     {
@@ -30,7 +32,9 @@ namespace Kermalis.EndianBinaryTesting
                     NullTerminatedASCIIString = "EndianBinaryIO",
 
                     UTF16String = "Kermalis"
-                });
+                };
+                writer.Write(obj);
+                writer.Write(obj.DoNotReadOrWrite);
 
                 Console.WriteLine("Little endian bytes of a \"{0}\":", nameof(MyBasicStruct));
                 TestUtils.PrintBytes(bytes);

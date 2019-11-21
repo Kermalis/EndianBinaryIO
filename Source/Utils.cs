@@ -179,5 +179,13 @@ namespace Kermalis.EndianBinaryIO
                 }
             }
         }
+
+        public static void ThrowIfCannotReadWriteType(Type type)
+        {
+            if (type.IsArray || type.IsEnum || type.IsInterface || type.IsPointer || type.IsPrimitive)
+            {
+                throw new ArgumentException(nameof(type), $"Cannot read/write \"{type.FullName}\" objects.");
+            }
+        }
     }
 }

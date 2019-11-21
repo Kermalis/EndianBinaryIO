@@ -15,7 +15,7 @@ namespace Kermalis.EndianBinaryTesting
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.WriteObject(new MyLengthyStruct
+                writer.Write(new MyLengthyStruct
                 {
                     NullTerminatedStringArray = new string[3]
                     {

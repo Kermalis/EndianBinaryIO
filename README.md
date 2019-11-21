@@ -78,7 +78,4 @@ For example, classes and structs in C# cannot have ignored members when marshall
 
 ----
 # To Do:
-* Something like Marshal.SizeOf()
-* Alignment
 * Documentation
-* Int24

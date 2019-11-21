@@ -1,8 +1,12 @@
 ﻿using Kermalis.EndianBinaryIO;
-using System;
 
 namespace Kermalis.EndianBinaryTesting
 {
+    internal enum ByteSizedEnum : byte
+    {
+        Val1 = 0x20,
+        Val2 = 0x80
+    }
     internal enum ShortSizedEnum : short
     {
         Val1 = 0x40,
@@ -17,7 +21,7 @@ namespace Kermalis.EndianBinaryTesting
 
         // Property that is ignored when reading and writing
         [BinaryIgnore(true)]
-        public double DoNotReadOrWrite { get; set; } = Math.PI;
+        public ByteSizedEnum DoNotReadOrWrite { get; set; }
 
         // Arrays work as well
         [BinaryArrayFixedLength(16)]

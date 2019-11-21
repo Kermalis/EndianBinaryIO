@@ -12,7 +12,7 @@ namespace Kermalis.EndianBinaryTesting
             Console.WriteLine("EndianBinaryIO Reader Test - Basic");
             Console.WriteLine();
 
-            byte[] bytes = new byte[107]
+            byte[] bytes = new byte[108]
             {
                 0x00, 0x08,
                 0xFF, 0x01,
@@ -38,12 +38,15 @@ namespace Kermalis.EndianBinaryTesting
 
                 0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00,
 
-                0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00
+                0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+                0x20
             };
             using (var stream = new MemoryStream(bytes))
             using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
             {
                 MyBasicStruct obj = reader.ReadObject<MyBasicStruct>();
+                obj.DoNotReadOrWrite = reader.ReadEnum<ByteSizedEnum>();
 
                 Console.WriteLine("Type: {0}", obj.Type);
                 Console.WriteLine("Version: {0}", obj.Version);

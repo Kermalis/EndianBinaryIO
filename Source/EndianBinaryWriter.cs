@@ -696,13 +696,57 @@ namespace Kermalis.EndianBinaryIO
             Write(value, index, count);
         }
 
-        public void WriteObject(object obj)
+        public void Write<TEnum>(TEnum value) where TEnum : Enum
+        {
+            Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
+            switch (underlyingType.FullName)
+            {
+                case "System.Byte": Write(Convert.ToByte(value)); break;
+                case "System.SByte": Write(Convert.ToSByte(value)); break;
+                case "System.Int16": Write(Convert.ToInt16(value)); break;
+                case "System.UInt16": Write(Convert.ToUInt16(value)); break;
+                case "System.Int32": Write(Convert.ToInt32(value)); break;
+                case "System.UInt32": Write(Convert.ToUInt32(value)); break;
+                case "System.Int64": Write(Convert.ToInt64(value)); break;
+                case "System.UInt64": Write(Convert.ToUInt64(value)); break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+        public void Write<TEnum>(TEnum value, long offset) where TEnum : Enum
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write<TEnum>(TEnum[] value) where TEnum : Enum
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write<TEnum>(TEnum[] value, long offset) where TEnum : Enum
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
+        public void Write<TEnum>(TEnum[] value, int index, int count) where TEnum : Enum
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Write(value[i + index]);
+            }
+        }
+        public void Write<TEnum>(TEnum[] value, int index, int count, long offset) where TEnum : Enum
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
+        }
+
+        public void Write(object obj)
         {
             if (obj == null)
             {
                 throw new ArgumentNullException(nameof(obj));
             }
             Type objType = obj.GetType();
+            Utils.ThrowIfCannotReadWriteType(objType);
             if (typeof(IBinarySerializable).IsAssignableFrom(objType))
             {
                 ((IBinarySerializable)obj).Write(this);
@@ -712,99 +756,86 @@ namespace Kermalis.EndianBinaryIO
                 // Get public non-static properties
                 foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
-                    if (Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
+                    if (!Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
                     {
-                        continue;
-                    }
+                        BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                        EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                        bool nullTerminated = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), true);
 
-                    BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                    EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                    bool nullTerminated = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), true);
-
-                    int arrayFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
-                    int stringFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                    string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
-                    int arrayVariableLength = 0;
-                    if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
-                    {
-                        PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                        if (anchor == null)
+                        int arrayFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
+                        int stringFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), 0);
+                        string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
+                        int arrayVariableLength = 0;
+                        if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
                         {
-                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor.");
-                        }
-                        else
-                        {
-                            arrayVariableLength = Convert.ToInt32(anchor.GetValue(obj));
-                        }
-                    }
-                    string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
-                    int stringVariableLength = 0;
-                    if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
-                    {
-                        PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                        if (anchor == null)
-                        {
-                            throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor.");
-                        }
-                        else
-                        {
-                            stringVariableLength = Convert.ToInt32(anchor.GetValue(obj));
-                        }
-                    }
-                    if ((arrayFixedLength > 0 && arrayVariableLength > 0)
-                        || (stringFixedLength > 0 && stringVariableLength > 0))
-                    {
-                        throw new ArgumentException($"A property in \"{objType.FullName}\" has two length attributes.");
-                    }
-                    // One will be 0 and the other will be the intended length, so it is safe to use Math.Max to get the intended length
-                    int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
-                    int stringLength = Math.Max(stringFixedLength, stringVariableLength);
-                    if (stringLength > 0)
-                    {
-                        nullTerminated = false;
-                    }
-
-                    Type propertyType = propertyInfo.PropertyType;
-                    object value = propertyInfo.GetValue(obj);
-
-                    if (propertyType.IsArray)
-                    {
-                        if (arrayLength < 0)
-                        {
-                            throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be written with an invalid length.");
-                        }
-                        // Get array type
-                        Type elementType = propertyType.GetElementType();
-                        if (elementType.IsEnum)
-                        {
-                            elementType = elementType.GetEnumUnderlyingType();
-                        }
-                        switch (elementType.Name)
-                        {
-                            case "Boolean": Write((bool[])value, 0, arrayLength, booleanSize); break;
-                            case "Byte": Write((byte[])value, 0, arrayLength); break;
-                            case "SByte": Write((sbyte[])value, 0, arrayLength); break;
-                            case "Char": Write((char[])value, 0, arrayLength, encodingType); break;
-                            case "Int16": Write((short[])value, 0, arrayLength); break;
-                            case "UInt16": Write((ushort[])value, 0, arrayLength); break;
-                            case "Int32": Write((int[])value, 0, arrayLength); break;
-                            case "UInt32": Write((uint[])value, 0, arrayLength); break;
-                            case "Int64": Write((long[])value, 0, arrayLength); break;
-                            case "UInt64": Write((ulong[])value, 0, arrayLength); break;
-                            case "Single": Write((float[])value, 0, arrayLength); break;
-                            case "Double": Write((double[])value, 0, arrayLength); break;
-                            case "Decimal": Write((decimal[])value, 0, arrayLength); break;
-                            default:
+                            PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                            if (anchor == null)
                             {
-                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
-                                {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        var serializable = (IBinarySerializable)((Array)value).GetValue(i);
-                                        serializable.Write(this);
-                                    }
-                                }
-                                else if (elementType.Name == "String")
+                                throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor ({arrayVariableLengthAnchor}).");
+                            }
+                            else
+                            {
+                                arrayVariableLength = Convert.ToInt32(anchor.GetValue(obj));
+                            }
+                        }
+                        string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
+                        int stringVariableLength = 0;
+                        if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
+                        {
+                            PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
+                            if (anchor == null)
+                            {
+                                throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor ({stringVariableLengthAnchor}).");
+                            }
+                            else
+                            {
+                                stringVariableLength = Convert.ToInt32(anchor.GetValue(obj));
+                            }
+                        }
+                        if ((arrayFixedLength > 0 && arrayVariableLength > 0)
+                            || (stringFixedLength > 0 && stringVariableLength > 0))
+                        {
+                            throw new ArgumentException($"A property in \"{objType.FullName}\" has two length attributes.");
+                        }
+                        // One will be 0 and the other will be the intended length, so it is safe to use Math.Max to get the intended length
+                        int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
+                        int stringLength = Math.Max(stringFixedLength, stringVariableLength);
+                        if (stringLength > 0)
+                        {
+                            nullTerminated = false;
+                        }
+
+                        Type propertyType = propertyInfo.PropertyType;
+                        object value = propertyInfo.GetValue(obj);
+
+                        if (propertyType.IsArray)
+                        {
+                            if (arrayLength < 0)
+                            {
+                                throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be written with an invalid length ({arrayLength}).");
+                            }
+                            // Get array type
+                            Type elementType = propertyType.GetElementType();
+                            if (elementType.IsEnum)
+                            {
+                                elementType = Enum.GetUnderlyingType(elementType);
+                            }
+                            switch (elementType.FullName)
+                            {
+                                case "System.Boolean": Write((bool[])value, 0, arrayLength, booleanSize); break;
+                                case "System.Byte": Write((byte[])value, 0, arrayLength); break;
+                                case "System.SByte": Write((sbyte[])value, 0, arrayLength); break;
+                                case "System.Char": Write((char[])value, 0, arrayLength, encodingType); break;
+                                case "System.Int16": Write((short[])value, 0, arrayLength); break;
+                                case "System.UInt16": Write((ushort[])value, 0, arrayLength); break;
+                                case "System.Int32": Write((int[])value, 0, arrayLength); break;
+                                case "System.UInt32": Write((uint[])value, 0, arrayLength); break;
+                                case "System.Int64": Write((long[])value, 0, arrayLength); break;
+                                case "System.UInt64": Write((ulong[])value, 0, arrayLength); break;
+                                case "System.Single": Write((float[])value, 0, arrayLength); break;
+                                case "System.Double": Write((double[])value, 0, arrayLength); break;
+                                case "System.Decimal": Write((decimal[])value, 0, arrayLength); break;
+                                case "System.String":
                                 {
                                     for (int i = 0; i < arrayLength; i++)
                                     {
@@ -819,73 +850,85 @@ namespace Kermalis.EndianBinaryIO
                                             Write(chars, encodingType);
                                         }
                                     }
+                                    break;
                                 }
-                                else // Element's type is not supported so try to write the array's objects
+                                default:
                                 {
-                                    for (int i = 0; i < arrayLength; i++)
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                     {
-                                        WriteObject(((Array)value).GetValue(i));
+                                        for (int i = 0; i < arrayLength; i++)
+                                        {
+                                            var serializable = (IBinarySerializable)((Array)value).GetValue(i);
+                                            serializable.Write(this);
+                                        }
                                     }
+                                    else // Element's type is not supported so try to write the array's objects
+                                    {
+                                        for (int i = 0; i < arrayLength; i++)
+                                        {
+                                            Write(((Array)value).GetValue(i));
+                                        }
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
-                    }
-                    else
-                    {
-                        if (propertyType.IsEnum)
+                        else
                         {
-                            propertyType = propertyType.GetEnumUnderlyingType();
-                        }
-                        switch (propertyType.Name)
-                        {
-                            case "Boolean": Write((bool)value, booleanSize); break;
-                            case "Byte": Write((byte)value); break;
-                            case "SByte": Write((sbyte)value); break;
-                            case "Char": Write((char)value, encodingType); break;
-                            case "Int16": Write((short)value); break;
-                            case "UInt16": Write((ushort)value); break;
-                            case "Int32": Write((int)value); break;
-                            case "UInt32": Write((uint)value); break;
-                            case "Int64": Write((long)value); break;
-                            case "UInt64": Write((ulong)value); break;
-                            case "Single": Write((float)value); break;
-                            case "Double": Write((double)value); break;
-                            case "Decimal": Write((decimal)value); break;
-                            case "String":
+                            if (propertyType.IsEnum)
                             {
-                                if (nullTerminated)
-                                {
-                                    Write((string)value, true, encodingType);
-                                }
-                                else
-                                {
-                                    TruncateString((string)value, stringLength, out char[] chars);
-                                    Write(chars, encodingType);
-                                }
-                                break;
+                                propertyType = Enum.GetUnderlyingType(propertyType);
                             }
-                            default:
+                            switch (propertyType.FullName)
                             {
-                                if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
+                                case "System.Boolean": Write((bool)value, booleanSize); break;
+                                case "System.Byte": Write((byte)value); break;
+                                case "System.SByte": Write((sbyte)value); break;
+                                case "System.Char": Write((char)value, encodingType); break;
+                                case "System.Int16": Write((short)value); break;
+                                case "System.UInt16": Write((ushort)value); break;
+                                case "System.Int32": Write((int)value); break;
+                                case "System.UInt32": Write((uint)value); break;
+                                case "System.Int64": Write((long)value); break;
+                                case "System.UInt64": Write((ulong)value); break;
+                                case "System.Single": Write((float)value); break;
+                                case "System.Double": Write((double)value); break;
+                                case "System.Decimal": Write((decimal)value); break;
+                                case "System.String":
                                 {
-                                    ((IBinarySerializable)value).Write(this);
+                                    if (nullTerminated)
+                                    {
+                                        Write((string)value, true, encodingType);
+                                    }
+                                    else
+                                    {
+                                        TruncateString((string)value, stringLength, out char[] chars);
+                                        Write(chars, encodingType);
+                                    }
+                                    break;
                                 }
-                                else // property's type is not supported so try to write the object
+                                default:
                                 {
-                                    WriteObject(value);
+                                    if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
+                                    {
+                                        ((IBinarySerializable)value).Write(this);
+                                    }
+                                    else // property's type is not supported so try to write the object
+                                    {
+                                        Write(value);
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
                 }
             }
         }
-        public void WriteObject(object obj, long offset)
+        public void Write(object obj, long offset)
         {
             BaseStream.Position = offset;
-            WriteObject(obj);
+            Write(obj);
         }
     }
 }
