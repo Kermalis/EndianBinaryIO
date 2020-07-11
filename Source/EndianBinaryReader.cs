@@ -17,7 +17,7 @@ namespace Kermalis.EndianBinaryIO
 
         public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII, BooleanSize booleanSize = BooleanSize.U8)
         {
-            if (baseStream == null)
+            if (baseStream is null)
             {
                 throw new ArgumentNullException(nameof(baseStream));
             }
@@ -584,7 +584,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void ReadIntoObject(object obj)
         {
-            if (obj == null)
+            if (obj is null)
             {
                 throw new ArgumentNullException(nameof(obj));
             }
@@ -611,7 +611,7 @@ namespace Kermalis.EndianBinaryIO
                         if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
                         {
                             PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                            if (anchor == null)
+                            if (anchor is null)
                             {
                                 throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor ({arrayVariableLengthAnchor}).");
                             }
@@ -625,7 +625,7 @@ namespace Kermalis.EndianBinaryIO
                         if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
                         {
                             PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                            if (anchor == null)
+                            if (anchor is null)
                             {
                                 throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor ({stringVariableLengthAnchor}).");
                             }
