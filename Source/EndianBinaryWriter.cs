@@ -698,7 +698,9 @@ namespace Kermalis.EndianBinaryIO
 
         public void Write<TEnum>(TEnum value) where TEnum : Enum
         {
-            Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
+            // #13 - Handle "Enum" abstract type so we get the correct type in that case
+            // For example, writer.Write((Enum)Enum.Parse(enumType, value))
+            Type underlyingType = Enum.GetUnderlyingType(value.GetType());
             switch (underlyingType.FullName)
             {
                 case "System.Byte": Write(Convert.ToByte(value)); break;
@@ -709,7 +711,7 @@ namespace Kermalis.EndianBinaryIO
                 case "System.UInt32": Write(Convert.ToUInt32(value)); break;
                 case "System.Int64": Write(Convert.ToInt64(value)); break;
                 case "System.UInt64": Write(Convert.ToUInt64(value)); break;
-                default: throw new ArgumentOutOfRangeException();
+                default: throw new ArgumentOutOfRangeException(nameof(underlyingType));
             }
         }
         public void Write<TEnum>(TEnum value, long offset) where TEnum : Enum

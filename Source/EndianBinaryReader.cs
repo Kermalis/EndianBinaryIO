@@ -525,6 +525,11 @@ namespace Kermalis.EndianBinaryIO
         public TEnum ReadEnum<TEnum>() where TEnum : Enum
         {
             Type enumType = typeof(TEnum);
+            if (enumType.Equals(typeof(Enum)))
+            {
+                throw new ArgumentOutOfRangeException(nameof(TEnum), "The abstract \"Enum\" type cannot be read because the underlying types are unknown."
+                    + Environment.NewLine + "You must call other methods to read your expected values for your generic Enums.");
+            }
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             object value;
             switch (underlyingType.FullName)
@@ -537,7 +542,7 @@ namespace Kermalis.EndianBinaryIO
                 case "System.UInt32": value = ReadUInt32(); break;
                 case "System.Int64": value = ReadInt64(); break;
                 case "System.UInt64": value = ReadUInt64(); break;
-                default: throw new ArgumentOutOfRangeException(nameof(TEnum));
+                default: throw new ArgumentOutOfRangeException(nameof(underlyingType));
             }
             return (TEnum)Enum.ToObject(enumType, value);
         }
