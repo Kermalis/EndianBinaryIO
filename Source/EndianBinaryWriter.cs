@@ -700,6 +700,7 @@ namespace Kermalis.EndianBinaryIO
         {
             // #13 - Handle "Enum" abstract type so we get the correct type in that case
             // For example, writer.Write((Enum)Enum.Parse(enumType, value))
+            // No "struct" restriction on writes
             Type underlyingType = Enum.GetUnderlyingType(value.GetType());
             switch (underlyingType.FullName)
             {

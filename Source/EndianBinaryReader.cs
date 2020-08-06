@@ -522,14 +522,11 @@ namespace Kermalis.EndianBinaryIO
             return ReadDecimals(count);
         }
 
-        public TEnum ReadEnum<TEnum>() where TEnum : Enum
+        public TEnum ReadEnum<TEnum>() where TEnum : struct, Enum
         {
+            // Do not allow writing abstract "Enum" because there is no way to know which underlying type to read
+            // Yes "struct" restriction on reads
             Type enumType = typeof(TEnum);
-            if (enumType.Equals(typeof(Enum)))
-            {
-                throw new ArgumentOutOfRangeException(nameof(TEnum), "The abstract \"Enum\" type cannot be read because the underlying types are unknown."
-                    + Environment.NewLine + "You must call other methods to read your expected values for your generic Enums.");
-            }
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             object value;
             switch (underlyingType.FullName)
@@ -546,12 +543,12 @@ namespace Kermalis.EndianBinaryIO
             }
             return (TEnum)Enum.ToObject(enumType, value);
         }
-        public TEnum ReadEnum<TEnum>(long offset) where TEnum : Enum
+        public TEnum ReadEnum<TEnum>(long offset) where TEnum : struct, Enum
         {
             BaseStream.Position = offset;
             return ReadEnum<TEnum>();
         }
-        public TEnum[] ReadEnums<TEnum>(int count) where TEnum : Enum
+        public TEnum[] ReadEnums<TEnum>(int count) where TEnum : struct, Enum
         {
             var array = new TEnum[count];
             for (int i = 0; i < count; i++)
@@ -560,7 +557,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return array;
         }
-        public TEnum[] ReadEnums<TEnum>(int count, long offset) where TEnum : Enum
+        public TEnum[] ReadEnums<TEnum>(int count, long offset) where TEnum : struct, Enum
         {
             BaseStream.Position = offset;
             return ReadEnums<TEnum>(count);
