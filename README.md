@@ -7,7 +7,7 @@ Also included are attributes that can make reading and writing objects less of a
 For example, classes and structs in C# cannot have ignored members when marshalling, but EndianBinaryIO has a BinaryIgnoreAttribute that will ignore properties when reading and writing.
 
 ----
-# Example:
+## Example:
 ### Class:
 ```cs
     enum ShortSizedEnum : short
@@ -77,9 +77,9 @@ For example, classes and structs in C# cannot have ignored members when marshall
 ```
 
 ----
-# To Do:
+## To Do:
 * Documentation
 
 ----
-# EndianBinaryIOTests Uses:
+## EndianBinaryIOTests Uses:
 * [xUnit.net](https://github.com/xunit/xunit)
