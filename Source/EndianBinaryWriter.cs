@@ -742,6 +742,37 @@ namespace Kermalis.EndianBinaryIO
             Write(value, index, count);
         }
 
+        public void Write(DateTime value)
+        {
+            Write(value.ToBinary());
+        }
+        public void Write(DateTime value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value);
+        }
+        public void Write(DateTime[] value)
+        {
+            Write(value, 0, value.Length);
+        }
+        public void Write(DateTime[] value, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, 0, value.Length);
+        }
+        public void Write(DateTime[] value, int index, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Write(value[i + index]);
+            }
+        }
+        public void Write(DateTime[] value, int index, int count, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count);
+        }
+
         public void Write(object obj)
         {
             if (obj is null)

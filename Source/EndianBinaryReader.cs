@@ -563,6 +563,30 @@ namespace Kermalis.EndianBinaryIO
             return ReadEnums<TEnum>(count);
         }
 
+        public DateTime ReadDateTime()
+        {
+            return DateTime.FromBinary(ReadInt64());
+        }
+        public DateTime ReadDateTime(long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadDateTime();
+        }
+        public DateTime[] ReadDateTimes(int count)
+        {
+            var array = new DateTime[count];
+            for (int i = 0; i < count; i++)
+            {
+                array[i] = ReadDateTime();
+            }
+            return array;
+        }
+        public DateTime[] ReadDateTimes(int count, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadDateTimes(count);
+        }
+
         public T ReadObject<T>()
         {
             return (T)ReadObject(typeof(T));
