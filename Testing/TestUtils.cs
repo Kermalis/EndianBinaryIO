@@ -1,28 +1,13 @@
-﻿using System;
-
-namespace Kermalis.EndianBinaryTesting
+﻿namespace Kermalis.EndianBinaryIOTests
 {
-    internal sealed class TestUtils
+    internal enum ByteSizedEnum : byte
     {
-        public static void PrintBytes(byte[] bytes, int perRow = 8)
-        {
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                Console.Write("0x{0:X2}", bytes[i]);
-                if (i != bytes.Length - 1)
-                {
-                    Console.Write(',');
-                    if (i % perRow == perRow - 1)
-                    {
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        Console.Write(' ');
-                    }
-                }
-            }
-            Console.WriteLine();
-        }
+        Val1 = 0x20,
+        Val2 = 0x80
+    }
+    internal enum ShortSizedEnum : short
+    {
+        Val1 = 0x40,
+        Val2 = 0x800
     }
 }
