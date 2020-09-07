@@ -135,8 +135,13 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
 
         UTF16String = "Kermalis"
     };
-
-    writer.Write(obj);
+    
+    writer.Write(obj.Type);
+    writer.Write(obj.Version);
+    writer.Write(obj.ArrayWith16Elements);
+    writer.Write(obj.Bool32);
+    writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);
+    writer.Write(obj.UTF16String, 10, EncodingType.UTF16);
 }
 ```
 ### Writing Automatically (With Reflection):
@@ -162,12 +167,7 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
         UTF16String = "Kermalis"
     };
 
-    writer.Write(obj.Type);
-    writer.Write(obj.Version);
-    writer.Write(obj.ArrayWith16Elements);
-    writer.Write(obj.Bool32);
-    writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);
-    writer.Write(obj.UTF16String, 10, EncodingType.UTF16);
+    writer.Write(obj);
 }
 ```
 
