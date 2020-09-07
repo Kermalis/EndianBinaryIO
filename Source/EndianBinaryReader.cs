@@ -529,16 +529,16 @@ namespace Kermalis.EndianBinaryIO
             Type enumType = typeof(TEnum);
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             object value;
-            switch (underlyingType.FullName)
+            switch (Type.GetTypeCode(underlyingType))
             {
-                case "System.Byte": value = ReadByte(); break;
-                case "System.SByte": value = ReadSByte(); break;
-                case "System.Int16": value = ReadInt16(); break;
-                case "System.UInt16": value = ReadUInt16(); break;
-                case "System.Int32": value = ReadInt32(); break;
-                case "System.UInt32": value = ReadUInt32(); break;
-                case "System.Int64": value = ReadInt64(); break;
-                case "System.UInt64": value = ReadUInt64(); break;
+                case TypeCode.Byte: value = ReadByte(); break;
+                case TypeCode.SByte: value = ReadSByte(); break;
+                case TypeCode.Int16: value = ReadInt16(); break;
+                case TypeCode.UInt16: value = ReadUInt16(); break;
+                case TypeCode.Int32: value = ReadInt32(); break;
+                case TypeCode.UInt32: value = ReadUInt32(); break;
+                case TypeCode.Int64: value = ReadInt64(); break;
+                case TypeCode.UInt64: value = ReadUInt64(); break;
                 default: throw new ArgumentOutOfRangeException(nameof(underlyingType));
             }
             return (TEnum)Enum.ToObject(enumType, value);

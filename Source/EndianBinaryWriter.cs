@@ -702,16 +702,16 @@ namespace Kermalis.EndianBinaryIO
             // For example, writer.Write((Enum)Enum.Parse(enumType, value))
             // No "struct" restriction on writes
             Type underlyingType = Enum.GetUnderlyingType(value.GetType());
-            switch (underlyingType.FullName)
+            switch (Type.GetTypeCode(underlyingType))
             {
-                case "System.Byte": Write(Convert.ToByte(value)); break;
-                case "System.SByte": Write(Convert.ToSByte(value)); break;
-                case "System.Int16": Write(Convert.ToInt16(value)); break;
-                case "System.UInt16": Write(Convert.ToUInt16(value)); break;
-                case "System.Int32": Write(Convert.ToInt32(value)); break;
-                case "System.UInt32": Write(Convert.ToUInt32(value)); break;
-                case "System.Int64": Write(Convert.ToInt64(value)); break;
-                case "System.UInt64": Write(Convert.ToUInt64(value)); break;
+                case TypeCode.Byte: Write(Convert.ToByte(value)); break;
+                case TypeCode.SByte: Write(Convert.ToSByte(value)); break;
+                case TypeCode.Int16: Write(Convert.ToInt16(value)); break;
+                case TypeCode.UInt16: Write(Convert.ToUInt16(value)); break;
+                case TypeCode.Int32: Write(Convert.ToInt32(value)); break;
+                case TypeCode.UInt32: Write(Convert.ToUInt32(value)); break;
+                case TypeCode.Int64: Write(Convert.ToInt64(value)); break;
+                case TypeCode.UInt64: Write(Convert.ToUInt64(value)); break;
                 default: throw new ArgumentOutOfRangeException(nameof(underlyingType));
             }
         }
