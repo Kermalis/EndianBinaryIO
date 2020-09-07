@@ -5,9 +5,9 @@ using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests
 {
-    public sealed class BasicReaderTest
+    public sealed class BasicTests
     {
-        private sealed class MyBasicStruct
+        private sealed class MyBasicObj
         {
             // Properties
             public ShortSizedEnum Type { get; set; }
@@ -68,13 +68,13 @@ namespace Kermalis.EndianBinaryIOTests
         };
 
         [Fact]
-        public void TestReads()
+        public void ReadObject()
         {
-            MyBasicStruct obj;
+            MyBasicObj obj;
             using (var stream = new MemoryStream(_bytes))
-            using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
+            using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian))
             {
-                obj = reader.ReadObject<MyBasicStruct>();
+                obj = reader.ReadObject<MyBasicObj>();
             }
 
             Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
@@ -95,13 +95,44 @@ namespace Kermalis.EndianBinaryIOTests
         }
 
         [Fact]
-        public void TestWrites()
+        public void ReadManually()
+        {
+            MyBasicObj obj;
+            using (var stream = new MemoryStream(_bytes))
+            using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
+            {
+                obj = new MyBasicObj();
+
+                obj.Type = reader.ReadEnum<ShortSizedEnum>();
+                Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
+                obj.Version = reader.ReadInt16();
+                Assert.True(obj.Version == 0x1FF); // short works
+
+                obj.ArrayWith16Elements = reader.ReadUInt32s(16);
+                Assert.True(obj.ArrayWith16Elements.Length == 16); // Fixed size array works
+                for (uint i = 0; i < 16; i++)
+                {
+                    Assert.True(obj.ArrayWith16Elements[i] == i); // Array works
+                }
+
+                obj.Bool32 = reader.ReadBoolean();
+                Assert.False(obj.Bool32); // bool32 works
+
+                obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII);
+                Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
+                obj.UTF16String = reader.ReadString(10, EncodingType.UTF16);
+                Assert.True(obj.UTF16String == "Kermalis\0\0"); // Fixed size (10 chars) utf16
+            }
+        }
+
+        [Fact]
+        public void WriteObject()
         {
             byte[] bytes = new byte[107];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream))
+            using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian))
             {
-                var obj = new MyBasicStruct
+                var obj = new MyBasicObj
                 {
                     Type = ShortSizedEnum.Val2,
                     Version = 511,
@@ -120,6 +151,43 @@ namespace Kermalis.EndianBinaryIOTests
                     UTF16String = "Kermalis"
                 };
                 writer.Write(obj);
+            }
+
+            Assert.True(bytes.SequenceEqual(_bytes));
+        }
+
+        [Fact]
+        public void WriteManually()
+        {
+            byte[] bytes = new byte[107];
+            using (var stream = new MemoryStream(bytes))
+            using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
+            {
+                var obj = new MyBasicObj
+                {
+                    Type = ShortSizedEnum.Val2,
+                    Version = 511,
+
+                    DoNotReadOrWrite = ByteSizedEnum.Val1,
+
+                    ArrayWith16Elements = new uint[16]
+                    {
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+                    },
+
+                    Bool32 = false,
+
+                    NullTerminatedASCIIString = "EndianBinaryIO",
+
+                    UTF16String = "Kermalis\0\0"
+                };
+
+                writer.Write(obj.Type);
+                writer.Write(obj.Version);
+                writer.Write(obj.ArrayWith16Elements);
+                writer.Write(obj.Bool32);
+                writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);
+                writer.Write(obj.UTF16String, 10, EncodingType.UTF16);
             }
 
             Assert.True(bytes.SequenceEqual(_bytes));

@@ -187,5 +187,86 @@ namespace Kermalis.EndianBinaryIO
                 throw new ArgumentException(nameof(type), $"Cannot read/write \"{type.FullName}\" objects.");
             }
         }
+
+        public static int GetArrayLength(object obj, Type objType, PropertyInfo propertyInfo)
+        {
+            int Validate(int value)
+            {
+                if (value <= 0)
+                {
+                    throw new ArgumentOutOfRangeException($"An array property in \"{objType.FullName}\" has an invalid length attribute ({value})");
+                }
+                return value;
+            }
+
+            int? fixedLength = AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), (int?)null);
+            string variableLength = AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), (string)null);
+            if (fixedLength.HasValue)
+            {
+                if (variableLength != null)
+                {
+                    throw new ArgumentException($"An array property in \"{objType.FullName}\" has two array length attributes. Only one should be provided.");
+                }
+                return Validate(fixedLength.Value);
+            }
+            if (variableLength is null)
+            {
+                throw new MissingMemberException($"An array property in \"{objType.FullName}\" is missing an array length attribute. One should be provided.");
+            }
+            PropertyInfo anchor = objType.GetProperty(variableLength, BindingFlags.Instance | BindingFlags.Public);
+            if (anchor is null)
+            {
+                throw new MissingMemberException($"An array property in \"{objType.FullName}\" has an invalid {nameof(BinaryArrayVariableLengthAttribute)} ({variableLength}).");
+            }
+            return Validate(Convert.ToInt32(anchor.GetValue(obj)));
+        }
+        public static void GetStringLength(object obj, Type objType, PropertyInfo propertyInfo, bool forReads, out bool? nullTerminated, out int stringLength)
+        {
+            int Validate(int value)
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException($"A string property in \"{objType.FullName}\" has an invalid length attribute ({value})");
+                }
+                return value;
+            }
+
+            nullTerminated = AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), (bool?)null);
+            int? fixedLength = AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), (int?)null);
+            string variableLength = AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), (string)null);
+            if (nullTerminated.HasValue)
+            {
+                if (fixedLength.HasValue || variableLength != null)
+                {
+                    throw new ArgumentException($"A string property in \"{objType.FullName}\" has a string length attribute and a {nameof(BinaryStringNullTerminatedAttribute)}; cannot use both.");
+                }
+                if (forReads && !nullTerminated.Value)
+                {
+                    throw new ArgumentException($"A string property in \"{objType.FullName}\" has a {nameof(BinaryStringNullTerminatedAttribute)} that's set to false." +
+                        $" Must use null termination or provide a string length when reading.");
+                }
+                stringLength = -1;
+                return;
+            }
+            if (fixedLength.HasValue)
+            {
+                if (variableLength != null)
+                {
+                    throw new ArgumentException($"A string property in \"{objType.FullName}\" has two string length attributes. Only one should be provided.");
+                }
+                stringLength = Validate(fixedLength.Value);
+                return;
+            }
+            if (variableLength is null)
+            {
+                throw new MissingMemberException($"A string property in \"{objType.FullName}\" is missing a string length attribute and has no {nameof(BinaryStringNullTerminatedAttribute)}. One should be provided.");
+            }
+            PropertyInfo anchor = objType.GetProperty(variableLength, BindingFlags.Instance | BindingFlags.Public);
+            if (anchor is null)
+            {
+                throw new MissingMemberException($"A string property in \"{objType.FullName}\" has an invalid {nameof(BinaryStringVariableLengthAttribute)} ({variableLength}).");
+            }
+            stringLength = Validate(Convert.ToInt32(anchor.GetValue(obj)));
+        }
     }
 }

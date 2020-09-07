@@ -9,10 +9,18 @@
     <PackageId>EndianBinaryIO</PackageId>
     <Product>EndianBinaryIO</Product>
     <AssemblyName>EndianBinaryIO</AssemblyName>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.1.0</Version>
     <RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <NoWarn />
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    
+    <Description>A .NET Standard library that can read and write primitives, enums, arrays, and strings to streams using specified endianness, string encoding, and boolean sizes.
+Objects can also be read from/written to streams via reflection and attributes.
+Project URL ― https://github.com/Kermalis/EndianBinaryIO</Description>
+    <PackageProjectUrl>https://github.com/Kermalis/EndianBinaryIO</PackageProjectUrl>
+    <NeutralLanguage>en-001</NeutralLanguage>
+    <PackageTags>Serialization;Reflection;Endianness;LittleEndian;BigEndian;EndianBinaryIO</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

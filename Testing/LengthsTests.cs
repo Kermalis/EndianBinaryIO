@@ -7,7 +7,7 @@ namespace Kermalis.EndianBinaryIOTests
 {
     public sealed class LengthsTests
     {
-        private sealed class MyLengthyStruct
+        private sealed class MyLengthyObj
         {
             [BinaryArrayFixedLength(3)]
             [BinaryEncoding(EncodingType.ASCII)]
@@ -40,13 +40,13 @@ namespace Kermalis.EndianBinaryIOTests
         };
 
         [Fact]
-        public void TestReads()
+        public void ReadObject()
         {
-            MyLengthyStruct obj;
+            MyLengthyObj obj;
             using (var stream = new MemoryStream(_bytes))
             using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
             {
-                obj = reader.ReadObject<MyLengthyStruct>();
+                obj = reader.ReadObject<MyLengthyObj>();
             }
 
             Assert.True(obj.NullTerminatedStringArray.Length == 3); // Fixed size array works
@@ -66,13 +66,13 @@ namespace Kermalis.EndianBinaryIOTests
         }
 
         [Fact]
-        public void TestWrites()
+        public void WriteObject()
         {
             byte[] bytes = new byte[34];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.Write(new MyLengthyStruct
+                writer.Write(new MyLengthyObj
                 {
                     NullTerminatedStringArray = new string[3]
                     {

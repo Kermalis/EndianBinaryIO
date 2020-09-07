@@ -616,188 +616,164 @@ namespace Kermalis.EndianBinaryIO
             }
             Type objType = obj.GetType();
             Utils.ThrowIfCannotReadWriteType(objType);
-            if (typeof(IBinarySerializable).IsAssignableFrom(objType))
+            if (obj is IBinarySerializable bs)
             {
-                ((IBinarySerializable)obj).Read(this);
+                bs.Read(this);
+                return;
             }
-            else
+
+            // Get public non-static properties
+            foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                if (Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
                 {
-                    if (!Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
+                    continue; // Skip properties with BinaryIgnoreAttribute
+                }
+
+                Type propertyType = propertyInfo.PropertyType;
+                object value;
+
+                if (propertyType.IsArray)
+                {
+                    int arrayLength = Utils.GetArrayLength(obj, objType, propertyInfo);
+                    // Get array type
+                    Type elementType = propertyType.GetElementType();
+                    if (elementType.IsEnum)
                     {
-                        BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                        EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                        bool nullTerminated = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringNullTerminatedAttribute), true);
-
-                        int arrayFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayFixedLengthAttribute), 0);
-                        int stringFixedLength = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringFixedLengthAttribute), 0);
-                        string arrayVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryArrayVariableLengthAttribute), string.Empty);
-                        int arrayVariableLength = 0;
-                        if (!string.IsNullOrEmpty(arrayVariableLengthAnchor))
+                        elementType = Enum.GetUnderlyingType(elementType);
+                    }
+                    switch (elementType.FullName)
+                    {
+                        case "System.Boolean":
                         {
-                            PropertyInfo anchor = objType.GetProperty(arrayVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                            if (anchor is null)
-                            {
-                                throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable array length anchor ({arrayVariableLengthAnchor}).");
-                            }
-                            else
-                            {
-                                arrayVariableLength = Convert.ToInt32(anchor.GetValue(obj));
-                            }
+                            BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                            value = ReadBooleans(arrayLength, booleanSize);
+                            break;
                         }
-                        string stringVariableLengthAnchor = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryStringVariableLengthAttribute), string.Empty);
-                        int stringVariableLength = 0;
-                        if (!string.IsNullOrEmpty(stringVariableLengthAnchor))
+                        case "System.Byte": value = ReadBytes(arrayLength); break;
+                        case "System.SByte": value = ReadSBytes(arrayLength); break;
+                        case "System.Char":
                         {
-                            PropertyInfo anchor = objType.GetProperty(stringVariableLengthAnchor, BindingFlags.Instance | BindingFlags.Public);
-                            if (anchor is null)
-                            {
-                                throw new MissingMemberException($"A property in \"{objType.FullName}\" has an invalid variable string length anchor ({stringVariableLengthAnchor}).");
-                            }
-                            else
-                            {
-                                stringVariableLength = Convert.ToInt32(anchor.GetValue(obj));
-                            }
+                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            value = ReadChars(arrayLength, encodingType);
+                            break;
                         }
-                        if ((arrayFixedLength > 0 && arrayVariableLength > 0)
-                            || (stringFixedLength > 0 && stringVariableLength > 0))
+                        case "System.Int16": value = ReadInt16s(arrayLength); break;
+                        case "System.UInt16": value = ReadUInt16s(arrayLength); break;
+                        case "System.Int32": value = ReadInt32s(arrayLength); break;
+                        case "System.UInt32": value = ReadUInt32s(arrayLength); break;
+                        case "System.Int64": value = ReadInt64s(arrayLength); break;
+                        case "System.UInt64": value = ReadUInt64s(arrayLength); break;
+                        case "System.Single": value = ReadSingles(arrayLength); break;
+                        case "System.Double": value = ReadDoubles(arrayLength); break;
+                        case "System.Decimal": value = ReadDecimals(arrayLength); break;
+                        case "System.String":
                         {
-                            throw new ArgumentException($"A property in \"{objType.FullName}\" has two length attributes.");
-                        }
-                        // One will be 0 and the other will be the intended length, so it is safe to use Math.Max to get the intended length
-                        int arrayLength = Math.Max(arrayFixedLength, arrayVariableLength);
-                        int stringLength = Math.Max(stringFixedLength, stringVariableLength);
-                        if (stringLength > 0)
-                        {
-                            nullTerminated = false;
-                        }
-
-                        Type propertyType = propertyInfo.PropertyType;
-                        object value;
-
-                        if (propertyType.IsArray)
-                        {
-                            if (arrayLength < 0)
+                            Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
+                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            value = Array.CreateInstance(elementType, arrayLength);
+                            for (int i = 0; i < arrayLength; i++)
                             {
-                                throw new ArgumentOutOfRangeException($"An array in \"{objType.FullName}\" attempted to be read with an invalid length ({arrayLength}).");
-                            }
-                            // Get array type
-                            Type elementType = propertyType.GetElementType();
-                            if (elementType.IsEnum)
-                            {
-                                elementType = Enum.GetUnderlyingType(elementType);
-                            }
-                            switch (elementType.FullName)
-                            {
-                                case "System.Boolean": value = ReadBooleans(arrayLength, booleanSize); break;
-                                case "System.Byte": value = ReadBytes(arrayLength); break;
-                                case "System.SByte": value = ReadSBytes(arrayLength); break;
-                                case "System.Char": value = ReadChars(arrayLength, encodingType); break;
-                                case "System.Int16": value = ReadInt16s(arrayLength); break;
-                                case "System.UInt16": value = ReadUInt16s(arrayLength); break;
-                                case "System.Int32": value = ReadInt32s(arrayLength); break;
-                                case "System.UInt32": value = ReadUInt32s(arrayLength); break;
-                                case "System.Int64": value = ReadInt64s(arrayLength); break;
-                                case "System.UInt64": value = ReadUInt64s(arrayLength); break;
-                                case "System.Single": value = ReadSingles(arrayLength); break;
-                                case "System.Double": value = ReadDoubles(arrayLength); break;
-                                case "System.Decimal": value = ReadDecimals(arrayLength); break;
-                                case "System.String":
+                                string str;
+                                if (nullTerminated == true)
                                 {
-                                    value = Array.CreateInstance(elementType, arrayLength);
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        string str;
-                                        if (nullTerminated)
-                                        {
-                                            str = ReadStringNullTerminated(encodingType);
-                                        }
-                                        else
-                                        {
-                                            str = ReadString(stringLength, encodingType);
-                                        }
-                                        ((Array)value).SetValue(str, i);
-                                    }
-                                    break;
+                                    str = ReadStringNullTerminated(encodingType);
                                 }
-                                default:
+                                else
                                 {
-                                    value = Array.CreateInstance(elementType, arrayLength);
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
-                                    {
-                                        for (int i = 0; i < arrayLength; i++)
-                                        {
-                                            var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
-                                            serializable.Read(this);
-                                            ((Array)value).SetValue(serializable, i);
-                                        }
-                                    }
-                                    else // Element's type is not supported so try to read the array's objects
-                                    {
-                                        for (int i = 0; i < arrayLength; i++)
-                                        {
-                                            object elementObj = ReadObject(elementType);
-                                            ((Array)value).SetValue(elementObj, i);
-                                        }
-                                    }
-                                    break;
+                                    str = ReadString(stringLength, encodingType);
+                                }
+                                ((Array)value).SetValue(str, i);
+                            }
+                            break;
+                        }
+                        default:
+                        {
+                            value = Array.CreateInstance(elementType, arrayLength);
+                            if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                            {
+                                for (int i = 0; i < arrayLength; i++)
+                                {
+                                    var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
+                                    serializable.Read(this);
+                                    ((Array)value).SetValue(serializable, i);
                                 }
                             }
-                        }
-                        else
-                        {
-                            if (propertyType.IsEnum)
+                            else // Element's type is not supported so try to read the array's objects
                             {
-                                propertyType = Enum.GetUnderlyingType(propertyType);
-                            }
-                            switch (propertyType.FullName)
-                            {
-                                case "System.Boolean": value = ReadBoolean(booleanSize); break;
-                                case "System.Byte": value = ReadByte(); break;
-                                case "System.SByte": value = ReadSByte(); break;
-                                case "System.Char": value = ReadChar(encodingType); break;
-                                case "System.Int16": value = ReadInt16(); break;
-                                case "System.UInt16": value = ReadUInt16(); break;
-                                case "System.Int32": value = ReadInt32(); break;
-                                case "System.UInt32": value = ReadUInt32(); break;
-                                case "System.Int64": value = ReadInt64(); break;
-                                case "System.UInt64": value = ReadUInt64(); break;
-                                case "System.Single": value = ReadSingle(); break;
-                                case "System.Double": value = ReadDouble(); break;
-                                case "System.Decimal": value = ReadDecimal(); break;
-                                case "System.String":
+                                for (int i = 0; i < arrayLength; i++)
                                 {
-                                    if (nullTerminated)
-                                    {
-                                        value = ReadStringNullTerminated(encodingType);
-                                    }
-                                    else
-                                    {
-                                        value = ReadString(stringLength, encodingType);
-                                    }
-                                    break;
-                                }
-                                default:
-                                {
-                                    if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
-                                    {
-                                        value = Activator.CreateInstance(propertyType);
-                                        ((IBinarySerializable)value).Read(this);
-                                    }
-                                    else // The property's type is not supported so try to read the object
-                                    {
-                                        value = ReadObject(propertyType);
-                                    }
-                                    break;
+                                    object elementObj = ReadObject(elementType);
+                                    ((Array)value).SetValue(elementObj, i);
                                 }
                             }
+                            break;
                         }
-
-                        // Set the value into the property
-                        propertyInfo.SetValue(obj, value);
                     }
                 }
+                else
+                {
+                    if (propertyType.IsEnum)
+                    {
+                        propertyType = Enum.GetUnderlyingType(propertyType);
+                    }
+                    switch (propertyType.FullName)
+                    {
+                        case "System.Boolean":
+                        {
+                            BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                            value = ReadBoolean(booleanSize);
+                            break;
+                        }
+                        case "System.Byte": value = ReadByte(); break;
+                        case "System.SByte": value = ReadSByte(); break;
+                        case "System.Char":
+                        {
+                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            value = ReadChar(encodingType);
+                            break;
+                        }
+                        case "System.Int16": value = ReadInt16(); break;
+                        case "System.UInt16": value = ReadUInt16(); break;
+                        case "System.Int32": value = ReadInt32(); break;
+                        case "System.UInt32": value = ReadUInt32(); break;
+                        case "System.Int64": value = ReadInt64(); break;
+                        case "System.UInt64": value = ReadUInt64(); break;
+                        case "System.Single": value = ReadSingle(); break;
+                        case "System.Double": value = ReadDouble(); break;
+                        case "System.Decimal": value = ReadDecimal(); break;
+                        case "System.String":
+                        {
+                            Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
+                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            if (nullTerminated == true)
+                            {
+                                value = ReadStringNullTerminated(encodingType);
+                            }
+                            else
+                            {
+                                value = ReadString(stringLength, encodingType);
+                            }
+                            break;
+                        }
+                        default:
+                        {
+                            if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
+                            {
+                                value = Activator.CreateInstance(propertyType);
+                                ((IBinarySerializable)value).Read(this);
+                            }
+                            else // The property's type is not supported so try to read the object
+                            {
+                                value = ReadObject(propertyType);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                // Set the value into the property
+                propertyInfo.SetValue(obj, value);
             }
         }
         public void ReadIntoObject(object obj, long offset)
