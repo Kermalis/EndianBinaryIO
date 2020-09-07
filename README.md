@@ -18,6 +18,11 @@ Add the [EndianBinaryIO](https://www.nuget.org/packages/EndianBinaryIO) NuGet pa
 Assume we have the following definitions:
 ### C#:
 ```cs
+enum ByteSizedEnum : byte
+{
+    Val1 = 0x20,
+    Val2 = 0x80
+}
 enum ShortSizedEnum : short
 {
     Val1 = 0x40,
@@ -32,7 +37,7 @@ class MyBasicObj
 
     // Property that is ignored when reading and writing
     [BinaryIgnore(true)]
-    public double DoNotReadOrWrite { get; set; } = Math.PI;
+    public ByteSizedEnum DoNotReadOrWrite { get; set; }
 
     // Arrays work as well
     [BinaryArrayFixedLength(16)]
@@ -132,7 +137,6 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
         Bool32 = false,
 
         NullTerminatedASCIIString = "EndianBinaryIO",
-
         UTF16String = "Kermalis"
     };
     
@@ -163,7 +167,6 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
         Bool32 = false,
 
         NullTerminatedASCIIString = "EndianBinaryIO",
-
         UTF16String = "Kermalis"
     };
 
