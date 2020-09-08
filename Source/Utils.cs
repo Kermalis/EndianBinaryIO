@@ -145,13 +145,30 @@ namespace Kermalis.EndianBinaryIO
             return *(double*)&val;
         }
         // TODO: https://github.com/Kermalis/EndianBinaryIO/issues/3
-        public static decimal BytesToDecimal(byte[] value, int startIndex)
+        public static unsafe decimal BytesToDecimal(byte[] value, int startIndex)
         {
-            int i1 = BytesToInt32(value, startIndex);
-            int i2 = BytesToInt32(value, startIndex + 4);
-            int i3 = BytesToInt32(value, startIndex + 8);
-            int i4 = BytesToInt32(value, startIndex + 12);
-            return new decimal(new int[] { i1, i2, i3, i4 });
+            int i1, i2, i3, i4;
+            int[] bits;
+            fixed (byte* b = &value[startIndex])
+            {
+                if (SystemEndianness == Endianness.LittleEndian)
+                {
+                    i1 = (*b) | (*(b + 1) << 8) | (*(b + 2) << 16) | (*(b + 3) << 24);
+                    i2 = (*(b + 4)) | (*(b + 5) << 8) | (*(b + 6) << 16) | (*(b + 7) << 24);
+                    i3 = (*(b + 8)) | (*(b + 9) << 8) | (*(b + 10) << 16) | (*(b + 11) << 24);
+                    i4 = (*(b + 12)) | (*(b + 13) << 8) | (*(b + 14) << 16) | (*(b + 15) << 24);
+                    bits = new int[] { i3, i4, i2, i1 };
+                }
+                else
+                {
+                    i1 = (*b << 24) | (*(b + 1) << 16) | (*(b + 2) << 8) | (*(b + 3));
+                    i2 = (*(b + 4) << 24) | (*(b + 5) << 16) | (*(b + 6) << 8) | (*(b + 7));
+                    i3 = (*(b + 8) << 24) | (*(b + 9) << 16) | (*(b + 10) << 8) | (*(b + 11));
+                    i4 = (*(b + 12) << 24) | (*(b + 13) << 16) | (*(b + 14) << 8) | (*(b + 15));
+                    bits = new int[] { i2, i1, i3, i4 }; // Not tested, as I do not have a big endian system
+                }
+            }
+            return new decimal(bits);
         }
 
         public static T AttributeValueOrDefault<T>(PropertyInfo propertyInfo, Type attributeType, T defaultValue)
@@ -162,20 +179,21 @@ namespace Kermalis.EndianBinaryIO
 
         public static void FlipPrimitives(byte[] buffer, Endianness targetEndianness, int byteCount, int primitiveSize)
         {
-            if (SystemEndianness != targetEndianness)
+            if (SystemEndianness == targetEndianness || primitiveSize <= 1)
             {
-                for (int i = 0; i < byteCount; i += primitiveSize)
+                return;
+            }
+            for (int i = 0; i < byteCount; i += primitiveSize)
+            {
+                int a = i;
+                int b = i + primitiveSize - 1;
+                while (a < b)
                 {
-                    int a = i;
-                    int b = i + primitiveSize - 1;
-                    while (a < b)
-                    {
-                        byte by = buffer[a];
-                        buffer[a] = buffer[b];
-                        buffer[b] = by;
-                        a++;
-                        b--;
-                    }
+                    byte by = buffer[a];
+                    buffer[a] = buffer[b];
+                    buffer[b] = by;
+                    a++;
+                    b--;
                 }
             }
         }
