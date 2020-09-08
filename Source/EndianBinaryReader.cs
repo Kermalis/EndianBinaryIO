@@ -265,13 +265,17 @@ namespace Kermalis.EndianBinaryIO
         }
         public string ReadStringNullTerminated(EncodingType encodingType)
         {
-            string text = "";
-            do
+            string text = string.Empty;
+            while (true)
             {
-                text += ReadChar(encodingType);
+                char c = ReadChar(encodingType);
+                if (c == '\0')
+                {
+                    break;
+                }
+                text += c;
             }
-            while (!text.EndsWith("\0", StringComparison.Ordinal));
-            return text.Remove(text.Length - 1);
+            return text;
         }
         public string ReadStringNullTerminated(EncodingType encodingType, long offset)
         {
