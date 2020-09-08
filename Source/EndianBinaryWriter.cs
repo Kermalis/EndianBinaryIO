@@ -798,13 +798,14 @@ namespace Kermalis.EndianBinaryIO
             {
                 throw new ArgumentNullException(nameof(obj));
             }
-            Type objType = obj.GetType();
-            Utils.ThrowIfCannotReadWriteType(objType);
             if (obj is IBinarySerializable bs)
             {
                 bs.Write(this);
                 return;
             }
+
+            Type objType = obj.GetType();
+            Utils.ThrowIfCannotReadWriteType(objType);
 
             // Get public non-static properties
             foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -826,32 +827,33 @@ namespace Kermalis.EndianBinaryIO
                     {
                         elementType = Enum.GetUnderlyingType(elementType);
                     }
-                    switch (elementType.FullName)
+                    switch (Type.GetTypeCode(elementType))
                     {
-                        case "System.Boolean":
+                        case TypeCode.Boolean:
                         {
                             BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
                             Write((bool[])value, 0, arrayLength, booleanSize);
                             break;
                         }
-                        case "System.Byte": Write((byte[])value, 0, arrayLength); break;
-                        case "System.SByte": Write((sbyte[])value, 0, arrayLength); break;
-                        case "System.Char":
+                        case TypeCode.Byte: Write((byte[])value, 0, arrayLength); break;
+                        case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
+                        case TypeCode.Char:
                         {
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                             Write((char[])value, 0, arrayLength, encodingType);
                             break;
                         }
-                        case "System.Int16": Write((short[])value, 0, arrayLength); break;
-                        case "System.UInt16": Write((ushort[])value, 0, arrayLength); break;
-                        case "System.Int32": Write((int[])value, 0, arrayLength); break;
-                        case "System.UInt32": Write((uint[])value, 0, arrayLength); break;
-                        case "System.Int64": Write((long[])value, 0, arrayLength); break;
-                        case "System.UInt64": Write((ulong[])value, 0, arrayLength); break;
-                        case "System.Single": Write((float[])value, 0, arrayLength); break;
-                        case "System.Double": Write((double[])value, 0, arrayLength); break;
-                        case "System.Decimal": Write((decimal[])value, 0, arrayLength); break;
-                        case "System.String":
+                        case TypeCode.Int16: Write((short[])value, 0, arrayLength); break;
+                        case TypeCode.UInt16: Write((ushort[])value, 0, arrayLength); break;
+                        case TypeCode.Int32: Write((int[])value, 0, arrayLength); break;
+                        case TypeCode.UInt32: Write((uint[])value, 0, arrayLength); break;
+                        case TypeCode.Int64: Write((long[])value, 0, arrayLength); break;
+                        case TypeCode.UInt64: Write((ulong[])value, 0, arrayLength); break;
+                        case TypeCode.Single: Write((float[])value, 0, arrayLength); break;
+                        case TypeCode.Double: Write((double[])value, 0, arrayLength); break;
+                        case TypeCode.Decimal: Write((decimal[])value, 0, arrayLength); break;
+                        case TypeCode.DateTime: Write((DateTime[])value, 0, arrayLength); break;
+                        case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
@@ -869,7 +871,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
-                        default:
+                        case TypeCode.Object:
                         {
                             if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                             {
@@ -888,6 +890,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
+                        default: throw new ArgumentOutOfRangeException(nameof(elementType));
                     }
                 }
                 else
@@ -896,32 +899,33 @@ namespace Kermalis.EndianBinaryIO
                     {
                         propertyType = Enum.GetUnderlyingType(propertyType);
                     }
-                    switch (propertyType.FullName)
+                    switch (Type.GetTypeCode(propertyType))
                     {
-                        case "System.Boolean":
+                        case TypeCode.Boolean:
                         {
                             BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
                             Write((bool)value, booleanSize);
                             break;
                         }
-                        case "System.Byte": Write((byte)value); break;
-                        case "System.SByte": Write((sbyte)value); break;
-                        case "System.Char":
+                        case TypeCode.Byte: Write((byte)value); break;
+                        case TypeCode.SByte: Write((sbyte)value); break;
+                        case TypeCode.Char:
                         {
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                             Write((char)value, encodingType);
                             break;
                         }
-                        case "System.Int16": Write((short)value); break;
-                        case "System.UInt16": Write((ushort)value); break;
-                        case "System.Int32": Write((int)value); break;
-                        case "System.UInt32": Write((uint)value); break;
-                        case "System.Int64": Write((long)value); break;
-                        case "System.UInt64": Write((ulong)value); break;
-                        case "System.Single": Write((float)value); break;
-                        case "System.Double": Write((double)value); break;
-                        case "System.Decimal": Write((decimal)value); break;
-                        case "System.String":
+                        case TypeCode.Int16: Write((short)value); break;
+                        case TypeCode.UInt16: Write((ushort)value); break;
+                        case TypeCode.Int32: Write((int)value); break;
+                        case TypeCode.UInt32: Write((uint)value); break;
+                        case TypeCode.Int64: Write((long)value); break;
+                        case TypeCode.UInt64: Write((ulong)value); break;
+                        case TypeCode.Single: Write((float)value); break;
+                        case TypeCode.Double: Write((double)value); break;
+                        case TypeCode.Decimal: Write((decimal)value); break;
+                        case TypeCode.DateTime: Write((DateTime)value); break;
+                        case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
@@ -935,7 +939,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
-                        default:
+                        case TypeCode.Object:
                         {
                             if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
                             {
@@ -947,6 +951,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
+                        default: throw new ArgumentOutOfRangeException(nameof(propertyType));
                     }
                 }
             }

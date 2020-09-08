@@ -65,6 +65,7 @@ And assume these are our input bytes (in little endian):
 ```cs
 0x00, 0x08,
 0xFF, 0x01,
+0x00, 0x00, 0x4A, 0x7A, 0x9E, 0x01, 0xC0, 0x08,
 
 0x00, 0x00, 0x00, 0x00,
 0x01, 0x00, 0x00, 0x00,
@@ -100,6 +101,7 @@ using (var reader = new EndianBinaryReader(stream, endianness: Endianness.Little
 
     obj.Type = reader.ReadEnum<ShortSizedEnum>(); // Enum works
     obj.Version = reader.ReadInt16(); // short works
+    obj.Date = reader.ReadDateTime(); // DateTime works
 
     obj.ArrayWith16Elements = reader.ReadUInt32s(16); // Array works
 
@@ -126,6 +128,7 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
     {
         Type = ShortSizedEnum.Val2,
         Version = 511,
+        Date = new DateTime(1998, 12, 30),
 
         DoNotReadOrWrite = ByteSizedEnum.Val1,
 
@@ -142,6 +145,7 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
     
     writer.Write(obj.Type);
     writer.Write(obj.Version);
+    writer.Write(obj.Date);
     writer.Write(obj.ArrayWith16Elements);
     writer.Write(obj.Bool32);
     writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);
@@ -156,6 +160,7 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
     {
         Type = ShortSizedEnum.Val2,
         Version = 511,
+        Date = new DateTime(1998, 12, 30),
 
         DoNotReadOrWrite = ByteSizedEnum.Val1,
 

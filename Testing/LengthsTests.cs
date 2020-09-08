@@ -68,7 +68,7 @@ namespace Kermalis.EndianBinaryIOTests
         [Fact]
         public void WriteObject()
         {
-            byte[] bytes = new byte[34];
+            byte[] bytes = new byte[_bytes.Length];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {

@@ -1,4 +1,5 @@
 ﻿using Kermalis.EndianBinaryIO;
+using System;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -12,6 +13,7 @@ namespace Kermalis.EndianBinaryIOTests
             // Properties
             public ShortSizedEnum Type { get; set; }
             public short Version { get; set; }
+            public DateTime Date { get; set; }
 
             // Property that is ignored when reading and writing
             [BinaryIgnore(true)]
@@ -38,10 +40,11 @@ namespace Kermalis.EndianBinaryIOTests
             public string UTF16String { get; set; }
         }
 
-        private static readonly byte[] _bytes = new byte[107]
+        private static readonly byte[] _bytes = new byte[115]
         {
             0x00, 0x08,
             0xFF, 0x01,
+            0x00, 0x00, 0x4A, 0x7A, 0x9E, 0x01, 0xC0, 0x08,
 
             0x00, 0x00, 0x00, 0x00,
             0x01, 0x00, 0x00, 0x00,
@@ -79,6 +82,7 @@ namespace Kermalis.EndianBinaryIOTests
 
             Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
             Assert.True(obj.Version == 0x1FF); // short works
+            Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
 
             Assert.True(obj.DoNotReadOrWrite == default); // Ignored
 
@@ -107,6 +111,8 @@ namespace Kermalis.EndianBinaryIOTests
                 Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
                 obj.Version = reader.ReadInt16();
                 Assert.True(obj.Version == 0x1FF); // short works
+                obj.Date = reader.ReadDateTime();
+                Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
 
                 obj.ArrayWith16Elements = reader.ReadUInt32s(16);
                 Assert.True(obj.ArrayWith16Elements.Length == 16); // Fixed size array works
@@ -128,7 +134,7 @@ namespace Kermalis.EndianBinaryIOTests
         [Fact]
         public void WriteObject()
         {
-            byte[] bytes = new byte[107];
+            byte[] bytes = new byte[_bytes.Length];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian))
             {
@@ -136,6 +142,7 @@ namespace Kermalis.EndianBinaryIOTests
                 {
                     Type = ShortSizedEnum.Val2,
                     Version = 511,
+                    Date = new DateTime(1998, 12, 30),
 
                     DoNotReadOrWrite = ByteSizedEnum.Val1,
 
@@ -147,7 +154,6 @@ namespace Kermalis.EndianBinaryIOTests
                     Bool32 = false,
 
                     NullTerminatedASCIIString = "EndianBinaryIO",
-
                     UTF16String = "Kermalis"
                 };
                 writer.Write(obj);
@@ -159,7 +165,7 @@ namespace Kermalis.EndianBinaryIOTests
         [Fact]
         public void WriteManually()
         {
-            byte[] bytes = new byte[107];
+            byte[] bytes = new byte[_bytes.Length];
             using (var stream = new MemoryStream(bytes))
             using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
             {
@@ -167,6 +173,7 @@ namespace Kermalis.EndianBinaryIOTests
                 {
                     Type = ShortSizedEnum.Val2,
                     Version = 511,
+                    Date = new DateTime(1998, 12, 30),
 
                     DoNotReadOrWrite = ByteSizedEnum.Val1,
 
@@ -178,12 +185,12 @@ namespace Kermalis.EndianBinaryIOTests
                     Bool32 = false,
 
                     NullTerminatedASCIIString = "EndianBinaryIO",
-
                     UTF16String = "Kermalis\0\0"
                 };
 
                 writer.Write(obj.Type);
                 writer.Write(obj.Version);
+                writer.Write(obj.Date);
                 writer.Write(obj.ArrayWith16Elements);
                 writer.Write(obj.Bool32);
                 writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);

@@ -587,7 +587,7 @@ namespace Kermalis.EndianBinaryIO
             return ReadDateTimes(count);
         }
 
-        public T ReadObject<T>()
+        public T ReadObject<T>() where T : new()
         {
             return (T)ReadObject(typeof(T));
         }
@@ -598,7 +598,7 @@ namespace Kermalis.EndianBinaryIO
             ReadIntoObject(obj);
             return obj;
         }
-        public T ReadObject<T>(long offset)
+        public T ReadObject<T>(long offset) where T : new()
         {
             BaseStream.Position = offset;
             return ReadObject<T>();
@@ -614,13 +614,14 @@ namespace Kermalis.EndianBinaryIO
             {
                 throw new ArgumentNullException(nameof(obj));
             }
-            Type objType = obj.GetType();
-            Utils.ThrowIfCannotReadWriteType(objType);
             if (obj is IBinarySerializable bs)
             {
                 bs.Read(this);
                 return;
             }
+
+            Type objType = obj.GetType();
+            Utils.ThrowIfCannotReadWriteType(objType);
 
             // Get public non-static properties
             foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -642,32 +643,33 @@ namespace Kermalis.EndianBinaryIO
                     {
                         elementType = Enum.GetUnderlyingType(elementType);
                     }
-                    switch (elementType.FullName)
+                    switch (Type.GetTypeCode(elementType))
                     {
-                        case "System.Boolean":
+                        case TypeCode.Boolean:
                         {
                             BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
                             value = ReadBooleans(arrayLength, booleanSize);
                             break;
                         }
-                        case "System.Byte": value = ReadBytes(arrayLength); break;
-                        case "System.SByte": value = ReadSBytes(arrayLength); break;
-                        case "System.Char":
+                        case TypeCode.Byte: value = ReadBytes(arrayLength); break;
+                        case TypeCode.SByte: value = ReadSBytes(arrayLength); break;
+                        case TypeCode.Char:
                         {
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                             value = ReadChars(arrayLength, encodingType);
                             break;
                         }
-                        case "System.Int16": value = ReadInt16s(arrayLength); break;
-                        case "System.UInt16": value = ReadUInt16s(arrayLength); break;
-                        case "System.Int32": value = ReadInt32s(arrayLength); break;
-                        case "System.UInt32": value = ReadUInt32s(arrayLength); break;
-                        case "System.Int64": value = ReadInt64s(arrayLength); break;
-                        case "System.UInt64": value = ReadUInt64s(arrayLength); break;
-                        case "System.Single": value = ReadSingles(arrayLength); break;
-                        case "System.Double": value = ReadDoubles(arrayLength); break;
-                        case "System.Decimal": value = ReadDecimals(arrayLength); break;
-                        case "System.String":
+                        case TypeCode.Int16: value = ReadInt16s(arrayLength); break;
+                        case TypeCode.UInt16: value = ReadUInt16s(arrayLength); break;
+                        case TypeCode.Int32: value = ReadInt32s(arrayLength); break;
+                        case TypeCode.UInt32: value = ReadUInt32s(arrayLength); break;
+                        case TypeCode.Int64: value = ReadInt64s(arrayLength); break;
+                        case TypeCode.UInt64: value = ReadUInt64s(arrayLength); break;
+                        case TypeCode.Single: value = ReadSingles(arrayLength); break;
+                        case TypeCode.Double: value = ReadDoubles(arrayLength); break;
+                        case TypeCode.Decimal: value = ReadDecimals(arrayLength); break;
+                        case TypeCode.DateTime: value = ReadDateTimes(arrayLength); break;
+                        case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
@@ -687,7 +689,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
-                        default:
+                        case TypeCode.Object:
                         {
                             value = Array.CreateInstance(elementType, arrayLength);
                             if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
@@ -709,6 +711,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
+                        default: throw new ArgumentOutOfRangeException(nameof(elementType));
                     }
                 }
                 else
@@ -717,32 +720,33 @@ namespace Kermalis.EndianBinaryIO
                     {
                         propertyType = Enum.GetUnderlyingType(propertyType);
                     }
-                    switch (propertyType.FullName)
+                    switch (Type.GetTypeCode(propertyType))
                     {
-                        case "System.Boolean":
+                        case TypeCode.Boolean:
                         {
                             BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
                             value = ReadBoolean(booleanSize);
                             break;
                         }
-                        case "System.Byte": value = ReadByte(); break;
-                        case "System.SByte": value = ReadSByte(); break;
-                        case "System.Char":
+                        case TypeCode.Byte: value = ReadByte(); break;
+                        case TypeCode.SByte: value = ReadSByte(); break;
+                        case TypeCode.Char:
                         {
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                             value = ReadChar(encodingType);
                             break;
                         }
-                        case "System.Int16": value = ReadInt16(); break;
-                        case "System.UInt16": value = ReadUInt16(); break;
-                        case "System.Int32": value = ReadInt32(); break;
-                        case "System.UInt32": value = ReadUInt32(); break;
-                        case "System.Int64": value = ReadInt64(); break;
-                        case "System.UInt64": value = ReadUInt64(); break;
-                        case "System.Single": value = ReadSingle(); break;
-                        case "System.Double": value = ReadDouble(); break;
-                        case "System.Decimal": value = ReadDecimal(); break;
-                        case "System.String":
+                        case TypeCode.Int16: value = ReadInt16(); break;
+                        case TypeCode.UInt16: value = ReadUInt16(); break;
+                        case TypeCode.Int32: value = ReadInt32(); break;
+                        case TypeCode.UInt32: value = ReadUInt32(); break;
+                        case TypeCode.Int64: value = ReadInt64(); break;
+                        case TypeCode.UInt64: value = ReadUInt64(); break;
+                        case TypeCode.Single: value = ReadSingle(); break;
+                        case TypeCode.Double: value = ReadDouble(); break;
+                        case TypeCode.Decimal: value = ReadDecimal(); break;
+                        case TypeCode.DateTime: value = ReadDateTime(); break;
+                        case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
                             EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
@@ -756,7 +760,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
-                        default:
+                        case TypeCode.Object:
                         {
                             if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
                             {
@@ -769,6 +773,7 @@ namespace Kermalis.EndianBinaryIO
                             }
                             break;
                         }
+                        default: throw new ArgumentOutOfRangeException(nameof(propertyType));
                     }
                 }
 
