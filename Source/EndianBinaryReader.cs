@@ -608,6 +608,19 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadObject(objType);
         }
+        public void ReadIntoObject(IBinarySerializable obj)
+        {
+            if (obj is null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+            obj.Read(this);
+        }
+        public void ReadIntoObject(IBinarySerializable obj, long offset)
+        {
+            BaseStream.Position = offset;
+            ReadIntoObject(obj);
+        }
         public void ReadIntoObject(object obj)
         {
             if (obj is null)

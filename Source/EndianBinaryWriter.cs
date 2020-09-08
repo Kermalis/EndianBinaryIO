@@ -792,6 +792,19 @@ namespace Kermalis.EndianBinaryIO
             Write(value, index, count);
         }
 
+        public void Write(IBinarySerializable obj)
+        {
+            if (obj is null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+            obj.Write(this);
+        }
+        public void Write(IBinarySerializable obj, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(obj);
+        }
         public void Write(object obj)
         {
             if (obj is null)
