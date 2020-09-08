@@ -210,7 +210,7 @@ namespace Kermalis.EndianBinaryIO
         {
             int Validate(int value)
             {
-                if (value <= 0)
+                if (value < 0)
                 {
                     throw new ArgumentOutOfRangeException($"An array property in \"{objType.FullName}\" has an invalid length attribute ({value})");
                 }

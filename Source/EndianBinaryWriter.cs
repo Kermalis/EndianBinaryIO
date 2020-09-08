@@ -40,6 +40,15 @@ namespace Kermalis.EndianBinaryIO
             }
         }
 
+        // Returns true if count is 0
+        private static bool ValidateArraySize(int count)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid array length ({count})");
+            }
+            return count == 0;
+        }
         private void SetBufferSize(int size)
         {
             if (_buffer is null || _buffer.Length < size)
@@ -135,10 +144,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(bool[] value, int index, int count)
         {
-            for (int i = index; i < count; i++)
-            {
-                Write(value[i], BooleanSize);
-            }
+            Write(value, index, count, BooleanSize);
         }
         public void Write(bool[] value, int index, int count, long offset)
         {
@@ -147,6 +153,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(bool[] value, int index, int count, BooleanSize booleanSize)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             for (int i = index; i < count; i++)
             {
                 Write(value[i], booleanSize);
@@ -179,6 +189,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(byte[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(count);
             for (int i = 0; i < count; i++)
             {
@@ -213,6 +227,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(sbyte[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(count);
             for (int i = 0; i < count; i++)
             {
@@ -280,6 +298,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(char[] value, int index, int count, EncodingType encodingType)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
             SetBufferSize(encodingSize * count);
@@ -336,6 +358,56 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, charCount, encodingType);
         }
+        public void Write(string[] value, int index, int count, bool nullTerminated)
+        {
+            Write(value, index, count, nullTerminated, Encoding);
+        }
+        public void Write(string[] value, int index, int count, bool nullTerminated, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, nullTerminated, Encoding);
+        }
+        public void Write(string[] value, int index, int count, bool nullTerminated, EncodingType encodingType)
+        {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                Write(value[i + index], nullTerminated, encodingType);
+            }
+        }
+        public void Write(string[] value, int index, int count, bool nullTerminated, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, nullTerminated, encodingType);
+        }
+        public void Write(string[] value, int index, int count, int charCount)
+        {
+            Write(value, index, count, charCount, Encoding);
+        }
+        public void Write(string[] value, int index, int count, int charCount, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, charCount, Encoding);
+        }
+        public void Write(string[] value, int index, int count, int charCount, EncodingType encodingType)
+        {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                Write(value[i + index], charCount, encodingType);
+            }
+        }
+        public void Write(string[] value, int index, int count, int charCount, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            Write(value, index, count, charCount, encodingType);
+        }
         public void Write(short value)
         {
             SetBufferSize(2);
@@ -362,6 +434,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(short[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
             {
@@ -404,6 +480,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(ushort[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(2 * count);
             for (int i = 0; i < count; i++)
             {
@@ -446,6 +526,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(int[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
             {
@@ -488,6 +572,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(uint[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
             {
@@ -530,6 +618,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(long[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
             {
@@ -572,6 +664,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(ulong[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
             {
@@ -614,6 +710,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(float[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(4 * count);
             for (int i = 0; i < count; i++)
             {
@@ -656,6 +756,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(double[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(8 * count);
             for (int i = 0; i < count; i++)
             {
@@ -698,6 +802,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(decimal[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             SetBufferSize(16 * count);
             for (int i = 0; i < count; i++)
             {
@@ -750,6 +858,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write<TEnum>(TEnum[] value, int index, int count) where TEnum : Enum
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             for (int i = 0; i < count; i++)
             {
                 Write(value[i + index]);
@@ -781,6 +893,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(DateTime[] value, int index, int count)
         {
+            if (ValidateArraySize(count))
+            {
+                return;
+            }
             for (int i = 0; i < count; i++)
             {
                 Write(value[i + index]);
@@ -834,76 +950,76 @@ namespace Kermalis.EndianBinaryIO
                 if (propertyType.IsArray)
                 {
                     int arrayLength = Utils.GetArrayLength(obj, objType, propertyInfo);
-                    // Get array type
-                    Type elementType = propertyType.GetElementType();
-                    if (elementType.IsEnum)
+                    if (arrayLength != 0) // Do not need to do anything for length 0
                     {
-                        elementType = Enum.GetUnderlyingType(elementType);
-                    }
-                    switch (Type.GetTypeCode(elementType))
-                    {
-                        case TypeCode.Boolean:
+                        // Get array type
+                        Type elementType = propertyType.GetElementType();
+                        if (elementType.IsEnum)
                         {
-                            BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                            Write((bool[])value, 0, arrayLength, booleanSize);
-                            break;
+                            elementType = Enum.GetUnderlyingType(elementType);
                         }
-                        case TypeCode.Byte: Write((byte[])value, 0, arrayLength); break;
-                        case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
-                        case TypeCode.Char:
+                        switch (Type.GetTypeCode(elementType))
                         {
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                            Write((char[])value, 0, arrayLength, encodingType);
-                            break;
-                        }
-                        case TypeCode.Int16: Write((short[])value, 0, arrayLength); break;
-                        case TypeCode.UInt16: Write((ushort[])value, 0, arrayLength); break;
-                        case TypeCode.Int32: Write((int[])value, 0, arrayLength); break;
-                        case TypeCode.UInt32: Write((uint[])value, 0, arrayLength); break;
-                        case TypeCode.Int64: Write((long[])value, 0, arrayLength); break;
-                        case TypeCode.UInt64: Write((ulong[])value, 0, arrayLength); break;
-                        case TypeCode.Single: Write((float[])value, 0, arrayLength); break;
-                        case TypeCode.Double: Write((double[])value, 0, arrayLength); break;
-                        case TypeCode.Decimal: Write((decimal[])value, 0, arrayLength); break;
-                        case TypeCode.DateTime: Write((DateTime[])value, 0, arrayLength); break;
-                        case TypeCode.String:
-                        {
-                            Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                            for (int i = 0; i < arrayLength; i++)
+                            case TypeCode.Boolean:
                             {
-                                string str = (string)((Array)value).GetValue(i);
+                                BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                                Write((bool[])value, 0, arrayLength, booleanSize);
+                                break;
+                            }
+                            case TypeCode.Byte: Write((byte[])value, 0, arrayLength); break;
+                            case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
+                            case TypeCode.Char:
+                            {
+                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                                Write((char[])value, 0, arrayLength, encodingType);
+                                break;
+                            }
+                            case TypeCode.Int16: Write((short[])value, 0, arrayLength); break;
+                            case TypeCode.UInt16: Write((ushort[])value, 0, arrayLength); break;
+                            case TypeCode.Int32: Write((int[])value, 0, arrayLength); break;
+                            case TypeCode.UInt32: Write((uint[])value, 0, arrayLength); break;
+                            case TypeCode.Int64: Write((long[])value, 0, arrayLength); break;
+                            case TypeCode.UInt64: Write((ulong[])value, 0, arrayLength); break;
+                            case TypeCode.Single: Write((float[])value, 0, arrayLength); break;
+                            case TypeCode.Double: Write((double[])value, 0, arrayLength); break;
+                            case TypeCode.Decimal: Write((decimal[])value, 0, arrayLength); break;
+                            case TypeCode.DateTime: Write((DateTime[])value, 0, arrayLength); break;
+                            case TypeCode.String:
+                            {
+                                Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
+                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                                 if (nullTerminated.HasValue)
                                 {
-                                    Write(str, nullTerminated.Value, encodingType);
+                                    Write((string[])value, 0, arrayLength, nullTerminated.Value, encodingType);
                                 }
                                 else
                                 {
-                                    Write(str, stringLength, encodingType);
+                                    Write((string[])value, 0, arrayLength, stringLength, encodingType);
                                 }
+                                break;
                             }
-                            break;
-                        }
-                        case TypeCode.Object:
-                        {
-                            if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                            case TypeCode.Object:
                             {
-                                for (int i = 0; i < arrayLength; i++)
+                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                 {
-                                    var serializable = (IBinarySerializable)((Array)value).GetValue(i);
-                                    serializable.Write(this);
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        var serializable = (IBinarySerializable)((Array)value).GetValue(i);
+                                        serializable.Write(this);
+                                    }
                                 }
-                            }
-                            else // Element's type is not supported so try to write the array's objects
-                            {
-                                for (int i = 0; i < arrayLength; i++)
+                                else // Element's type is not supported so try to write the array's objects
                                 {
-                                    Write(((Array)value).GetValue(i));
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        object elementObj = ((Array)value).GetValue(i);
+                                        Write(elementObj);
+                                    }
                                 }
+                                break;
                             }
-                            break;
+                            default: throw new ArgumentOutOfRangeException(nameof(elementType));
                         }
-                        default: throw new ArgumentOutOfRangeException(nameof(elementType));
                     }
                 }
                 else

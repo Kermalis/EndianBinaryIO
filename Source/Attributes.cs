@@ -49,7 +49,7 @@ namespace Kermalis.EndianBinaryIO
 
         public BinaryArrayFixedLengthAttribute(int length)
         {
-            if (length <= 0)
+            if (length < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(length));
             }

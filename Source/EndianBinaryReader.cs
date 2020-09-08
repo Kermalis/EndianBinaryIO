@@ -40,6 +40,21 @@ namespace Kermalis.EndianBinaryIO
             }
         }
 
+        // Returns true if count is 0
+        private static bool ValidateArraySize<T>(int count, out T[] array)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid array length ({count})");
+            }
+            if (count == 0)
+            {
+                array = Array.Empty<T>();
+                return true;
+            }
+            array = null;
+            return false;
+        }
         private void ReadBytesIntoBuffer(int primitiveCount, int primitiveSize)
         {
             int byteCount = primitiveCount * primitiveSize;
@@ -150,10 +165,13 @@ namespace Kermalis.EndianBinaryIO
         }
         public bool[] ReadBooleans(int count, BooleanSize size)
         {
-            bool[] array = new bool[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out bool[] array))
             {
-                array[i] = ReadBoolean(size);
+                array = new bool[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = ReadBoolean(size);
+                }
             }
             return array;
         }
@@ -174,11 +192,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public byte[] ReadBytes(int count)
         {
-            ReadBytesIntoBuffer(count, 1);
-            byte[] array = new byte[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out byte[] array))
             {
-                array[i] = _buffer[i];
+                ReadBytesIntoBuffer(count, 1);
+                array = new byte[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = _buffer[i];
+                }
             }
             return array;
         }
@@ -199,11 +220,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public sbyte[] ReadSBytes(int count)
         {
-            ReadBytesIntoBuffer(count, 1);
-            sbyte[] array = new sbyte[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out sbyte[] array))
             {
-                array[i] = (sbyte)_buffer[i];
+                ReadBytesIntoBuffer(count, 1);
+                array = new sbyte[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = (sbyte)_buffer[i];
+                }
             }
             return array;
         }
@@ -244,6 +268,10 @@ namespace Kermalis.EndianBinaryIO
         }
         public char[] ReadChars(int count, EncodingType encodingType)
         {
+            if (ValidateArraySize(count, out char[] array))
+            {
+                return array;
+            }
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int encodingSize = Utils.EncodingSize(encoding);
             ReadBytesIntoBuffer(count, encodingSize);
@@ -300,6 +328,58 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadString(charCount, encodingType);
         }
+        public string[] ReadStringsNullTerminated(int count)
+        {
+            return ReadStringsNullTerminated(count, Encoding);
+        }
+        public string[] ReadStringsNullTerminated(int count, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadStringsNullTerminated(count);
+        }
+        public string[] ReadStringsNullTerminated(int count, EncodingType encodingType)
+        {
+            if (!ValidateArraySize(count, out string[] array))
+            {
+                array = new string[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = ReadStringNullTerminated(encodingType);
+                }
+            }
+            return array;
+        }
+        public string[] ReadStringsNullTerminated(int count, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadStringsNullTerminated(count, encodingType);
+        }
+        public string[] ReadStrings(int count, int charCount)
+        {
+            return ReadStrings(count, charCount, Encoding);
+        }
+        public string[] ReadStrings(int count, int charCount, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadStrings(count, charCount);
+        }
+        public string[] ReadStrings(int count, int charCount, EncodingType encodingType)
+        {
+            if (!ValidateArraySize(count, out string[] array))
+            {
+                array = new string[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = ReadString(charCount, encodingType);
+                }
+            }
+            return array;
+        }
+        public string[] ReadStrings(int count, int charCount, EncodingType encodingType, long offset)
+        {
+            BaseStream.Position = offset;
+            return ReadStrings(count, charCount, encodingType);
+        }
         public short ReadInt16()
         {
             ReadBytesIntoBuffer(1, 2);
@@ -312,11 +392,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public short[] ReadInt16s(int count)
         {
-            ReadBytesIntoBuffer(count, 2);
-            short[] array = new short[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out short[] array))
             {
-                array[i] = Utils.BytesToInt16(_buffer, 2 * i);
+                ReadBytesIntoBuffer(count, 2);
+                array = new short[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToInt16(_buffer, 2 * i);
+                }
             }
             return array;
         }
@@ -337,11 +420,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public ushort[] ReadUInt16s(int count)
         {
-            ReadBytesIntoBuffer(count, 2);
-            ushort[] array = new ushort[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out ushort[] array))
             {
-                array[i] = (ushort)Utils.BytesToInt16(_buffer, 2 * i);
+                ReadBytesIntoBuffer(count, 2);
+                array = new ushort[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = (ushort)Utils.BytesToInt16(_buffer, 2 * i);
+                }
             }
             return array;
         }
@@ -362,11 +448,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public int[] ReadInt32s(int count)
         {
-            ReadBytesIntoBuffer(count, 4);
-            int[] array = new int[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out int[] array))
             {
-                array[i] = Utils.BytesToInt32(_buffer, 4 * i);
+                ReadBytesIntoBuffer(count, 4);
+                array = new int[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToInt32(_buffer, 4 * i);
+                }
             }
             return array;
         }
@@ -387,11 +476,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public uint[] ReadUInt32s(int count)
         {
-            ReadBytesIntoBuffer(count, 4);
-            uint[] array = new uint[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out uint[] array))
             {
-                array[i] = (uint)Utils.BytesToInt32(_buffer, 4 * i);
+                ReadBytesIntoBuffer(count, 4);
+                array = new uint[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = (uint)Utils.BytesToInt32(_buffer, 4 * i);
+                }
             }
             return array;
         }
@@ -412,11 +504,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public long[] ReadInt64s(int count)
         {
-            ReadBytesIntoBuffer(count, 8);
-            long[] array = new long[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out long[] array))
             {
-                array[i] = Utils.BytesToInt64(_buffer, 8 * i);
+                ReadBytesIntoBuffer(count, 8);
+                array = new long[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToInt64(_buffer, 8 * i);
+                }
             }
             return array;
         }
@@ -437,11 +532,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public ulong[] ReadUInt64s(int count)
         {
-            ReadBytesIntoBuffer(count, 8);
-            ulong[] array = new ulong[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out ulong[] array))
             {
-                array[i] = (ulong)Utils.BytesToInt64(_buffer, 8 * i);
+                ReadBytesIntoBuffer(count, 8);
+                array = new ulong[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = (ulong)Utils.BytesToInt64(_buffer, 8 * i);
+                }
             }
             return array;
         }
@@ -462,11 +560,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public float[] ReadSingles(int count)
         {
-            ReadBytesIntoBuffer(count, 4);
-            float[] array = new float[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out float[] array))
             {
-                array[i] = Utils.BytesToSingle(_buffer, 4 * i);
+                ReadBytesIntoBuffer(count, 4);
+                array = new float[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToSingle(_buffer, 4 * i);
+                }
             }
             return array;
         }
@@ -487,11 +588,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public double[] ReadDoubles(int count)
         {
-            ReadBytesIntoBuffer(count, 8);
-            double[] array = new double[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out double[] array))
             {
-                array[i] = Utils.BytesToDouble(_buffer, 8 * i);
+                ReadBytesIntoBuffer(count, 8);
+                array = new double[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToDouble(_buffer, 8 * i);
+                }
             }
             return array;
         }
@@ -512,11 +616,14 @@ namespace Kermalis.EndianBinaryIO
         }
         public decimal[] ReadDecimals(int count)
         {
-            ReadBytesIntoBuffer(count, 16);
-            decimal[] array = new decimal[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out decimal[] array))
             {
-                array[i] = Utils.BytesToDecimal(_buffer, 16 * i);
+                ReadBytesIntoBuffer(count, 16);
+                array = new decimal[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = Utils.BytesToDecimal(_buffer, 16 * i);
+                }
             }
             return array;
         }
@@ -554,10 +661,13 @@ namespace Kermalis.EndianBinaryIO
         }
         public TEnum[] ReadEnums<TEnum>(int count) where TEnum : struct, Enum
         {
-            var array = new TEnum[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out TEnum[] array))
             {
-                array[i] = ReadEnum<TEnum>();
+                array = new TEnum[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = ReadEnum<TEnum>();
+                }
             }
             return array;
         }
@@ -578,10 +688,13 @@ namespace Kermalis.EndianBinaryIO
         }
         public DateTime[] ReadDateTimes(int count)
         {
-            var array = new DateTime[count];
-            for (int i = 0; i < count; i++)
+            if (!ValidateArraySize(count, out DateTime[] array))
             {
-                array[i] = ReadDateTime();
+                array = new DateTime[count];
+                for (int i = 0; i < count; i++)
+                {
+                    array[i] = ReadDateTime();
+                }
             }
             return array;
         }
@@ -656,79 +769,80 @@ namespace Kermalis.EndianBinaryIO
                     int arrayLength = Utils.GetArrayLength(obj, objType, propertyInfo);
                     // Get array type
                     Type elementType = propertyType.GetElementType();
-                    if (elementType.IsEnum)
+                    if (arrayLength == 0)
                     {
-                        elementType = Enum.GetUnderlyingType(elementType);
+                        value = Array.CreateInstance(elementType, 0); // Create 0 length array regardless of type
                     }
-                    switch (Type.GetTypeCode(elementType))
+                    else
                     {
-                        case TypeCode.Boolean:
+                        if (elementType.IsEnum)
                         {
-                            BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
-                            value = ReadBooleans(arrayLength, booleanSize);
-                            break;
+                            elementType = Enum.GetUnderlyingType(elementType);
                         }
-                        case TypeCode.Byte: value = ReadBytes(arrayLength); break;
-                        case TypeCode.SByte: value = ReadSBytes(arrayLength); break;
-                        case TypeCode.Char:
+                        switch (Type.GetTypeCode(elementType))
                         {
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                            value = ReadChars(arrayLength, encodingType);
-                            break;
-                        }
-                        case TypeCode.Int16: value = ReadInt16s(arrayLength); break;
-                        case TypeCode.UInt16: value = ReadUInt16s(arrayLength); break;
-                        case TypeCode.Int32: value = ReadInt32s(arrayLength); break;
-                        case TypeCode.UInt32: value = ReadUInt32s(arrayLength); break;
-                        case TypeCode.Int64: value = ReadInt64s(arrayLength); break;
-                        case TypeCode.UInt64: value = ReadUInt64s(arrayLength); break;
-                        case TypeCode.Single: value = ReadSingles(arrayLength); break;
-                        case TypeCode.Double: value = ReadDoubles(arrayLength); break;
-                        case TypeCode.Decimal: value = ReadDecimals(arrayLength); break;
-                        case TypeCode.DateTime: value = ReadDateTimes(arrayLength); break;
-                        case TypeCode.String:
-                        {
-                            Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
-                            value = Array.CreateInstance(elementType, arrayLength);
-                            for (int i = 0; i < arrayLength; i++)
+                            case TypeCode.Boolean:
                             {
-                                string str;
+                                BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                                value = ReadBooleans(arrayLength, booleanSize);
+                                break;
+                            }
+                            case TypeCode.Byte: value = ReadBytes(arrayLength); break;
+                            case TypeCode.SByte: value = ReadSBytes(arrayLength); break;
+                            case TypeCode.Char:
+                            {
+                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                                value = ReadChars(arrayLength, encodingType);
+                                break;
+                            }
+                            case TypeCode.Int16: value = ReadInt16s(arrayLength); break;
+                            case TypeCode.UInt16: value = ReadUInt16s(arrayLength); break;
+                            case TypeCode.Int32: value = ReadInt32s(arrayLength); break;
+                            case TypeCode.UInt32: value = ReadUInt32s(arrayLength); break;
+                            case TypeCode.Int64: value = ReadInt64s(arrayLength); break;
+                            case TypeCode.UInt64: value = ReadUInt64s(arrayLength); break;
+                            case TypeCode.Single: value = ReadSingles(arrayLength); break;
+                            case TypeCode.Double: value = ReadDoubles(arrayLength); break;
+                            case TypeCode.Decimal: value = ReadDecimals(arrayLength); break;
+                            case TypeCode.DateTime: value = ReadDateTimes(arrayLength); break;
+                            case TypeCode.String:
+                            {
+                                Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
+                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
                                 if (nullTerminated == true)
                                 {
-                                    str = ReadStringNullTerminated(encodingType);
+                                    value = ReadStringsNullTerminated(arrayLength, encodingType);
                                 }
                                 else
                                 {
-                                    str = ReadString(stringLength, encodingType);
+                                    value = ReadStrings(arrayLength, stringLength, encodingType);
                                 }
-                                ((Array)value).SetValue(str, i);
+                                break;
                             }
-                            break;
-                        }
-                        case TypeCode.Object:
-                        {
-                            value = Array.CreateInstance(elementType, arrayLength);
-                            if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
+                            case TypeCode.Object:
                             {
-                                for (int i = 0; i < arrayLength; i++)
+                                value = Array.CreateInstance(elementType, arrayLength);
+                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
                                 {
-                                    var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
-                                    serializable.Read(this);
-                                    ((Array)value).SetValue(serializable, i);
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        var serializable = (IBinarySerializable)Activator.CreateInstance(elementType);
+                                        serializable.Read(this);
+                                        ((Array)value).SetValue(serializable, i);
+                                    }
                                 }
-                            }
-                            else // Element's type is not supported so try to read the array's objects
-                            {
-                                for (int i = 0; i < arrayLength; i++)
+                                else // Element's type is not supported so try to read the array's objects
                                 {
-                                    object elementObj = ReadObject(elementType);
-                                    ((Array)value).SetValue(elementObj, i);
+                                    for (int i = 0; i < arrayLength; i++)
+                                    {
+                                        object elementObj = ReadObject(elementType);
+                                        ((Array)value).SetValue(elementObj, i);
+                                    }
                                 }
+                                break;
                             }
-                            break;
+                            default: throw new ArgumentOutOfRangeException(nameof(elementType));
                         }
-                        default: throw new ArgumentOutOfRangeException(nameof(elementType));
                     }
                 }
                 else
