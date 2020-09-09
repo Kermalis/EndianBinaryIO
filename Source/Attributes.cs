@@ -2,8 +2,13 @@
 
 namespace Kermalis.EndianBinaryIO
 {
+    public interface IBinaryAttribute<T>
+    {
+        T Value { get; }
+    }
+
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryIgnoreAttribute : Attribute
+    public sealed class BinaryIgnoreAttribute : Attribute, IBinaryAttribute<bool>
     {
         public bool Value { get; }
 
@@ -13,27 +18,35 @@ namespace Kermalis.EndianBinaryIO
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryBooleanSizeAttribute : Attribute
+    public sealed class BinaryBooleanSizeAttribute : Attribute, IBinaryAttribute<BooleanSize>
     {
         public BooleanSize Value { get; }
 
         public BinaryBooleanSizeAttribute(BooleanSize booleanSize = BooleanSize.U8)
         {
+            if (booleanSize >= BooleanSize.MAX)
+            {
+                throw new ArgumentOutOfRangeException($"{nameof(BinaryBooleanSizeAttribute)} cannot be created with a size of {booleanSize}.");
+            }
             Value = booleanSize;
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryEncodingAttribute : Attribute
+    public sealed class BinaryEncodingAttribute : Attribute, IBinaryAttribute<EncodingType>
     {
         public EncodingType Value { get; }
 
         public BinaryEncodingAttribute(EncodingType encodingType = EncodingType.ASCII)
         {
+            if (encodingType >= EncodingType.MAX)
+            {
+                throw new ArgumentOutOfRangeException($"{nameof(BinaryEncodingAttribute)} cannot be created with a size of {encodingType}.");
+            }
             Value = encodingType;
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryStringNullTerminatedAttribute : Attribute
+    public sealed class BinaryStringNullTerminatedAttribute : Attribute, IBinaryAttribute<bool>
     {
         public bool Value { get; }
 
@@ -43,7 +56,7 @@ namespace Kermalis.EndianBinaryIO
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryArrayFixedLengthAttribute : Attribute
+    public sealed class BinaryArrayFixedLengthAttribute : Attribute, IBinaryAttribute<int>
     {
         public int Value { get; }
 
@@ -51,13 +64,13 @@ namespace Kermalis.EndianBinaryIO
         {
             if (length < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(length));
+                throw new ArgumentOutOfRangeException($"{nameof(BinaryArrayFixedLengthAttribute)} cannot be created with a length of {length}. Length must be 0 or greater.");
             }
             Value = length;
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryArrayVariableLengthAttribute : Attribute
+    public sealed class BinaryArrayVariableLengthAttribute : Attribute, IBinaryAttribute<string>
     {
         public string Value { get; }
 
@@ -67,7 +80,7 @@ namespace Kermalis.EndianBinaryIO
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryStringFixedLengthAttribute : Attribute
+    public sealed class BinaryStringFixedLengthAttribute : Attribute, IBinaryAttribute<int>
     {
         public int Value { get; }
 
@@ -75,13 +88,13 @@ namespace Kermalis.EndianBinaryIO
         {
             if (length <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(length));
+                throw new ArgumentOutOfRangeException($"{nameof(BinaryStringFixedLengthAttribute)} cannot be created with a length of {length}. Length must be 0 or greater.");
             }
             Value = length;
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryStringVariableLengthAttribute : Attribute
+    public sealed class BinaryStringVariableLengthAttribute : Attribute, IBinaryAttribute<string>
     {
         public string Value { get; }
 

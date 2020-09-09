@@ -8,9 +8,45 @@ namespace Kermalis.EndianBinaryIO
     public class EndianBinaryWriter : IDisposable
     {
         public Stream BaseStream { get; }
-        public Endianness Endianness { get; set; }
-        public EncodingType Encoding { get; set; }
-        public BooleanSize BooleanSize { get; set; }
+        private Endianness _endianness;
+        public Endianness Endianness
+        {
+            get => _endianness;
+            set
+            {
+                if (value >= Endianness.MAX)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+                _endianness = value;
+            }
+        }
+        private EncodingType _encoding;
+        public EncodingType Encoding
+        {
+            get => _encoding;
+            set
+            {
+                if (value >= EncodingType.MAX)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+                _encoding = value;
+            }
+        }
+        private BooleanSize _booleanSize;
+        public BooleanSize BooleanSize
+        {
+            get => _booleanSize;
+            set
+            {
+                if (value >= BooleanSize.MAX)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+                _booleanSize = value;
+            }
+        }
 
         private byte[] _buffer;
         private bool _isDisposed;
@@ -939,7 +975,7 @@ namespace Kermalis.EndianBinaryIO
             // Get public non-static properties
             foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                if (Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryIgnoreAttribute), false))
+                if (Utils.AttributeValueOrDefault<BinaryIgnoreAttribute, bool>(propertyInfo, false))
                 {
                     continue; // Skip properties with BinaryIgnoreAttribute
                 }
@@ -962,7 +998,7 @@ namespace Kermalis.EndianBinaryIO
                         {
                             case TypeCode.Boolean:
                             {
-                                BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                                BooleanSize booleanSize = Utils.AttributeValueOrDefault<BinaryBooleanSizeAttribute, BooleanSize>(propertyInfo, BooleanSize);
                                 Write((bool[])value, 0, arrayLength, booleanSize);
                                 break;
                             }
@@ -970,7 +1006,7 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
                             case TypeCode.Char:
                             {
-                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
                                 Write((char[])value, 0, arrayLength, encodingType);
                                 break;
                             }
@@ -987,7 +1023,7 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.String:
                             {
                                 Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                                EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
                                 if (nullTerminated.HasValue)
                                 {
                                     Write((string[])value, 0, arrayLength, nullTerminated.Value, encodingType);
@@ -1032,7 +1068,7 @@ namespace Kermalis.EndianBinaryIO
                     {
                         case TypeCode.Boolean:
                         {
-                            BooleanSize booleanSize = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryBooleanSizeAttribute), BooleanSize);
+                            BooleanSize booleanSize = Utils.AttributeValueOrDefault<BinaryBooleanSizeAttribute, BooleanSize>(propertyInfo, BooleanSize);
                             Write((bool)value, booleanSize);
                             break;
                         }
@@ -1040,7 +1076,7 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.SByte: Write((sbyte)value); break;
                         case TypeCode.Char:
                         {
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
                             Write((char)value, encodingType);
                             break;
                         }
@@ -1057,7 +1093,7 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                            EncodingType encodingType = Utils.AttributeValueOrDefault(propertyInfo, typeof(BinaryEncodingAttribute), Encoding);
+                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
                             if (nullTerminated.HasValue)
                             {
                                 Write((string)value, nullTerminated.Value, encodingType);

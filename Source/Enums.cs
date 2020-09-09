@@ -1,26 +1,29 @@
 ﻿namespace Kermalis.EndianBinaryIO
 {
-    public enum BooleanSize
+    public enum BooleanSize : byte
     {
         U8,
         U16,
-        U32
+        U32,
+        MAX
     }
 
-    public enum Endianness
+    public enum Endianness : byte
     {
         LittleEndian,
-        BigEndian
+        BigEndian,
+        MAX
     }
 
-    public enum EncodingType
+    public enum EncodingType : byte
     {
         ASCII,
         UTF7,
         UTF8,
         UTF16,
         BigEndianUTF16,
-        UTF32
+        UTF32,
+        MAX
     }
 }
 
