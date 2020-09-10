@@ -43,7 +43,7 @@ namespace Kermalis.EndianBinaryIOTests
         private static readonly byte[] _bytes = new byte[]
         {
             0x00, 0x08, // ShortSizedEnum.Val2
-            0xFF, 0x01, // (short)0x1FF
+            0xFF, 0x01, // (short)511
             0x00, 0x00, 0x4A, 0x7A, 0x9E, 0x01, 0xC0, 0x08, // (DateTime)Dec. 30, 1998
 
             0x00, 0x00, 0x00, 0x00, // (uint)0
@@ -65,9 +65,9 @@ namespace Kermalis.EndianBinaryIOTests
 
             0x00, 0x00, 0x00, 0x00, // (bool32)false
 
-            0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00, // "EndianBinaryIO\0"
+            0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00, // (ASCII)"EndianBinaryIO\0"
 
-            0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // "Kermalis\0\0"
+            0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16)"Kermalis\0\0"
         };
 
         [Fact]
@@ -81,7 +81,7 @@ namespace Kermalis.EndianBinaryIOTests
             }
 
             Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
-            Assert.True(obj.Version == 0x1FF); // short works
+            Assert.True(obj.Version == 511); // short works
             Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
 
             Assert.True(obj.DoNotReadOrWrite == default); // Ignored
@@ -110,7 +110,7 @@ namespace Kermalis.EndianBinaryIOTests
                 obj.Type = reader.ReadEnum<ShortSizedEnum>();
                 Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
                 obj.Version = reader.ReadInt16();
-                Assert.True(obj.Version == 0x1FF); // short works
+                Assert.True(obj.Version == 511); // short works
                 obj.Date = reader.ReadDateTime();
                 Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
 
