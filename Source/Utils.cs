@@ -6,8 +6,6 @@ namespace Kermalis.EndianBinaryIO
 {
     internal sealed class Utils
     {
-        public static Endianness SystemEndianness { get; } = BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
-
         public static Encoding EncodingFromEnum(EncodingType encodingType)
         {
             switch (encodingType)
@@ -33,142 +31,14 @@ namespace Kermalis.EndianBinaryIO
             }
             return 1;
         }
-
-        public static unsafe byte[] Int16ToBytes(short value)
+        public static void TruncateString(string str, int length, out char[] toArray)
         {
-            byte[] bytes = new byte[2];
-            fixed (byte* b = bytes)
+            toArray = new char[length];
+            int numCharsToCopy = Math.Min(length, str.Length);
+            for (int i = 0; i < numCharsToCopy; i++)
             {
-                *(short*)b = value;
+                toArray[i] = str[i];
             }
-            return bytes;
-        }
-        public static unsafe byte[] Int32ToBytes(int value)
-        {
-            byte[] bytes = new byte[4];
-            fixed (byte* b = bytes)
-            {
-                *(int*)b = value;
-            }
-            return bytes;
-        }
-        public static unsafe byte[] Int64ToBytes(long value)
-        {
-            byte[] bytes = new byte[8];
-            fixed (byte* b = bytes)
-            {
-                *(long*)b = value;
-            }
-            return bytes;
-        }
-        public static unsafe byte[] SingleToBytes(float value)
-        {
-            byte[] bytes = new byte[4];
-            fixed (byte* b = bytes)
-            {
-                *(float*)b = value;
-            }
-            return bytes;
-        }
-        public static unsafe byte[] DoubleToBytes(double value)
-        {
-            byte[] bytes = new byte[8];
-            fixed (byte* b = bytes)
-            {
-                *(double*)b = value;
-            }
-            return bytes;
-        }
-        public static unsafe byte[] DecimalToBytes(decimal value)
-        {
-            byte[] bytes = new byte[16];
-            fixed (byte* b = bytes)
-            {
-                *(decimal*)b = value;
-            }
-            return bytes;
-        }
-        public static unsafe short BytesToInt16(byte[] value, int startIndex)
-        {
-            fixed (byte* b = &value[startIndex])
-            {
-                if (SystemEndianness == Endianness.LittleEndian)
-                {
-                    return (short)((*b) | (*(b + 1) << 8));
-                }
-                else
-                {
-                    return (short)((*b << 8) | (*(b + 1)));
-                }
-            }
-        }
-        public static unsafe int BytesToInt32(byte[] value, int startIndex)
-        {
-            fixed (byte* b = &value[startIndex])
-            {
-                if (SystemEndianness == Endianness.LittleEndian)
-                {
-                    return (*b) | (*(b + 1) << 8) | (*(b + 2) << 16) | (*(b + 3) << 24);
-                }
-                else
-                {
-                    return (*b << 24) | (*(b + 1) << 16) | (*(b + 2) << 8) | (*(b + 3));
-                }
-            }
-        }
-        public static unsafe long BytesToInt64(byte[] value, int startIndex)
-        {
-            fixed (byte* b = &value[startIndex])
-            {
-                if (SystemEndianness == Endianness.LittleEndian)
-                {
-                    int i1 = (*b) | (*(b + 1) << 8) | (*(b + 2) << 16) | (*(b + 3) << 24);
-                    int i2 = (*(b + 4)) | (*(b + 5) << 8) | (*(b + 6) << 16) | (*(b + 7) << 24);
-                    return (uint)i1 | ((long)i2 << 32);
-                }
-                else
-                {
-                    int i1 = (*b << 24) | (*(b + 1) << 16) | (*(b + 2) << 8) | (*(b + 3));
-                    int i2 = (*(b + 4) << 24) | (*(b + 5) << 16) | (*(b + 6) << 8) | (*(b + 7));
-                    return (uint)i2 | ((long)i1 << 32);
-                }
-            }
-        }
-        public static unsafe float BytesToSingle(byte[] value, int startIndex)
-        {
-            int val = BytesToInt32(value, startIndex);
-            return *(float*)&val;
-        }
-        public static unsafe double BytesToDouble(byte[] value, int startIndex)
-        {
-            long val = BytesToInt64(value, startIndex);
-            return *(double*)&val;
-        }
-        // TODO: https://github.com/Kermalis/EndianBinaryIO/issues/3
-        public static unsafe decimal BytesToDecimal(byte[] value, int startIndex)
-        {
-            int i1, i2, i3, i4;
-            int[] bits;
-            fixed (byte* b = &value[startIndex])
-            {
-                if (SystemEndianness == Endianness.LittleEndian)
-                {
-                    i1 = (*b) | (*(b + 1) << 8) | (*(b + 2) << 16) | (*(b + 3) << 24);
-                    i2 = (*(b + 4)) | (*(b + 5) << 8) | (*(b + 6) << 16) | (*(b + 7) << 24);
-                    i3 = (*(b + 8)) | (*(b + 9) << 8) | (*(b + 10) << 16) | (*(b + 11) << 24);
-                    i4 = (*(b + 12)) | (*(b + 13) << 8) | (*(b + 14) << 16) | (*(b + 15) << 24);
-                    bits = new int[] { i3, i4, i2, i1 };
-                }
-                else
-                {
-                    i1 = (*b << 24) | (*(b + 1) << 16) | (*(b + 2) << 8) | (*(b + 3));
-                    i2 = (*(b + 4) << 24) | (*(b + 5) << 16) | (*(b + 6) << 8) | (*(b + 7));
-                    i3 = (*(b + 8) << 24) | (*(b + 9) << 16) | (*(b + 10) << 8) | (*(b + 11));
-                    i4 = (*(b + 12) << 24) | (*(b + 13) << 16) | (*(b + 14) << 8) | (*(b + 15));
-                    bits = new int[] { i2, i1, i3, i4 }; // Not tested, as I do not have a big endian system
-                }
-            }
-            return new decimal(bits);
         }
 
         public static bool TryGetAttribute<TAttribute>(PropertyInfo propertyInfo, out TAttribute attribute) where TAttribute : Attribute
@@ -195,33 +65,45 @@ namespace Kermalis.EndianBinaryIO
             return defaultValue;
         }
 
-        public static void FlipPrimitives(byte[] buffer, Endianness targetEndianness, int byteCount, int primitiveSize)
-        {
-            if (SystemEndianness == targetEndianness || primitiveSize <= 1)
-            {
-                return;
-            }
-            for (int i = 0; i < byteCount; i += primitiveSize)
-            {
-                int a = i;
-                int b = i + primitiveSize - 1;
-                while (a < b)
-                {
-                    byte by = buffer[a];
-                    buffer[a] = buffer[b];
-                    buffer[b] = by;
-                    a++;
-                    b--;
-                }
-            }
-        }
-
         public static void ThrowIfCannotReadWriteType(Type type)
         {
             if (type.IsArray || type.IsEnum || type.IsInterface || type.IsPointer || type.IsPrimitive)
             {
                 throw new ArgumentException(nameof(type), $"Cannot read/write \"{type.FullName}\" objects.");
             }
+        }
+
+        // Returns true if count is 0
+        public static bool ValidateReadArraySize<T>(int count, out T[] array)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid array length ({count})");
+            }
+            if (count == 0)
+            {
+                array = Array.Empty<T>();
+                return true;
+            }
+            array = null;
+            return false;
+        }
+        // Returns true if count is 0
+        public static bool ValidateArrayIndexAndCount(Array array, int startIndex, int count)
+        {
+            if (array is null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid array length ({count})");
+            }
+            if (startIndex + count > array.Length)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid array index + count (StartIndex: {startIndex}, Count: {count}, Array Length: {array.Length})");
+            }
+            return count == 0;
         }
 
         public static int GetArrayLength(object obj, Type objType, PropertyInfo propertyInfo)
