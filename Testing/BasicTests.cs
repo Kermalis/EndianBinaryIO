@@ -185,7 +185,7 @@ namespace Kermalis.EndianBinaryIOTests
                     Bool32 = false,
 
                     NullTerminatedASCIIString = "EndianBinaryIO",
-                    UTF16String = "Kermalis\0\0"
+                    UTF16String = "Kermalis"
                 };
 
                 writer.Write(obj.Type);
