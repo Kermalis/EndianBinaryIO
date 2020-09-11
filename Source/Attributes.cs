@@ -103,4 +103,14 @@ namespace Kermalis.EndianBinaryIO
             Value = anchor;
         }
     }
+    [AttributeUsage(AttributeTargets.Property)]
+    public sealed class BinaryStringTrimNullTerminatorsAttribute : Attribute, IBinaryAttribute<bool>
+    {
+        public bool Value { get; }
+
+        public BinaryStringTrimNullTerminatorsAttribute(bool trim = true)
+        {
+            Value = trim;
+        }
+    }
 }

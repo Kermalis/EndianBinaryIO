@@ -37,6 +37,7 @@ namespace Kermalis.EndianBinaryIOTests
             // String encoded in UTF-16 that will only read/write 10 chars
             [BinaryEncoding(EncodingType.UTF16)]
             [BinaryStringFixedLength(10)]
+            [BinaryStringTrimNullTerminators(true)]
             public string UTF16String { get; set; }
         }
 
@@ -95,7 +96,7 @@ namespace Kermalis.EndianBinaryIOTests
             Assert.False(obj.Bool32); // bool32 works
 
             Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
-            Assert.True(obj.UTF16String == "Kermalis\0\0"); // Fixed size (10 chars) utf16
+            Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) utf16, with the \0s trimmed
         }
 
         [Fact]
@@ -126,8 +127,8 @@ namespace Kermalis.EndianBinaryIOTests
 
                 obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII);
                 Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
-                obj.UTF16String = reader.ReadString(10, EncodingType.UTF16);
-                Assert.True(obj.UTF16String == "Kermalis\0\0"); // Fixed size (10 chars) utf16
+                obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16);
+                Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) utf16, with the \0s trimmed
             }
         }
 

@@ -56,8 +56,10 @@ class MyBasicObj
     public string NullTerminatedASCIIString { get; set; }
 
     // String encoded in UTF-16 that will only read/write 10 chars
+    // The BinaryStringTrimNullTerminatorsAttribute will indicate that every char from the first \0 will be removed from the string. This attribute also works with char arrays
     [BinaryEncoding(EncodingType.UTF16)]
     [BinaryStringFixedLength(10)]
+    [BinaryStringTrimNullTerminators(true)]
     public string UTF16String { get; set; }
 }
 ```

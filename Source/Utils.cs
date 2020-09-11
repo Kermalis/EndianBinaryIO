@@ -154,6 +154,10 @@ namespace Kermalis.EndianBinaryIO
                 {
                     throw new ArgumentException($"A string property in \"{objType.FullName}\" has a string length attribute and a {nameof(BinaryStringNullTerminatedAttribute)}; cannot use both.");
                 }
+                if (propertyInfo.IsDefined(typeof(BinaryStringTrimNullTerminatorsAttribute)))
+                {
+                    throw new ArgumentException($"A string property in \"{objType.FullName}\" has a {nameof(BinaryStringNullTerminatedAttribute)} and a {nameof(BinaryStringTrimNullTerminatorsAttribute)}; cannot use both.");
+                }
                 bool nt = GetAttributeValue<BinaryStringNullTerminatedAttribute, bool>(nullTermAttribute);
                 if (forReads && !nt) // Not forcing BinaryStringNullTerminatedAttribute to be treated as true since you may only write objects without reading them.
                 {
