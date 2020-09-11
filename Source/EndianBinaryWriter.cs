@@ -450,7 +450,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(ushort[] value, int startIndex, int count)
         {
-            _buffer = EndianBitConverter.Int16sToBytes(value, startIndex, count, Endianness);
+            _buffer = EndianBitConverter.UInt16sToBytes(value, startIndex, count, Endianness);
             WriteBytesFromBuffer(count * 2);
         }
         public void Write(ushort[] value, int startIndex, int count, long offset)
@@ -508,7 +508,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(uint[] value, int startIndex, int count)
         {
-            _buffer = EndianBitConverter.Int32sToBytes(value, startIndex, count, Endianness);
+            _buffer = EndianBitConverter.UInt32sToBytes(value, startIndex, count, Endianness);
             WriteBytesFromBuffer(count * 4);
         }
         public void Write(uint[] value, int startIndex, int count, long offset)
@@ -566,7 +566,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public void Write(ulong[] value, int startIndex, int count)
         {
-            _buffer = EndianBitConverter.Int64sToBytes(value, startIndex, count, Endianness);
+            _buffer = EndianBitConverter.UInt64sToBytes(value, startIndex, count, Endianness);
             WriteBytesFromBuffer(count * 8);
         }
         public void Write(ulong[] value, int startIndex, int count, long offset)

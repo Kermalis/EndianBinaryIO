@@ -421,7 +421,7 @@ namespace Kermalis.EndianBinaryIO
         public short[] ReadInt16s(int count)
         {
             ReadBytesIntoBuffer(count * 2);
-            return EndianBitConverter.BytesToInt16s<short>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToInt16s(_buffer, 0, count, Endianness);
         }
         public short[] ReadInt16s(int count, long offset)
         {
@@ -441,7 +441,7 @@ namespace Kermalis.EndianBinaryIO
         public ushort[] ReadUInt16s(int count)
         {
             ReadBytesIntoBuffer(count * 2);
-            return EndianBitConverter.BytesToInt16s<ushort>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToUInt16s(_buffer, 0, count, Endianness);
         }
         public ushort[] ReadUInt16s(int count, long offset)
         {
@@ -461,7 +461,7 @@ namespace Kermalis.EndianBinaryIO
         public int[] ReadInt32s(int count)
         {
             ReadBytesIntoBuffer(count * 4);
-            return EndianBitConverter.BytesToInt32s<int>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToInt32s(_buffer, 0, count, Endianness);
         }
         public int[] ReadInt32s(int count, long offset)
         {
@@ -481,7 +481,7 @@ namespace Kermalis.EndianBinaryIO
         public uint[] ReadUInt32s(int count)
         {
             ReadBytesIntoBuffer(count * 4);
-            return EndianBitConverter.BytesToInt32s<uint>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToUInt32s(_buffer, 0, count, Endianness);
         }
         public uint[] ReadUInt32s(int count, long offset)
         {
@@ -501,7 +501,7 @@ namespace Kermalis.EndianBinaryIO
         public long[] ReadInt64s(int count)
         {
             ReadBytesIntoBuffer(count * 8);
-            return EndianBitConverter.BytesToInt64s<long>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToInt64s(_buffer, 0, count, Endianness);
         }
         public long[] ReadInt64s(int count, long offset)
         {
@@ -521,7 +521,7 @@ namespace Kermalis.EndianBinaryIO
         public ulong[] ReadUInt64s(int count)
         {
             ReadBytesIntoBuffer(count * 8);
-            return EndianBitConverter.BytesToInt64s<ulong>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToUInt64s(_buffer, 0, count, Endianness);
         }
         public ulong[] ReadUInt64s(int count, long offset)
         {
@@ -541,7 +541,7 @@ namespace Kermalis.EndianBinaryIO
         public float[] ReadSingles(int count)
         {
             ReadBytesIntoBuffer(count * 4);
-            return EndianBitConverter.BytesToSingles<float>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToSingles(_buffer, 0, count, Endianness);
         }
         public float[] ReadSingles(int count, long offset)
         {
@@ -561,7 +561,7 @@ namespace Kermalis.EndianBinaryIO
         public double[] ReadDoubles(int count)
         {
             ReadBytesIntoBuffer(count * 8);
-            return EndianBitConverter.BytesToDoubles<double>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToDoubles(_buffer, 0, count, Endianness);
         }
         public double[] ReadDoubles(int count, long offset)
         {
@@ -581,7 +581,7 @@ namespace Kermalis.EndianBinaryIO
         public decimal[] ReadDecimals(int count)
         {
             ReadBytesIntoBuffer(count * 16);
-            return EndianBitConverter.BytesToDecimals<decimal>(_buffer, 0, count, Endianness);
+            return EndianBitConverter.BytesToDecimals(_buffer, 0, count, Endianness);
         }
         public decimal[] ReadDecimals(int count, long offset)
         {

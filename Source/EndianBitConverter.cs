@@ -19,7 +19,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] Int16sToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] Int16sToBytes(short[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -32,7 +32,30 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((short*)b)[i] = Convert.ToInt16(value[startIndex + i]);
+                        ((short*)b)[i] = value[startIndex + i];
+                    }
+                }
+                if (SystemEndianness != targetEndianness)
+                {
+                    FlipPrimitives(array, 0, count, 2);
+                }
+            }
+            return array;
+        }
+        public static unsafe byte[] UInt16sToBytes(ushort[] value, int startIndex, int count, Endianness targetEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
+            {
+                return Array.Empty<byte>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out byte[] array))
+            {
+                array = new byte[2 * count];
+                fixed (byte* b = array)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        ((ushort*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -55,7 +78,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] Int32sToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] Int32sToBytes(int[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -68,7 +91,30 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((int*)b)[i] = Convert.ToInt32(value[startIndex + i]);
+                        ((int*)b)[i] = value[startIndex + i];
+                    }
+                }
+                if (SystemEndianness != targetEndianness)
+                {
+                    FlipPrimitives(array, 0, count, 4);
+                }
+            }
+            return array;
+        }
+        public static unsafe byte[] UInt32sToBytes(uint[] value, int startIndex, int count, Endianness targetEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
+            {
+                return Array.Empty<byte>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out byte[] array))
+            {
+                array = new byte[4 * count];
+                fixed (byte* b = array)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        ((uint*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -91,7 +137,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] Int64sToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] Int64sToBytes(long[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -104,7 +150,30 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((long*)b)[i] = Convert.ToInt64(value[startIndex + i]);
+                        ((long*)b)[i] = value[startIndex + i];
+                    }
+                }
+                if (SystemEndianness != targetEndianness)
+                {
+                    FlipPrimitives(array, 0, count, 8);
+                }
+            }
+            return array;
+        }
+        public static unsafe byte[] UInt64sToBytes(ulong[] value, int startIndex, int count, Endianness targetEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
+            {
+                return Array.Empty<byte>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out byte[] array))
+            {
+                array = new byte[8 * count];
+                fixed (byte* b = array)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        ((ulong*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -127,7 +196,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] SinglesToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] SinglesToBytes(float[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -140,7 +209,7 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((float*)b)[i] = Convert.ToSingle(value[startIndex + i]);
+                        ((float*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -163,7 +232,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] DoublesToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] DoublesToBytes(double[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -176,7 +245,7 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((double*)b)[i] = Convert.ToDouble(value[startIndex + i]);
+                        ((double*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -199,7 +268,7 @@ namespace Kermalis.EndianBinaryIO
             }
             return bytes;
         }
-        public static unsafe byte[] DecimalsToBytes<T>(T[] value, int startIndex, int count, Endianness targetEndianness) where T : IConvertible
+        public static unsafe byte[] DecimalsToBytes(decimal[] value, int startIndex, int count, Endianness targetEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -212,7 +281,7 @@ namespace Kermalis.EndianBinaryIO
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        ((decimal*)b)[i] = Convert.ToDecimal(value[startIndex + i]);
+                        ((decimal*)b)[i] = value[startIndex + i];
                     }
                 }
                 if (SystemEndianness != targetEndianness)
@@ -234,24 +303,47 @@ namespace Kermalis.EndianBinaryIO
                 return *(short*)b;
             }
         }
-        public static unsafe T[] BytesToInt16s<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe short[] BytesToInt16s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 2))
             {
-                return Array.Empty<T>();
+                return Array.Empty<short>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out short[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 2);
                 }
-                array = new T[count];
+                array = new short[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((short*)b)[i], typeof(T));
+                        array[i] = ((short*)b)[i];
+                    }
+                }
+            }
+            return array;
+        }
+        public static unsafe ushort[] BytesToUInt16s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 2))
+            {
+                return Array.Empty<ushort>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out ushort[] array))
+            {
+                if (SystemEndianness != sourceEndianness)
+                {
+                    FlipPrimitives(value, startIndex, count, 2);
+                }
+                array = new ushort[count];
+                fixed (byte* b = &value[startIndex])
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        array[i] = ((ushort*)b)[i];
                     }
                 }
             }
@@ -268,24 +360,47 @@ namespace Kermalis.EndianBinaryIO
                 return *(int*)b;
             }
         }
-        public static unsafe T[] BytesToInt32s<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe int[] BytesToInt32s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 4))
             {
-                return Array.Empty<T>();
+                return Array.Empty<int>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out int[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 4);
                 }
-                array = new T[count];
+                array = new int[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((int*)b)[i], typeof(T));
+                        array[i] = ((int*)b)[i];
+                    }
+                }
+            }
+            return array;
+        }
+        public static unsafe uint[] BytesToUInt32s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 4))
+            {
+                return Array.Empty<uint>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out uint[] array))
+            {
+                if (SystemEndianness != sourceEndianness)
+                {
+                    FlipPrimitives(value, startIndex, count, 4);
+                }
+                array = new uint[count];
+                fixed (byte* b = &value[startIndex])
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        array[i] = ((uint*)b)[i];
                     }
                 }
             }
@@ -302,24 +417,47 @@ namespace Kermalis.EndianBinaryIO
                 return *(long*)b;
             }
         }
-        public static unsafe T[] BytesToInt64s<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe long[] BytesToInt64s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 8))
             {
-                return Array.Empty<T>();
+                return Array.Empty<long>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out long[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 8);
                 }
-                array = new T[count];
+                array = new long[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((long*)b)[i], typeof(T));
+                        array[i] = ((long*)b)[i];
+                    }
+                }
+            }
+            return array;
+        }
+        public static unsafe ulong[] BytesToUInt64s(byte[] value, int startIndex, int count, Endianness sourceEndianness)
+        {
+            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 8))
+            {
+                return Array.Empty<ulong>();
+            }
+            if (!Utils.ValidateReadArraySize(count, out ulong[] array))
+            {
+                if (SystemEndianness != sourceEndianness)
+                {
+                    FlipPrimitives(value, startIndex, count, 8);
+                }
+                array = new ulong[count];
+                fixed (byte* b = &value[startIndex])
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        array[i] = ((ulong*)b)[i];
                     }
                 }
             }
@@ -336,24 +474,24 @@ namespace Kermalis.EndianBinaryIO
                 return *(float*)b;
             }
         }
-        public static unsafe T[] BytesToSingles<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe float[] BytesToSingles(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 4))
             {
-                return Array.Empty<T>();
+                return Array.Empty<float>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out float[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 4);
                 }
-                array = new T[count];
+                array = new float[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((float*)b)[i], typeof(T));
+                        array[i] = ((float*)b)[i];
                     }
                 }
             }
@@ -370,24 +508,24 @@ namespace Kermalis.EndianBinaryIO
                 return *(double*)b;
             }
         }
-        public static unsafe T[] BytesToDoubles<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe double[] BytesToDoubles(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 8))
             {
-                return Array.Empty<T>();
+                return Array.Empty<double>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out double[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 8);
                 }
-                array = new T[count];
+                array = new double[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((double*)b)[i], typeof(T));
+                        array[i] = ((double*)b)[i];
                     }
                 }
             }
@@ -404,24 +542,24 @@ namespace Kermalis.EndianBinaryIO
                 return *(decimal*)b;
             }
         }
-        public static unsafe T[] BytesToDecimals<T>(byte[] value, int startIndex, int count, Endianness sourceEndianness) where T : IConvertible
+        public static unsafe decimal[] BytesToDecimals(byte[] value, int startIndex, int count, Endianness sourceEndianness)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count * 16))
             {
-                return Array.Empty<T>();
+                return Array.Empty<decimal>();
             }
-            if (!Utils.ValidateReadArraySize(count, out T[] array))
+            if (!Utils.ValidateReadArraySize(count, out decimal[] array))
             {
                 if (SystemEndianness != sourceEndianness)
                 {
                     FlipPrimitives(value, startIndex, count, 16);
                 }
-                array = new T[count];
+                array = new decimal[count];
                 fixed (byte* b = &value[startIndex])
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        array[i] = (T)Convert.ChangeType(((decimal*)b)[i], typeof(T));
+                        array[i] = ((decimal*)b)[i];
                     }
                 }
             }
