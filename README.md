@@ -111,7 +111,7 @@ using (var reader = new EndianBinaryReader(stream, endianness: Endianness.Little
     obj.Bool32 = reader.ReadBoolean(); // Reads a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
 
     obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
-    obj.UTF16String = reader.ReadString(10, EncodingType.UTF16); // Reads 10 UTF16 chars as a 'string'
+    obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16 chars as a 'string' with the '\0's removed
 }
 ```
 ### Reading Automatically (With Reflection):
