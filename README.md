@@ -1,6 +1,7 @@
-﻿[![NuGet](https://img.shields.io/nuget/v/EndianBinaryIO.svg)](https://www.nuget.org/packages/EndianBinaryIO) [![downloads](https://img.shields.io/nuget/dt/EndianBinaryIO)](https://www.nuget.org/packages/EndianBinaryIO)
+﻿# 📖 EndianBinaryIO
 
-# 📖 EndianBinaryIO
+[![NuGet](https://img.shields.io/nuget/v/EndianBinaryIO.svg)](https://www.nuget.org/packages/EndianBinaryIO)
+[![NuGet downloads](https://img.shields.io/nuget/dt/EndianBinaryIO)](https://www.nuget.org/packages/EndianBinaryIO)
 
 A C# library that can read and write primitives, enums, arrays, and strings to streams using specified endianness, string encoding, and boolean sizes.
 Objects can also be read from/written to streams via reflection and attributes.
