@@ -6,9 +6,11 @@
 A C# library that can read and write primitives, enums, arrays, and strings to streams using specified endianness, string encoding, and boolean sizes.
 Objects can also be read from/written to streams via reflection and attributes.
 
-The IBinarySerializable interface allows an object to be read and written in a customizable fashion.
+The `IBinarySerializable` interface allows an object to be read and written in a customizable fashion.
 Also included are attributes that can make reading and writing objects less of a headache.
-For example, classes and structs in C# cannot have ignored members when marshalling, but EndianBinaryIO has a BinaryIgnoreAttribute that will ignore properties when reading and writing.
+For example, classes and structs in C# cannot have ignored members when marshalling, but **EndianBinaryIO** has a `BinaryIgnoreAttribute` that will ignore properties when reading and writing.
+
+There is also an `EndianBitConverter` static class which resembles `System.BitConverter`. With it you can convert to/from data types using arrays rather than streams, all with specific endianness.
 
 ----
 ## 🚀 Usage:
@@ -183,6 +185,15 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
     writer.Write(obj); // Write all properties in the 'MyBasicObj' in order, ignoring any with a 'BinaryIgnoreAttribute'
                        // Other objects that are properties in this object will also be written in the same way recursively
 }
+```
+
+### EndianBitConverter Example:
+```cs
+byte[] bytes = new byte[] { 0xFF, 0x00, 0x00, 0x00 };
+uint value = (uint)EndianBitConverter.BytesToInt32(bytes, 0, Endianness.LittleEndian); // Will return (int)255
+
+value = 128;
+bytes = EndianBitConverter.Int32ToBytes((int)value, Endianness.LittleEndian); // Will return (byte[]){ 0x80, 0x00, 0x00, 0x00 }
 ```
 
 ----
