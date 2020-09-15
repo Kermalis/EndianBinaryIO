@@ -7,6 +7,7 @@ namespace Kermalis.EndianBinaryIOTests
 {
     public sealed class FloatTests
     {
+        #region Constants
         private const float TestValue_Single = 1234.1234f;
         private const double TestValue_Double = 12345678.12345678d;
         private const decimal TestValue_Decimal = 12345678909876543210.123456789M;
@@ -35,6 +36,7 @@ namespace Kermalis.EndianBinaryIOTests
         {
             0x00, 0x00, 0x09, 0x00, 0x32, 0x1B, 0xE4, 0x27, 0x15, 0x71, 0x84, 0xA0, 0x75, 0x40, 0xAD, 0xBE
         };
+        #endregion
 
         [Theory]
         [InlineData(true)]
@@ -46,7 +48,7 @@ namespace Kermalis.EndianBinaryIOTests
             using (var stream = new MemoryStream(input))
             using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(reader.ReadSingle(), TestValue_Single);
+                Assert.Equal(TestValue_Single, reader.ReadSingle());
             }
         }
         [Theory]
@@ -64,6 +66,7 @@ namespace Kermalis.EndianBinaryIOTests
             }
             Assert.True(bytes.SequenceEqual(input));
         }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -74,7 +77,7 @@ namespace Kermalis.EndianBinaryIOTests
             using (var stream = new MemoryStream(input))
             using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(reader.ReadDouble(), TestValue_Double);
+                Assert.Equal(TestValue_Double, reader.ReadDouble());
             }
         }
         [Theory]
@@ -92,6 +95,7 @@ namespace Kermalis.EndianBinaryIOTests
             }
             Assert.True(bytes.SequenceEqual(input));
         }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -102,7 +106,7 @@ namespace Kermalis.EndianBinaryIOTests
             using (var stream = new MemoryStream(input))
             using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(reader.ReadDecimal(), TestValue_Decimal);
+                Assert.Equal(TestValue_Decimal, reader.ReadDecimal());
             }
         }
         [Theory]

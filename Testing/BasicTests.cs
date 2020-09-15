@@ -41,6 +41,7 @@ namespace Kermalis.EndianBinaryIOTests
             public string UTF16String { get; set; }
         }
 
+        #region Constants
         private static readonly byte[] _bytes = new byte[]
         {
             0x00, 0x08, // ShortSizedEnum.Val2
@@ -70,6 +71,7 @@ namespace Kermalis.EndianBinaryIOTests
 
             0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16-LE)"Kermalis\0\0"
         };
+        #endregion
 
         [Fact]
         public void ReadObject()
@@ -81,22 +83,22 @@ namespace Kermalis.EndianBinaryIOTests
                 obj = reader.ReadObject<MyBasicObj>();
             }
 
-            Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
-            Assert.True(obj.Version == 511); // short works
-            Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
+            Assert.Equal(ShortSizedEnum.Val2, obj.Type); // Enum works
+            Assert.Equal(511, obj.Version); // short works
+            Assert.Equal(new DateTime(1998, 12, 30), obj.Date); // DateTime works
 
-            Assert.True(obj.DoNotReadOrWrite == default); // Ignored
+            Assert.Equal(default, obj.DoNotReadOrWrite); // Ignored
 
-            Assert.True(obj.ArrayWith16Elements.Length == 16); // Fixed size array works
+            Assert.Equal(16, obj.ArrayWith16Elements.Length); // Fixed size array works
             for (uint i = 0; i < 16; i++)
             {
-                Assert.True(obj.ArrayWith16Elements[i] == i); // Array works
+                Assert.Equal(i, obj.ArrayWith16Elements[i]); // Array works
             }
 
             Assert.False(obj.Bool32); // bool32 works
 
-            Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
-            Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
+            Assert.Equal("EndianBinaryIO", obj.NullTerminatedASCIIString); // Stops reading at null terminator
+            Assert.Equal("Kermalis", obj.UTF16String); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
         }
 
         [Fact]
@@ -109,26 +111,26 @@ namespace Kermalis.EndianBinaryIOTests
                 obj = new MyBasicObj();
 
                 obj.Type = reader.ReadEnum<ShortSizedEnum>();
-                Assert.True(obj.Type == ShortSizedEnum.Val2); // Enum works
+                Assert.Equal(ShortSizedEnum.Val2, obj.Type); // Enum works
                 obj.Version = reader.ReadInt16();
-                Assert.True(obj.Version == 511); // short works
+                Assert.Equal(511, obj.Version); // short works
                 obj.Date = reader.ReadDateTime();
-                Assert.True(obj.Date.Equals(new DateTime(1998, 12, 30))); // DateTime works
+                Assert.Equal(new DateTime(1998, 12, 30), obj.Date); // DateTime works
 
                 obj.ArrayWith16Elements = reader.ReadUInt32s(16);
-                Assert.True(obj.ArrayWith16Elements.Length == 16); // Fixed size array works
+                Assert.Equal(16, obj.ArrayWith16Elements.Length); // Fixed size array works
                 for (uint i = 0; i < 16; i++)
                 {
-                    Assert.True(obj.ArrayWith16Elements[i] == i); // Array works
+                    Assert.Equal(i, obj.ArrayWith16Elements[i]); // Array works
                 }
 
                 obj.Bool32 = reader.ReadBoolean();
                 Assert.False(obj.Bool32); // bool32 works
 
                 obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII);
-                Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
+                Assert.Equal("EndianBinaryIO", obj.NullTerminatedASCIIString); // Stops reading at null terminator
                 obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16);
-                Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
+                Assert.Equal("Kermalis", obj.UTF16String); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
             }
         }
 

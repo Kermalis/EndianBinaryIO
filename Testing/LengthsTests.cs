@@ -34,6 +34,7 @@ namespace Kermalis.EndianBinaryIOTests
             public byte[] VariableArray { get; set; }
         }
 
+        #region Constants
         private static readonly byte[] _lengthyObjBytes = new byte[]
         {
             0x48, 0x69, 0x00, // "Hi\0"
@@ -52,6 +53,7 @@ namespace Kermalis.EndianBinaryIOTests
         {
             0x00, // (byte)0
         };
+        #endregion
 
         [Fact]
         public void ReadLengthyObject()
@@ -63,20 +65,20 @@ namespace Kermalis.EndianBinaryIOTests
                 obj = reader.ReadObject<MyLengthyObj>();
             }
 
-            Assert.True(obj.NullTerminatedStringArray.Length == 3); // Fixed size array works
-            Assert.True(obj.NullTerminatedStringArray[0] == "Hi"); // Null terminated strings
-            Assert.True(obj.NullTerminatedStringArray[1] == "Hello");
-            Assert.True(obj.NullTerminatedStringArray[2] == "Hola");
+            Assert.Equal(3, obj.NullTerminatedStringArray.Length); // Fixed size array works
+            Assert.Equal("Hi", obj.NullTerminatedStringArray[0]); // Null terminated strings
+            Assert.Equal("Hello", obj.NullTerminatedStringArray[1]);
+            Assert.Equal("Hola", obj.NullTerminatedStringArray[2]);
 
-            Assert.True(obj.SizedStringArray.Length == 3); // Fixed size array again
-            Assert.True(obj.SizedStringArray[0] == "Seeya"); // Strings 5 chars long
-            Assert.True(obj.SizedStringArray[1] == "Bye\0\0");
-            Assert.True(obj.SizedStringArray[2] == "Adios");
+            Assert.Equal(3, obj.SizedStringArray.Length); // Fixed size array again
+            Assert.Equal("Seeya", obj.SizedStringArray[0]); // Strings 5 chars long
+            Assert.Equal("Bye\0\0", obj.SizedStringArray[1]);
+            Assert.Equal("Adios", obj.SizedStringArray[2]);
 
-            Assert.True(obj.VariableLengthProperty == 2); // This determines how long the following array is
-            Assert.True(obj.VariableSizedArray.Length == 2); // Retrieves the proper size
-            Assert.True(obj.VariableSizedArray[0] == ShortSizedEnum.Val1);
-            Assert.True(obj.VariableSizedArray[1] == ShortSizedEnum.Val2);
+            Assert.Equal(2, obj.VariableLengthProperty); // This determines how long the following array is
+            Assert.Equal(2, obj.VariableSizedArray.Length); // Retrieves the proper size
+            Assert.Equal(ShortSizedEnum.Val1, obj.VariableSizedArray[0]);
+            Assert.Equal(ShortSizedEnum.Val2, obj.VariableSizedArray[1]);
         }
 
         [Fact]
@@ -118,10 +120,10 @@ namespace Kermalis.EndianBinaryIOTests
                 obj = reader.ReadObject<ZeroLenArrayObj>();
             }
 
-            Assert.True(obj.SizedArray.Length == 0); // Fixed size array works
+            Assert.Empty(obj.SizedArray); // Fixed size array works
 
-            Assert.True(obj.VariableLength == 0); // This determines how long the following array is
-            Assert.True(obj.VariableArray.Length == 0); // Retrieves the proper size
+            Assert.Equal(0, obj.VariableLength); // This determines how long the following array is
+            Assert.Empty(obj.VariableArray); // Retrieves the proper size
         }
 
         [Fact]
