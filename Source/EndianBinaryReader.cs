@@ -91,10 +91,10 @@ namespace Kermalis.EndianBinaryIO
         {
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int maxBytes = encoding.GetMaxByteCount(charCount);
-            _buffer = new byte[maxBytes]; // Overwrite buffer so nothing that's in it from before can mess with the decoding
-            BaseStream.Read(_buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
+            byte[] buffer = new byte[maxBytes];
+            BaseStream.Read(buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
             // If the maxBytes would be 4, and the string only takes 2, we'd not have enough bytes, but if it's a proper string it doesn't matter
-            char[] chars = encoding.GetChars(_buffer);
+            char[] chars = encoding.GetChars(buffer);
             if (chars.Length < charCount)
             {
                 // Too few chars means the decoding went wrong, so it could be because the stream ended or because the bytes were invalid

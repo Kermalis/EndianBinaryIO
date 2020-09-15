@@ -19,10 +19,10 @@ namespace Kermalis.EndianBinaryIO
                 default: throw new ArgumentOutOfRangeException(nameof(encodingType));
             }
         }
-        public static void TruncateString(string str, int length, out char[] toArray)
+        public static void TruncateString(string str, int charCount, out char[] toArray)
         {
-            toArray = new char[length];
-            int numCharsToCopy = Math.Min(length, str.Length);
+            toArray = new char[charCount];
+            int numCharsToCopy = Math.Min(charCount, str.Length);
             for (int i = 0; i < numCharsToCopy; i++)
             {
                 toArray[i] = str[i];
