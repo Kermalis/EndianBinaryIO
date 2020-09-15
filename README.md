@@ -58,7 +58,7 @@ class MyBasicObj
     [BinaryStringNullTerminated(true)]
     public string NullTerminatedASCIIString { get; set; }
 
-    // String encoded in UTF-16 that will only read/write 10 chars
+    // String encoded in UTF16-LE that will only read/write 10 chars
     // The BinaryStringTrimNullTerminatorsAttribute will indicate that every char from the first \0 will be removed from the string. This attribute also works with char arrays
     [BinaryEncoding(EncodingType.UTF16)]
     [BinaryStringFixedLength(10)]
@@ -94,7 +94,7 @@ And assume these are our input bytes (in little endian):
 
 0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00, // (ASCII)"EndianBinaryIO\0"
 
-0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16)"Kermalis\0\0"
+0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16-LE)"Kermalis\0\0"
 ```
 
 We can read/write the object manually or automatically (with reflection):
@@ -114,7 +114,7 @@ using (var reader = new EndianBinaryReader(stream, endianness: Endianness.Little
     obj.Bool32 = reader.ReadBoolean(); // Reads a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
 
     obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
-    obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16 chars as a 'string' with the '\0's removed
+    obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16-LE chars as a 'string' with the '\0's removed
 }
 ```
 ### Reading Automatically (With Reflection):
@@ -156,7 +156,7 @@ using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.Little
     writer.Write(obj.ArrayWith16Elements); // Writes 16 'uint's (4 bytes each)
     writer.Write(obj.Bool32); // Writes a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
     writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII); // Writes the chars in the 'string' as ASCII and appends a '\0' at the end
-    writer.Write(obj.UTF16String, 10, EncodingType.UTF16); // Writes 10 UTF16 chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
+    writer.Write(obj.UTF16String, 10, EncodingType.UTF16); // Writes 10 UTF16-LE chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
 }
 ```
 ### Writing Automatically (With Reflection):

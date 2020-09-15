@@ -19,18 +19,6 @@ namespace Kermalis.EndianBinaryIO
                 default: throw new ArgumentOutOfRangeException(nameof(encodingType));
             }
         }
-        public static int EncodingSize(Encoding encoding)
-        {
-            if (encoding == Encoding.UTF32)
-            {
-                return 4;
-            }
-            if (encoding == Encoding.Unicode || encoding == Encoding.BigEndianUnicode)
-            {
-                return 2;
-            }
-            return 1;
-        }
         public static void TruncateString(string str, int length, out char[] toArray)
         {
             toArray = new char[length];

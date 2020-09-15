@@ -78,7 +78,7 @@ namespace Kermalis.EndianBinaryIO
 
         private void ReadBytesIntoBuffer(int byteCount)
         {
-            if (_buffer == null || _buffer.Length < byteCount)
+            if (_buffer is null || _buffer.Length < byteCount)
             {
                 _buffer = new byte[byteCount];
             }
@@ -86,6 +86,33 @@ namespace Kermalis.EndianBinaryIO
             {
                 throw new EndOfStreamException();
             }
+        }
+        private char[] DecodeChars(EncodingType encodingType, int charCount)
+        {
+            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            int maxBytes = encoding.GetMaxByteCount(charCount);
+            _buffer = new byte[maxBytes]; // Overwrite buffer so nothing that's in it from before can mess with the decoding
+            BaseStream.Read(_buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
+            // If the maxBytes would be 4, and the string only takes 2, we'd not have enough bytes, but if it's a proper string it doesn't matter
+            char[] chars = encoding.GetChars(_buffer);
+            if (chars.Length < charCount)
+            {
+                // Too few chars means the decoding went wrong, so it could be because the stream ended or because the bytes were invalid
+                if (BaseStream.Position >= BaseStream.Length)
+                {
+                    throw new EndOfStreamException();
+                }
+                throw new InvalidDataException();
+            }
+            // If we read too many chars, we need to shrink the array
+            // For example, if we want 1 char and the max bytes is 2, but we manage to read 2 1-byte chars, we'd want to shrink back to 1 char
+            Array.Resize(ref chars, charCount);
+            int actualBytes = encoding.GetByteCount(chars);
+            if (maxBytes != actualBytes)
+            {
+                BaseStream.Position -= maxBytes - actualBytes; // Set the stream back to compensate for the extra bytes we read
+            }
+            return chars;
         }
 
         public byte PeekByte()
@@ -266,10 +293,7 @@ namespace Kermalis.EndianBinaryIO
         }
         public char ReadChar(EncodingType encodingType)
         {
-            Encoding encoding = Utils.EncodingFromEnum(encodingType);
-            int encodingSize = Utils.EncodingSize(encoding);
-            ReadBytesIntoBuffer(encodingSize);
-            return encoding.GetChars(_buffer, 0, encodingSize)[0];
+            return DecodeChars(encodingType, 1)[0];
         }
         public char ReadChar(EncodingType encodingType, long offset)
         {
@@ -291,10 +315,7 @@ namespace Kermalis.EndianBinaryIO
             {
                 return array;
             }
-            Encoding encoding = Utils.EncodingFromEnum(encodingType);
-            int encodingSize = Utils.EncodingSize(encoding);
-            ReadBytesIntoBuffer(count * encodingSize);
-            array = encoding.GetChars(_buffer, 0, encodingSize * count);
+            array = DecodeChars(encodingType, count);
             if (trimNullTerminators)
             {
                 int i = Array.IndexOf(array, '\0');

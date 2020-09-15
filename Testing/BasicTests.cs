@@ -34,7 +34,7 @@ namespace Kermalis.EndianBinaryIOTests
             [BinaryStringNullTerminated(true)]
             public string NullTerminatedASCIIString { get; set; }
 
-            // String encoded in UTF-16 that will only read/write 10 chars
+            // String encoded in UTF16-LE that will only read/write 10 chars
             [BinaryEncoding(EncodingType.UTF16)]
             [BinaryStringFixedLength(10)]
             [BinaryStringTrimNullTerminators(true)]
@@ -68,7 +68,7 @@ namespace Kermalis.EndianBinaryIOTests
 
             0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00, // (ASCII)"EndianBinaryIO\0"
 
-            0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16)"Kermalis\0\0"
+            0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16-LE)"Kermalis\0\0"
         };
 
         [Fact]
@@ -96,7 +96,7 @@ namespace Kermalis.EndianBinaryIOTests
             Assert.False(obj.Bool32); // bool32 works
 
             Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
-            Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) utf16, with the \0s trimmed
+            Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace Kermalis.EndianBinaryIOTests
                 obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII);
                 Assert.True(obj.NullTerminatedASCIIString == "EndianBinaryIO"); // Stops reading at null terminator
                 obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16);
-                Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) utf16, with the \0s trimmed
+                Assert.True(obj.UTF16String == "Kermalis"); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
             }
         }
 
