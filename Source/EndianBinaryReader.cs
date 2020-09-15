@@ -92,17 +92,16 @@ namespace Kermalis.EndianBinaryIO
             Encoding encoding = Utils.EncodingFromEnum(encodingType);
             int maxBytes = encoding.GetMaxByteCount(charCount);
             byte[] buffer = new byte[maxBytes];
-            BaseStream.Read(buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
+            int amtRead = BaseStream.Read(buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
+            if (amtRead == 0)
+            {
+                throw new EndOfStreamException();
+            }
             // If the maxBytes would be 4, and the string only takes 2, we'd not have enough bytes, but if it's a proper string it doesn't matter
             char[] chars = encoding.GetChars(buffer);
             if (chars.Length < charCount)
             {
-                // Too few chars means the decoding went wrong, so it could be because the stream ended or because the bytes were invalid
-                if (BaseStream.Position >= BaseStream.Length)
-                {
-                    throw new EndOfStreamException();
-                }
-                throw new InvalidDataException();
+                throw new InvalidDataException(); // Too few chars means the decoding went wrong
             }
             // If we read too many chars, we need to shrink the array
             // For example, if we want 1 char and the max bytes is 2, but we manage to read 2 1-byte chars, we'd want to shrink back to 1 char
@@ -110,7 +109,7 @@ namespace Kermalis.EndianBinaryIO
             int actualBytes = encoding.GetByteCount(chars);
             if (maxBytes != actualBytes)
             {
-                BaseStream.Position -= maxBytes - actualBytes; // Set the stream back to compensate for the extra bytes we read
+                BaseStream.Position -= amtRead - actualBytes; // Set the stream back to compensate for the extra bytes we read
             }
             return chars;
         }
