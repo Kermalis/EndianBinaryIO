@@ -46,9 +46,8 @@ namespace Kermalis.EndianBinaryIOTests
             byte[] input = le ? _littleEndianBytes_Single : _bigEndianBytes_Single;
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             using (var stream = new MemoryStream(input))
-            using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(TestValue_Single, reader.ReadSingle());
+                Assert.Equal(TestValue_Single, new EndianBinaryReader(stream, endianness: e).ReadSingle());
             }
         }
         [Theory]
@@ -60,9 +59,8 @@ namespace Kermalis.EndianBinaryIOTests
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             byte[] bytes = new byte[4];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: e))
             {
-                writer.Write(TestValue_Single);
+                new EndianBinaryWriter(stream, endianness: e).Write(TestValue_Single);
             }
             Assert.True(bytes.SequenceEqual(input));
         }
@@ -75,9 +73,8 @@ namespace Kermalis.EndianBinaryIOTests
             byte[] input = le ? _littleEndianBytes_Double : _bigEndianBytes_Double;
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             using (var stream = new MemoryStream(input))
-            using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(TestValue_Double, reader.ReadDouble());
+                Assert.Equal(TestValue_Double, new EndianBinaryReader(stream, endianness: e).ReadDouble());
             }
         }
         [Theory]
@@ -89,9 +86,8 @@ namespace Kermalis.EndianBinaryIOTests
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             byte[] bytes = new byte[8];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: e))
             {
-                writer.Write(TestValue_Double);
+                new EndianBinaryWriter(stream, endianness: e).Write(TestValue_Double);
             }
             Assert.True(bytes.SequenceEqual(input));
         }
@@ -104,9 +100,8 @@ namespace Kermalis.EndianBinaryIOTests
             byte[] input = le ? _littleEndianBytes_Decimal : _bigEndianBytes_Decimal;
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             using (var stream = new MemoryStream(input))
-            using (var reader = new EndianBinaryReader(stream, endianness: e))
             {
-                Assert.Equal(TestValue_Decimal, reader.ReadDecimal());
+                Assert.Equal(TestValue_Decimal, new EndianBinaryReader(stream, endianness: e).ReadDecimal());
             }
         }
         [Theory]
@@ -118,9 +113,8 @@ namespace Kermalis.EndianBinaryIOTests
             Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
             byte[] bytes = new byte[16];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: e))
             {
-                writer.Write(TestValue_Decimal);
+                new EndianBinaryWriter(stream, endianness: e).Write(TestValue_Decimal);
             }
             Assert.True(bytes.SequenceEqual(input));
         }

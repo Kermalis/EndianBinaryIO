@@ -60,9 +60,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             MyLengthyObj obj;
             using (var stream = new MemoryStream(_lengthyObjBytes))
-            using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
             {
-                obj = reader.ReadObject<MyLengthyObj>();
+                obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<MyLengthyObj>();
             }
 
             Assert.Equal(3, obj.NullTerminatedStringArray.Length); // Fixed size array works
@@ -86,9 +85,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             byte[] bytes = new byte[_lengthyObjBytes.Length];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.Write(new MyLengthyObj
+                new EndianBinaryWriter(stream, Endianness.LittleEndian).Write(new MyLengthyObj
                 {
                     NullTerminatedStringArray = new string[3]
                     {
@@ -115,9 +113,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             ZeroLenArrayObj obj;
             using (var stream = new MemoryStream(_zeroLenArrayObjBytes))
-            using (var reader = new EndianBinaryReader(stream, Endianness.LittleEndian))
             {
-                obj = reader.ReadObject<ZeroLenArrayObj>();
+                obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<ZeroLenArrayObj>();
             }
 
             Assert.Empty(obj.SizedArray); // Fixed size array works
@@ -131,9 +128,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             byte[] bytes = new byte[_zeroLenArrayObjBytes.Length];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, Endianness.LittleEndian))
             {
-                writer.Write(new ZeroLenArrayObj
+                new EndianBinaryWriter(stream, Endianness.LittleEndian).Write(new ZeroLenArrayObj
                 {
                     SizedArray = Array.Empty<byte>(),
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Kermalis.EndianBinaryIO
 {
-    public class EndianBinaryWriter : IDisposable
+    public class EndianBinaryWriter
     {
         public Stream BaseStream { get; }
         private Endianness _endianness;
@@ -49,7 +49,6 @@ namespace Kermalis.EndianBinaryIO
         }
 
         private byte[] _buffer;
-        private bool _isDisposed;
 
         public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII, BooleanSize booleanSize = BooleanSize.U8)
         {
@@ -65,15 +64,6 @@ namespace Kermalis.EndianBinaryIO
             Endianness = endianness;
             Encoding = encoding;
             BooleanSize = booleanSize;
-        }
-        public void Dispose()
-        {
-            if (!_isDisposed)
-            {
-                BaseStream.Dispose();
-                _buffer = null;
-                _isDisposed = true;
-            }
         }
 
         private void SetBufferSize(int size)

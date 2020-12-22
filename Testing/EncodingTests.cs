@@ -97,9 +97,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             Get(encodingType, out byte[] input, out string str);
             using (var stream = new MemoryStream(input))
-            using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, encoding: encodingType))
             {
-                CharObj obj = reader.ReadObject<CharObj>();
+                CharObj obj = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, encoding: encodingType).ReadObject<CharObj>();
                 Assert.Equal(str, obj.Str);
             }
         }
@@ -116,14 +115,13 @@ namespace Kermalis.EndianBinaryIOTests
             Get(encodingType, out byte[] input, out string str);
             byte[] bytes = new byte[input.Length];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, encoding: encodingType))
             {
                 var obj = new CharObj
                 {
                     Len = (byte)str.Length,
                     Str = str
                 };
-                writer.Write(obj);
+                new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, encoding: encodingType).Write(obj);
             }
             Assert.True(bytes.SequenceEqual(input));
         }

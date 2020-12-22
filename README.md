@@ -100,91 +100,81 @@ And assume these are our input bytes (in little endian):
 We can read/write the object manually or automatically (with reflection):
 ### Reading Manually:
 ```cs
-MyBasicObj obj;
-using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
-{
-    obj = new MyBasicObj();
+var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32);
+var obj = new MyBasicObj();
 
-    obj.Type = reader.ReadEnum<ShortSizedEnum>(); // Reads the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
-    obj.Version = reader.ReadInt16(); // Reads a 'short' (2 bytes)
-    obj.Date = reader.ReadDateTime(); // Reads a 'DateTime' (8 bytes)
+obj.Type = reader.ReadEnum<ShortSizedEnum>(); // Reads the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
+obj.Version = reader.ReadInt16(); // Reads a 'short' (2 bytes)
+obj.Date = reader.ReadDateTime(); // Reads a 'DateTime' (8 bytes)
 
-    obj.ArrayWith16Elements = reader.ReadUInt32s(16); // Reads 16 'uint's (4 bytes each)
+obj.ArrayWith16Elements = reader.ReadUInt32s(16); // Reads 16 'uint's (4 bytes each)
 
-    obj.Bool32 = reader.ReadBoolean(); // Reads a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
+obj.Bool32 = reader.ReadBoolean(); // Reads a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
 
-    obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
-    obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16-LE chars as a 'string' with the '\0's removed
-}
+obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
+obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16-LE chars as a 'string' with the '\0's removed
 ```
 ### Reading Automatically (With Reflection):
 ```cs
-MyBasicObj obj;
-using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian))
-{
-    obj = reader.ReadObject<MyBasicObj>(); // Create a 'MyBasicObj' and read all properties in order, ignoring any with a 'BinaryIgnoreAttribute'
+var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian);
+var obj = reader.ReadObject<MyBasicObj>(); // Create a 'MyBasicObj' and read all properties in order, ignoring any with a 'BinaryIgnoreAttribute'
                                            // Other objects that are properties in this object will also be read in the same way recursively
-}
 ```
 
 ### Writing Manually:
 ```cs
-using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
+var obj = new MyBasicObj
 {
-    var obj = new MyBasicObj
+    Type = ShortSizedEnum.Val2,
+    Version = 511,
+    Date = new DateTime(1998, 12, 30),
+
+    DoNotReadOrWrite = ByteSizedEnum.Val1,
+
+    ArrayWith16Elements = new uint[16]
     {
-        Type = ShortSizedEnum.Val2,
-        Version = 511,
-        Date = new DateTime(1998, 12, 30),
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    },
 
-        DoNotReadOrWrite = ByteSizedEnum.Val1,
+    Bool32 = false,
 
-        ArrayWith16Elements = new uint[16]
-        {
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-        },
+    NullTerminatedASCIIString = "EndianBinaryIO",
+    UTF16String = "Kermalis"
+};
 
-        Bool32 = false,
-
-        NullTerminatedASCIIString = "EndianBinaryIO",
-        UTF16String = "Kermalis"
-    };
-    
-    writer.Write(obj.Type); // Writes the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
-    writer.Write(obj.Version); // Writes a 'short' (2 bytes)
-    writer.Write(obj.Date); // Writes a 'DateTime' (8 bytes)
-    writer.Write(obj.ArrayWith16Elements); // Writes 16 'uint's (4 bytes each)
-    writer.Write(obj.Bool32); // Writes a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
-    writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII); // Writes the chars in the 'string' as ASCII and appends a '\0' at the end
-    writer.Write(obj.UTF16String, 10, EncodingType.UTF16); // Writes 10 UTF16-LE chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
-}
+var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32);
+writer.Write(obj.Type); // Writes the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
+writer.Write(obj.Version); // Writes a 'short' (2 bytes)
+writer.Write(obj.Date); // Writes a 'DateTime' (8 bytes)
+writer.Write(obj.ArrayWith16Elements); // Writes 16 'uint's (4 bytes each)
+writer.Write(obj.Bool32); // Writes a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
+writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII); // Writes the chars in the 'string' as ASCII and appends a '\0' at the end
+writer.Write(obj.UTF16String, 10, EncodingType.UTF16); // Writes 10 UTF16-LE chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
 ```
 ### Writing Automatically (With Reflection):
 ```cs
-using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian))
+var obj = new MyBasicObj
 {
-    var obj = new MyBasicObj
+    Type = ShortSizedEnum.Val2,
+    Version = 511,
+    Date = new DateTime(1998, 12, 30),
+
+    DoNotReadOrWrite = ByteSizedEnum.Val1,
+
+    ArrayWith16Elements = new uint[16]
     {
-        Type = ShortSizedEnum.Val2,
-        Version = 511,
-        Date = new DateTime(1998, 12, 30),
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    },
 
-        DoNotReadOrWrite = ByteSizedEnum.Val1,
+    Bool32 = false,
 
-        ArrayWith16Elements = new uint[16]
-        {
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-        },
+    NullTerminatedASCIIString = "EndianBinaryIO",
+    UTF16String = "Kermalis"
+};
 
-        Bool32 = false,
-
-        NullTerminatedASCIIString = "EndianBinaryIO",
-        UTF16String = "Kermalis"
-    };
-
-    writer.Write(obj); // Write all properties in the 'MyBasicObj' in order, ignoring any with a 'BinaryIgnoreAttribute'
-                       // Other objects that are properties in this object will also be written in the same way recursively
-}
+var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian);
+writer.Write(obj); // Write all properties in the 'MyBasicObj' in order, ignoring any with a 'BinaryIgnoreAttribute'
+                   // Other objects that are properties in this object will also be written in the same way recursively
 ```
 
 ### EndianBitConverter Example:

@@ -71,6 +71,27 @@ namespace Kermalis.EndianBinaryIOTests
 
             0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16-LE)"Kermalis\0\0"
         };
+        private MyBasicObj GetObj()
+        {
+            return new MyBasicObj
+            {
+                Type = ShortSizedEnum.Val2,
+                Version = 511,
+                Date = new DateTime(1998, 12, 30),
+
+                DoNotReadOrWrite = ByteSizedEnum.Val1,
+
+                ArrayWith16Elements = new uint[16]
+                {
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+                },
+
+                Bool32 = false,
+
+                NullTerminatedASCIIString = "EndianBinaryIO",
+                UTF16String = "Kermalis"
+            };
+        }
         #endregion
 
         [Fact]
@@ -78,9 +99,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             MyBasicObj obj;
             using (var stream = new MemoryStream(_bytes))
-            using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian))
             {
-                obj = reader.ReadObject<MyBasicObj>();
+                obj = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian).ReadObject<MyBasicObj>();
             }
 
             Assert.Equal(ShortSizedEnum.Val2, obj.Type); // Enum works
@@ -104,11 +124,10 @@ namespace Kermalis.EndianBinaryIOTests
         [Fact]
         public void ReadManually()
         {
-            MyBasicObj obj;
             using (var stream = new MemoryStream(_bytes))
-            using (var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
             {
-                obj = new MyBasicObj();
+                var reader = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32);
+                var obj = new MyBasicObj();
 
                 obj.Type = reader.ReadEnum<ShortSizedEnum>();
                 Assert.Equal(ShortSizedEnum.Val2, obj.Type); // Enum works
@@ -139,27 +158,8 @@ namespace Kermalis.EndianBinaryIOTests
         {
             byte[] bytes = new byte[_bytes.Length];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian))
             {
-                var obj = new MyBasicObj
-                {
-                    Type = ShortSizedEnum.Val2,
-                    Version = 511,
-                    Date = new DateTime(1998, 12, 30),
-
-                    DoNotReadOrWrite = ByteSizedEnum.Val1,
-
-                    ArrayWith16Elements = new uint[16]
-                    {
-                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-                    },
-
-                    Bool32 = false,
-
-                    NullTerminatedASCIIString = "EndianBinaryIO",
-                    UTF16String = "Kermalis"
-                };
-                writer.Write(obj);
+                new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian).Write(GetObj());
             }
 
             Assert.True(bytes.SequenceEqual(_bytes));
@@ -168,29 +168,12 @@ namespace Kermalis.EndianBinaryIOTests
         [Fact]
         public void WriteManually()
         {
+            MyBasicObj obj = GetObj();
+
             byte[] bytes = new byte[_bytes.Length];
             using (var stream = new MemoryStream(bytes))
-            using (var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32))
             {
-                var obj = new MyBasicObj
-                {
-                    Type = ShortSizedEnum.Val2,
-                    Version = 511,
-                    Date = new DateTime(1998, 12, 30),
-
-                    DoNotReadOrWrite = ByteSizedEnum.Val1,
-
-                    ArrayWith16Elements = new uint[16]
-                    {
-                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-                    },
-
-                    Bool32 = false,
-
-                    NullTerminatedASCIIString = "EndianBinaryIO",
-                    UTF16String = "Kermalis"
-                };
-
+                var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, booleanSize: BooleanSize.U32);
                 writer.Write(obj.Type);
                 writer.Write(obj.Version);
                 writer.Write(obj.Date);
