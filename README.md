@@ -54,13 +54,13 @@ class MyBasicObj
     // String encoded in ASCII
     // Reads chars until the stream encounters a '\0'
     // Writing will append a '\0' at the end of the string
-    [BinaryEncoding(EncodingType.ASCII)]
+    [BinaryEncoding("ASCII")]
     [BinaryStringNullTerminated(true)]
     public string NullTerminatedASCIIString { get; set; }
 
     // String encoded in UTF16-LE that will only read/write 10 chars
     // The BinaryStringTrimNullTerminatorsAttribute will indicate that every char from the first \0 will be removed from the string. This attribute also works with char arrays
-    [BinaryEncoding(EncodingType.UTF16)]
+    [BinaryEncoding("UTF-16")]
     [BinaryStringFixedLength(10)]
     [BinaryStringTrimNullTerminators(true)]
     public string UTF16String { get; set; }
@@ -111,8 +111,8 @@ obj.ArrayWith16Elements = reader.ReadUInt32s(16); // Reads 16 'uint's (4 bytes e
 
 obj.Bool32 = reader.ReadBoolean(); // Reads a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
 
-obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
-obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16); // Reads 10 UTF16-LE chars as a 'string' with the '\0's removed
+obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(Encoding.ASCII); // Reads ASCII chars until a '\0' is read, then returns a 'string'
+obj.UTF16String = reader.ReadString(10, true, Encoding.Unicode); // Reads 10 UTF16-LE chars as a 'string' with the '\0's removed
 ```
 ### Reading Automatically (With Reflection):
 ```cs
@@ -148,8 +148,8 @@ writer.Write(obj.Version); // Writes a 'short' (2 bytes)
 writer.Write(obj.Date); // Writes a 'DateTime' (8 bytes)
 writer.Write(obj.ArrayWith16Elements); // Writes 16 'uint's (4 bytes each)
 writer.Write(obj.Bool32); // Writes a 'bool' (4 bytes in this case, since the reader was initiated with a default of BooleanSize.U32, but there is an overload to pass in one)
-writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII); // Writes the chars in the 'string' as ASCII and appends a '\0' at the end
-writer.Write(obj.UTF16String, 10, EncodingType.UTF16); // Writes 10 UTF16-LE chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
+writer.Write(obj.NullTerminatedASCIIString, true, Encoding.ASCII); // Writes the chars in the 'string' as ASCII and appends a '\0' at the end
+writer.Write(obj.UTF16String, 10, Encoding.Unicode); // Writes 10 UTF16-LE chars as a 'string'. If the string has more than 10 chars, it is truncated; if it has less, it is padded with '\0'
 ```
 ### Writing Automatically (With Reflection):
 ```cs

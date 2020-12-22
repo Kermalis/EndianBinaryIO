@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Kermalis.EndianBinaryIO
 {
@@ -22,7 +23,7 @@ namespace Kermalis.EndianBinaryIO
     {
         public BooleanSize Value { get; }
 
-        public BinaryBooleanSizeAttribute(BooleanSize booleanSize = BooleanSize.U8)
+        public BinaryBooleanSizeAttribute(BooleanSize booleanSize)
         {
             if (booleanSize >= BooleanSize.MAX)
             {
@@ -32,17 +33,17 @@ namespace Kermalis.EndianBinaryIO
         }
     }
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryEncodingAttribute : Attribute, IBinaryAttribute<EncodingType>
+    public sealed class BinaryEncodingAttribute : Attribute, IBinaryAttribute<Encoding>
     {
-        public EncodingType Value { get; }
+        public Encoding Value { get; }
 
-        public BinaryEncodingAttribute(EncodingType encodingType = EncodingType.ASCII)
+        public BinaryEncodingAttribute(string encodingName)
         {
-            if (encodingType >= EncodingType.MAX)
-            {
-                throw new ArgumentOutOfRangeException($"{nameof(BinaryEncodingAttribute)} cannot be created with a size of {encodingType}.");
-            }
-            Value = encodingType;
+            Value = Encoding.GetEncoding(encodingName);
+        }
+        public BinaryEncodingAttribute(int encodingCodepage)
+        {
+            Value = Encoding.GetEncoding(encodingCodepage);
         }
     }
     [AttributeUsage(AttributeTargets.Property)]

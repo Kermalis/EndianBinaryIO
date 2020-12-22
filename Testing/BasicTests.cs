@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests
@@ -30,12 +31,12 @@ namespace Kermalis.EndianBinaryIOTests
             // String encoded in ASCII
             // Reads chars until the stream encounters a '\0'
             // Writing will append a '\0' at the end of the string
-            [BinaryEncoding(EncodingType.ASCII)]
+            [BinaryEncoding("ASCII")]
             [BinaryStringNullTerminated(true)]
             public string NullTerminatedASCIIString { get; set; }
 
             // String encoded in UTF16-LE that will only read/write 10 chars
-            [BinaryEncoding(EncodingType.UTF16)]
+            [BinaryEncoding("UTF-16")]
             [BinaryStringFixedLength(10)]
             [BinaryStringTrimNullTerminators(true)]
             public string UTF16String { get; set; }
@@ -146,9 +147,9 @@ namespace Kermalis.EndianBinaryIOTests
                 obj.Bool32 = reader.ReadBoolean();
                 Assert.False(obj.Bool32); // bool32 works
 
-                obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(EncodingType.ASCII);
+                obj.NullTerminatedASCIIString = reader.ReadStringNullTerminated(Encoding.ASCII);
                 Assert.Equal("EndianBinaryIO", obj.NullTerminatedASCIIString); // Stops reading at null terminator
-                obj.UTF16String = reader.ReadString(10, true, EncodingType.UTF16);
+                obj.UTF16String = reader.ReadString(10, true, Encoding.Unicode);
                 Assert.Equal("Kermalis", obj.UTF16String); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
             }
         }
@@ -179,8 +180,8 @@ namespace Kermalis.EndianBinaryIOTests
                 writer.Write(obj.Date);
                 writer.Write(obj.ArrayWith16Elements);
                 writer.Write(obj.Bool32);
-                writer.Write(obj.NullTerminatedASCIIString, true, EncodingType.ASCII);
-                writer.Write(obj.UTF16String, 10, EncodingType.UTF16);
+                writer.Write(obj.NullTerminatedASCIIString, true, Encoding.ASCII);
+                writer.Write(obj.UTF16String, 10, Encoding.Unicode);
             }
 
             Assert.True(bytes.SequenceEqual(_bytes));

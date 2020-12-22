@@ -11,12 +11,12 @@ namespace Kermalis.EndianBinaryIOTests
         private sealed class MyLengthyObj
         {
             [BinaryArrayFixedLength(3)]
-            [BinaryEncoding(EncodingType.ASCII)]
+            [BinaryEncoding("ASCII")]
             [BinaryStringNullTerminated(true)]
             public string[] NullTerminatedStringArray { get; set; }
 
             [BinaryArrayFixedLength(3)]
-            [BinaryEncoding(EncodingType.ASCII)]
+            [BinaryEncoding("ASCII")]
             [BinaryStringFixedLength(5)]
             public string[] SizedStringArray { get; set; }
 

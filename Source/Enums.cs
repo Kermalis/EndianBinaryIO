@@ -14,16 +14,5 @@
         BigEndian,
         MAX
     }
-
-    public enum EncodingType : byte
-    {
-        ASCII,
-        UTF7,
-        UTF8,
-        UTF16,
-        BigEndianUTF16,
-        UTF32,
-        MAX
-    }
 }
 

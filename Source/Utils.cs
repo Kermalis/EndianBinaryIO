@@ -6,19 +6,6 @@ namespace Kermalis.EndianBinaryIO
 {
     internal sealed class Utils
     {
-        public static Encoding EncodingFromEnum(EncodingType encodingType)
-        {
-            switch (encodingType)
-            {
-                case EncodingType.ASCII: return Encoding.ASCII;
-                case EncodingType.UTF7: return Encoding.UTF7;
-                case EncodingType.UTF8: return Encoding.UTF8;
-                case EncodingType.UTF16: return Encoding.Unicode;
-                case EncodingType.BigEndianUTF16: return Encoding.BigEndianUnicode;
-                case EncodingType.UTF32: return Encoding.UTF32;
-                default: throw new ArgumentOutOfRangeException(nameof(encodingType));
-            }
-        }
         public static void TruncateString(string str, int charCount, out char[] toArray)
         {
             toArray = new char[charCount];
@@ -58,6 +45,13 @@ namespace Kermalis.EndianBinaryIO
             if (type.IsArray || type.IsEnum || type.IsInterface || type.IsPointer || type.IsPrimitive)
             {
                 throw new ArgumentException(nameof(type), $"Cannot read/write \"{type.FullName}\" objects.");
+            }
+        }
+        public static void ThrowIfCannotUseEncoding(Encoding encoding)
+        {
+            if (encoding is null)
+            {
+                throw new ArgumentNullException(nameof(encoding), "EndianBinaryIO could not read/write chars because an encoding was null; make sure you pass one in properly.");
             }
         }
 

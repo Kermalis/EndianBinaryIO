@@ -21,19 +21,6 @@ namespace Kermalis.EndianBinaryIO
                 _endianness = value;
             }
         }
-        private EncodingType _encoding;
-        public EncodingType Encoding
-        {
-            get => _encoding;
-            set
-            {
-                if (value >= EncodingType.MAX)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-                _encoding = value;
-            }
-        }
         private BooleanSize _booleanSize;
         public BooleanSize BooleanSize
         {
@@ -47,10 +34,11 @@ namespace Kermalis.EndianBinaryIO
                 _booleanSize = value;
             }
         }
+        public Encoding Encoding { get; set; }
 
         private byte[] _buffer;
 
-        public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII, BooleanSize booleanSize = BooleanSize.U8)
+        public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
         {
             if (baseStream is null)
             {
@@ -62,8 +50,23 @@ namespace Kermalis.EndianBinaryIO
             }
             BaseStream = baseStream;
             Endianness = endianness;
-            Encoding = encoding;
             BooleanSize = booleanSize;
+            Encoding = Encoding.Default;
+        }
+        public EndianBinaryWriter(Stream baseStream, Encoding encoding, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
+        {
+            if (baseStream is null)
+            {
+                throw new ArgumentNullException(nameof(baseStream));
+            }
+            if (!baseStream.CanWrite)
+            {
+                throw new ArgumentException(nameof(baseStream));
+            }
+            BaseStream = baseStream;
+            Endianness = endianness;
+            BooleanSize = booleanSize;
+            Encoding = encoding;
         }
 
         private void SetBufferSize(int size)
@@ -246,16 +249,16 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, Encoding);
         }
-        public void Write(char value, EncodingType encodingType)
+        public void Write(char value, Encoding encoding)
         {
-            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            Utils.ThrowIfCannotUseEncoding(encoding);
             _buffer = encoding.GetBytes(new[] { value });
             WriteBytesFromBuffer(_buffer.Length);
         }
-        public void Write(char value, EncodingType encodingType, long offset)
+        public void Write(char value, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, encodingType);
+            Write(value, encoding);
         }
         public void Write(char[] value)
         {
@@ -266,14 +269,14 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, 0, value.Length, Encoding);
         }
-        public void Write(char[] value, EncodingType encodingType)
+        public void Write(char[] value, Encoding encoding)
         {
-            Write(value, 0, value.Length, encodingType);
+            Write(value, 0, value.Length, encoding);
         }
-        public void Write(char[] value, EncodingType encodingType, long offset)
+        public void Write(char[] value, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, 0, value.Length, encodingType);
+            Write(value, 0, value.Length, encoding);
         }
         public void Write(char[] value, int startIndex, int count)
         {
@@ -284,20 +287,20 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, startIndex, count, Encoding);
         }
-        public void Write(char[] value, int startIndex, int count, EncodingType encodingType)
+        public void Write(char[] value, int startIndex, int count, Encoding encoding)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
                 return;
             }
-            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            Utils.ThrowIfCannotUseEncoding(encoding);
             _buffer = encoding.GetBytes(value, startIndex, count);
             WriteBytesFromBuffer(_buffer.Length);
         }
-        public void Write(char[] value, int startIndex, int count, EncodingType encodingType, long offset)
+        public void Write(char[] value, int startIndex, int count, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, startIndex, count, encodingType);
+            Write(value, startIndex, count, encoding);
         }
         public void Write(string value, bool nullTerminated)
         {
@@ -308,18 +311,18 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, nullTerminated, Encoding);
         }
-        public void Write(string value, bool nullTerminated, EncodingType encodingType)
+        public void Write(string value, bool nullTerminated, Encoding encoding)
         {
-            Write(value.ToCharArray(), encodingType);
+            Write(value.ToCharArray(), encoding);
             if (nullTerminated)
             {
-                Write('\0', encodingType);
+                Write('\0', encoding);
             }
         }
-        public void Write(string value, bool nullTerminated, EncodingType encodingType, long offset)
+        public void Write(string value, bool nullTerminated, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, nullTerminated, encodingType);
+            Write(value, nullTerminated, encoding);
         }
         public void Write(string value, int charCount)
         {
@@ -330,15 +333,15 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, charCount, Encoding);
         }
-        public void Write(string value, int charCount, EncodingType encodingType)
+        public void Write(string value, int charCount, Encoding encoding)
         {
             Utils.TruncateString(value, charCount, out char[] chars);
-            Write(chars, encodingType);
+            Write(chars, encoding);
         }
-        public void Write(string value, int charCount, EncodingType encodingType, long offset)
+        public void Write(string value, int charCount, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, charCount, encodingType);
+            Write(value, charCount, encoding);
         }
         public void Write(string[] value, int startIndex, int count, bool nullTerminated)
         {
@@ -349,7 +352,7 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, startIndex, count, nullTerminated, Encoding);
         }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated, EncodingType encodingType)
+        public void Write(string[] value, int startIndex, int count, bool nullTerminated, Encoding encoding)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -357,13 +360,13 @@ namespace Kermalis.EndianBinaryIO
             }
             for (int i = 0; i < count; i++)
             {
-                Write(value[i + startIndex], nullTerminated, encodingType);
+                Write(value[i + startIndex], nullTerminated, encoding);
             }
         }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated, EncodingType encodingType, long offset)
+        public void Write(string[] value, int startIndex, int count, bool nullTerminated, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, startIndex, count, nullTerminated, encodingType);
+            Write(value, startIndex, count, nullTerminated, encoding);
         }
         public void Write(string[] value, int startIndex, int count, int charCount)
         {
@@ -374,7 +377,7 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             Write(value, startIndex, count, charCount, Encoding);
         }
-        public void Write(string[] value, int startIndex, int count, int charCount, EncodingType encodingType)
+        public void Write(string[] value, int startIndex, int count, int charCount, Encoding encoding)
         {
             if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
             {
@@ -382,13 +385,13 @@ namespace Kermalis.EndianBinaryIO
             }
             for (int i = 0; i < count; i++)
             {
-                Write(value[i + startIndex], charCount, encodingType);
+                Write(value[i + startIndex], charCount, encoding);
             }
         }
-        public void Write(string[] value, int startIndex, int count, int charCount, EncodingType encodingType, long offset)
+        public void Write(string[] value, int startIndex, int count, int charCount, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            Write(value, startIndex, count, charCount, encodingType);
+            Write(value, startIndex, count, charCount, encoding);
         }
         public void Write(short value)
         {
@@ -799,8 +802,8 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
                             case TypeCode.Char:
                             {
-                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
-                                Write((char[])value, 0, arrayLength, encodingType);
+                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
+                                Write((char[])value, 0, arrayLength, encoding);
                                 break;
                             }
                             case TypeCode.Int16: Write((short[])value, 0, arrayLength); break;
@@ -816,14 +819,14 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.String:
                             {
                                 Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
+                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
                                 if (nullTerminated.HasValue)
                                 {
-                                    Write((string[])value, 0, arrayLength, nullTerminated.Value, encodingType);
+                                    Write((string[])value, 0, arrayLength, nullTerminated.Value, encoding);
                                 }
                                 else
                                 {
-                                    Write((string[])value, 0, arrayLength, stringLength, encodingType);
+                                    Write((string[])value, 0, arrayLength, stringLength, encoding);
                                 }
                                 break;
                             }
@@ -869,8 +872,8 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.SByte: Write((sbyte)value); break;
                         case TypeCode.Char:
                         {
-                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
-                            Write((char)value, encodingType);
+                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
+                            Write((char)value, encoding);
                             break;
                         }
                         case TypeCode.Int16: Write((short)value); break;
@@ -886,14 +889,14 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
+                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
                             if (nullTerminated.HasValue)
                             {
-                                Write((string)value, nullTerminated.Value, encodingType);
+                                Write((string)value, nullTerminated.Value, encoding);
                             }
                             else
                             {
-                                Write((string)value, stringLength, encodingType);
+                                Write((string)value, stringLength, encoding);
                             }
                             break;
                         }

@@ -21,19 +21,6 @@ namespace Kermalis.EndianBinaryIO
                 _endianness = value;
             }
         }
-        private EncodingType _encoding;
-        public EncodingType Encoding
-        {
-            get => _encoding;
-            set
-            {
-                if (value >= EncodingType.MAX)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-                _encoding = value;
-            }
-        }
         private BooleanSize _booleanSize;
         public BooleanSize BooleanSize
         {
@@ -47,10 +34,11 @@ namespace Kermalis.EndianBinaryIO
                 _booleanSize = value;
             }
         }
+        public Encoding Encoding { get; set; }
 
         private byte[] _buffer;
 
-        public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, EncodingType encoding = EncodingType.ASCII, BooleanSize booleanSize = BooleanSize.U8)
+        public EndianBinaryReader(Stream baseStream, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
         {
             if (baseStream is null)
             {
@@ -62,8 +50,23 @@ namespace Kermalis.EndianBinaryIO
             }
             BaseStream = baseStream;
             Endianness = endianness;
-            Encoding = encoding;
             BooleanSize = booleanSize;
+            Encoding = Encoding.Default;
+        }
+        public EndianBinaryReader(Stream baseStream, Encoding encoding, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
+        {
+            if (baseStream is null)
+            {
+                throw new ArgumentNullException(nameof(baseStream));
+            }
+            if (!baseStream.CanRead)
+            {
+                throw new ArgumentException(nameof(baseStream));
+            }
+            BaseStream = baseStream;
+            Endianness = endianness;
+            BooleanSize = booleanSize;
+            Encoding = encoding;
         }
 
         private void ReadBytesIntoBuffer(int byteCount)
@@ -77,9 +80,9 @@ namespace Kermalis.EndianBinaryIO
                 throw new EndOfStreamException();
             }
         }
-        private char[] DecodeChars(EncodingType encodingType, int charCount)
+        private char[] DecodeChars(Encoding encoding, int charCount)
         {
-            Encoding encoding = Utils.EncodingFromEnum(encodingType);
+            Utils.ThrowIfCannotUseEncoding(encoding);
             int maxBytes = encoding.GetMaxByteCount(charCount);
             byte[] buffer = new byte[maxBytes];
             int amtRead = BaseStream.Read(buffer, 0, maxBytes); // Do not throw EndOfStreamException if there aren't enough bytes at the end of the stream
@@ -97,7 +100,7 @@ namespace Kermalis.EndianBinaryIO
             // For example, if we want 1 char and the max bytes is 2, but we manage to read 2 1-byte chars, we'd want to shrink back to 1 char
             Array.Resize(ref chars, charCount);
             int actualBytes = encoding.GetByteCount(chars);
-            if (maxBytes != actualBytes)
+            if (amtRead != actualBytes)
             {
                 BaseStream.Position -= amtRead - actualBytes; // Set the stream back to compensate for the extra bytes we read
             }
@@ -140,17 +143,17 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return PeekChar();
         }
-        public char PeekChar(EncodingType encodingType)
+        public char PeekChar(Encoding encoding)
         {
             long pos = BaseStream.Position;
-            char c = ReadChar(encodingType);
+            char c = ReadChar(encoding);
             BaseStream.Position = pos;
             return c;
         }
-        public char PeekChar(EncodingType encodingType, long offset)
+        public char PeekChar(Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return PeekChar(encodingType);
+            return PeekChar(encoding);
         }
 
         public bool ReadBoolean()
@@ -280,14 +283,14 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadChar();
         }
-        public char ReadChar(EncodingType encodingType)
+        public char ReadChar(Encoding encoding)
         {
-            return DecodeChars(encodingType, 1)[0];
+            return DecodeChars(encoding, 1)[0];
         }
-        public char ReadChar(EncodingType encodingType, long offset)
+        public char ReadChar(Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadChar(encodingType);
+            return ReadChar(encoding);
         }
         public char[] ReadChars(int count, bool trimNullTerminators)
         {
@@ -298,13 +301,13 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadChars(count, trimNullTerminators);
         }
-        public char[] ReadChars(int count, bool trimNullTerminators, EncodingType encodingType)
+        public char[] ReadChars(int count, bool trimNullTerminators, Encoding encoding)
         {
             if (Utils.ValidateReadArraySize(count, out char[] array))
             {
                 return array;
             }
-            array = DecodeChars(encodingType, count);
+            array = DecodeChars(encoding, count);
             if (trimNullTerminators)
             {
                 int i = Array.IndexOf(array, '\0');
@@ -315,10 +318,10 @@ namespace Kermalis.EndianBinaryIO
             }
             return array;
         }
-        public char[] ReadChars(int count, bool trimNullTerminators, EncodingType encodingType, long offset)
+        public char[] ReadChars(int count, bool trimNullTerminators, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadChars(count, trimNullTerminators, encodingType);
+            return ReadChars(count, trimNullTerminators, encoding);
         }
         public string ReadStringNullTerminated()
         {
@@ -329,12 +332,12 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadStringNullTerminated();
         }
-        public string ReadStringNullTerminated(EncodingType encodingType)
+        public string ReadStringNullTerminated(Encoding encoding)
         {
             string text = string.Empty;
             while (true)
             {
-                char c = ReadChar(encodingType);
+                char c = ReadChar(encoding);
                 if (c == '\0')
                 {
                     break;
@@ -343,10 +346,10 @@ namespace Kermalis.EndianBinaryIO
             }
             return text;
         }
-        public string ReadStringNullTerminated(EncodingType encodingType, long offset)
+        public string ReadStringNullTerminated(Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadStringNullTerminated(encodingType);
+            return ReadStringNullTerminated(encoding);
         }
         public string ReadString(int charCount, bool trimNullTerminators)
         {
@@ -357,14 +360,14 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadString(charCount, trimNullTerminators);
         }
-        public string ReadString(int charCount, bool trimNullTerminators, EncodingType encodingType)
+        public string ReadString(int charCount, bool trimNullTerminators, Encoding encoding)
         {
-            return new string(ReadChars(charCount, trimNullTerminators, encodingType));
+            return new string(ReadChars(charCount, trimNullTerminators, encoding));
         }
-        public string ReadString(int charCount, bool trimNullTerminators, EncodingType encodingType, long offset)
+        public string ReadString(int charCount, bool trimNullTerminators, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadString(charCount, trimNullTerminators, encodingType);
+            return ReadString(charCount, trimNullTerminators, encoding);
         }
         public string[] ReadStringsNullTerminated(int count)
         {
@@ -375,22 +378,22 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadStringsNullTerminated(count);
         }
-        public string[] ReadStringsNullTerminated(int count, EncodingType encodingType)
+        public string[] ReadStringsNullTerminated(int count, Encoding encoding)
         {
             if (!Utils.ValidateReadArraySize(count, out string[] array))
             {
                 array = new string[count];
                 for (int i = 0; i < count; i++)
                 {
-                    array[i] = ReadStringNullTerminated(encodingType);
+                    array[i] = ReadStringNullTerminated(encoding);
                 }
             }
             return array;
         }
-        public string[] ReadStringsNullTerminated(int count, EncodingType encodingType, long offset)
+        public string[] ReadStringsNullTerminated(int count, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadStringsNullTerminated(count, encodingType);
+            return ReadStringsNullTerminated(count, encoding);
         }
         public string[] ReadStrings(int count, int charCount, bool trimNullTerminators)
         {
@@ -401,22 +404,22 @@ namespace Kermalis.EndianBinaryIO
             BaseStream.Position = offset;
             return ReadStrings(count, charCount, trimNullTerminators);
         }
-        public string[] ReadStrings(int count, int charCount, bool trimNullTerminators, EncodingType encodingType)
+        public string[] ReadStrings(int count, int charCount, bool trimNullTerminators, Encoding encoding)
         {
             if (!Utils.ValidateReadArraySize(count, out string[] array))
             {
                 array = new string[count];
                 for (int i = 0; i < count; i++)
                 {
-                    array[i] = ReadString(charCount, trimNullTerminators, encodingType);
+                    array[i] = ReadString(charCount, trimNullTerminators, encoding);
                 }
             }
             return array;
         }
-        public string[] ReadStrings(int count, int charCount, bool trimNullTerminators, EncodingType encodingType, long offset)
+        public string[] ReadStrings(int count, int charCount, bool trimNullTerminators, Encoding encoding, long offset)
         {
             BaseStream.Position = offset;
-            return ReadStrings(count, charCount, trimNullTerminators, encodingType);
+            return ReadStrings(count, charCount, trimNullTerminators, encoding);
         }
         public short ReadInt16()
         {
@@ -757,9 +760,9 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.SByte: value = ReadSBytes(arrayLength); break;
                             case TypeCode.Char:
                             {
-                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
+                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
                                 bool trimNullTerminators = Utils.AttributeValueOrDefault<BinaryStringTrimNullTerminatorsAttribute, bool>(propertyInfo, false);
-                                value = ReadChars(arrayLength, trimNullTerminators, encodingType);
+                                value = ReadChars(arrayLength, trimNullTerminators, encoding);
                                 break;
                             }
                             case TypeCode.Int16: value = ReadInt16s(arrayLength); break;
@@ -775,15 +778,15 @@ namespace Kermalis.EndianBinaryIO
                             case TypeCode.String:
                             {
                                 Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
-                                EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
+                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
                                 if (nullTerminated == true)
                                 {
-                                    value = ReadStringsNullTerminated(arrayLength, encodingType);
+                                    value = ReadStringsNullTerminated(arrayLength, encoding);
                                 }
                                 else
                                 {
                                     bool trimNullTerminators = Utils.AttributeValueOrDefault<BinaryStringTrimNullTerminatorsAttribute, bool>(propertyInfo, false);
-                                    value = ReadStrings(arrayLength, stringLength, trimNullTerminators, encodingType);
+                                    value = ReadStrings(arrayLength, stringLength, trimNullTerminators, encoding);
                                 }
                                 break;
                             }
@@ -831,8 +834,8 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.SByte: value = ReadSByte(); break;
                         case TypeCode.Char:
                         {
-                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
-                            value = ReadChar(encodingType);
+                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
+                            value = ReadChar(encoding);
                             break;
                         }
                         case TypeCode.Int16: value = ReadInt16(); break;
@@ -848,15 +851,15 @@ namespace Kermalis.EndianBinaryIO
                         case TypeCode.String:
                         {
                             Utils.GetStringLength(obj, objType, propertyInfo, true, out bool? nullTerminated, out int stringLength);
-                            EncodingType encodingType = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, EncodingType>(propertyInfo, Encoding);
+                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
                             if (nullTerminated == true)
                             {
-                                value = ReadStringNullTerminated(encodingType);
+                                value = ReadStringNullTerminated(encoding);
                             }
                             else
                             {
                                 bool trimNullTerminators = Utils.AttributeValueOrDefault<BinaryStringTrimNullTerminatorsAttribute, bool>(propertyInfo, false);
-                                value = ReadString(stringLength, trimNullTerminators, encodingType);
+                                value = ReadString(stringLength, trimNullTerminators, encoding);
                             }
                             break;
                         }
