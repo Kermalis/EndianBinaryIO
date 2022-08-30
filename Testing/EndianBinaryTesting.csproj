@@ -4,12 +4,12 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<RootNamespace>Kermalis.EndianBinaryIOTests</RootNamespace>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+
 		<Authors>Kermalis</Authors>
 		<Copyright>Kermalis</Copyright>
 		<RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
-		<NoWarn />
-		<IsPackable>false</IsPackable>
-		<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
 	<ItemGroup>

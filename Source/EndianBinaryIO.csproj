@@ -5,28 +5,42 @@
 		<LangVersion>latest</LangVersion>
 		<OutputType>Library</OutputType>
 		<RootNamespace>Kermalis.EndianBinaryIO</RootNamespace>
-		<Authors>Kermalis</Authors>
-		<Copyright>Kermalis</Copyright>
-		<PackageId>EndianBinaryIO</PackageId>
-		<Product>EndianBinaryIO</Product>
-		<AssemblyName>EndianBinaryIO</AssemblyName>
-		<Version>2.0.0.0</Version>
-		<RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<NoWarn />
 		<Nullable>enable</Nullable>
 
+		<Authors>Kermalis</Authors>
+		<Copyright>Kermalis</Copyright>
+		<Product>EndianBinaryIO</Product>
+		<Title>EndianBinaryIO</Title>
+		<PackageId>EndianBinaryIO</PackageId>
+		<AssemblyName>EndianBinaryIO</AssemblyName>
+		<Version>2.0.0</Version>
+		<RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
 		<Description>
 			This .NET library provides a simple API to read/write bytes from/to streams and spans using user-specified endianness.
 			By default, supported types include primitives, enums, arrays, strings, and some common .NET struct types.
 			Objects can also be read/written from/to streams via reflection and attributes.
 			The developer can use the API even if their target behavior or data is not directly supported by using the IBinarySerializable interface, inheritting from the reader/writer, or using the manual Span methods without streams.
 			Performance is the focus when not using reflection; no allocations unless absolutely necessary!
+
 			Project URL and Samples ― https://github.com/Kermalis/EndianBinaryIO
 		</Description>
 		<PackageProjectUrl>https://github.com/Kermalis/EndianBinaryIO</PackageProjectUrl>
 		<NeutralLanguage>en-001</NeutralLanguage>
 		<PackageTags>Serialization;Reflection;Endianness;LittleEndian;BigEndian;EndianBinaryIO</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<PackageReleaseNotes>
+			* Rewritten with Span&lt;T&gt; and performance in mind. No allocations unless absolutely necessary
+			* The compiler will now inline certain methods. For example, ReadEnum&lt;TEnum&gt;() will only include code that will be executed for the given enum size. So passing a TEnum that is the size of a byte will condense down to just a ReadByte() call with no size/type checks
+			* Implemented reading and writing for Half, DateOnly, TimeOnly, Vector2, Vector3, Vector4, Quaternion, and Matrix4x4
+			* Removed bloated overloads (with array offset/count, alternate Encoding/BooleanSize, null termination, etc.). The reader/writer now respects its state (such as whether to use ASCII, and which BooleanSize to use) which you can change at any time
+			* decimal int order now matches with .net APIs
+			* Removed EndianBitConverter in favor of EndianBinaryPrimitives, which has similar API while using modern programming like Span&lt;T&gt;
+			* API uses nullable notations
+			* You can now ReadObject() and WriteObject() with primitives and other supported types like DateTime, Vector3, etc.
+			* Removed Encoding usage. The whole thing was very complicated before, and it barely functioned. Now you have ASCII and .net (UTF16-LE) support by default, and can add your own requirements either by extension methods or inheriting the reader/writer
+		</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -41,5 +55,16 @@
 		<DebugType>full</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>
