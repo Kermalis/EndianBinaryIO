@@ -16,6 +16,10 @@ For example, classes and structs in C# cannot have ignored members when marshall
 The `EndianBinaryPrimitives` static class which resembles `System.Buffers.Binary.BinaryPrimitives` is an API that converts to/from data types using `Span<T>`/`ReadOnlySpan<T>` with specific endianness, rather than streams.
 
 ----
+## Changelog For v2.0.0.0
+Be sure to check the comment at #28!
+
+----
 ## 🚀 Usage:
 Add the [EndianBinaryIO](https://www.nuget.org/packages/EndianBinaryIO) NuGet package to your project or download the .dll from [the releases tab](https://github.com/Kermalis/EndianBinaryIO/releases).
 
