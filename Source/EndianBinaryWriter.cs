@@ -1,926 +1,497 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
-using System.Text;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryIO
 {
-    public class EndianBinaryWriter
-    {
-        public Stream BaseStream { get; }
-        private Endianness _endianness;
-        public Endianness Endianness
-        {
-            get => _endianness;
-            set
-            {
-                if (value >= Endianness.MAX)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-                _endianness = value;
-            }
-        }
-        private BooleanSize _booleanSize;
-        public BooleanSize BooleanSize
-        {
-            get => _booleanSize;
-            set
-            {
-                if (value >= BooleanSize.MAX)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-                _booleanSize = value;
-            }
-        }
-        public Encoding Encoding { get; set; }
+	public partial class EndianBinaryWriter
+	{
+		protected const int BUF_LEN = 64; // Must be a power of 64
 
-        private byte[] _buffer;
+		public Stream Stream { get; }
+		private Endianness _endianness;
+		public Endianness Endianness
+		{
+			get => _endianness;
+			set
+			{
+				if (value >= Endianness.MAX)
+				{
+					throw new ArgumentOutOfRangeException(nameof(value), value, null);
+				}
+				_endianness = value;
+			}
+		}
+		private BooleanSize _booleanSize;
+		public BooleanSize BooleanSize
+		{
+			get => _booleanSize;
+			set
+			{
+				if (value >= BooleanSize.MAX)
+				{
+					throw new ArgumentOutOfRangeException(nameof(value), value, null);
+				}
+				_booleanSize = value;
+			}
+		}
+		public bool ASCII { get; set; }
 
-        public EndianBinaryWriter(Stream baseStream, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
-        {
-            if (baseStream is null)
-            {
-                throw new ArgumentNullException(nameof(baseStream));
-            }
-            if (!baseStream.CanWrite)
-            {
-                throw new ArgumentException(nameof(baseStream));
-            }
-            BaseStream = baseStream;
-            Endianness = endianness;
-            BooleanSize = booleanSize;
-            Encoding = Encoding.Default;
-        }
-        public EndianBinaryWriter(Stream baseStream, Encoding encoding, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
-        {
-            if (baseStream is null)
-            {
-                throw new ArgumentNullException(nameof(baseStream));
-            }
-            if (!baseStream.CanWrite)
-            {
-                throw new ArgumentException(nameof(baseStream));
-            }
-            BaseStream = baseStream;
-            Endianness = endianness;
-            BooleanSize = booleanSize;
-            Encoding = encoding;
-        }
+		protected readonly byte[] _buffer;
 
-        private void SetBufferSize(int size)
-        {
-            if (_buffer is null || _buffer.Length < size)
-            {
-                _buffer = new byte[size];
-            }
-        }
-        private void WriteBytesFromBuffer(int byteCount)
-        {
-            BaseStream.Write(_buffer, 0, byteCount);
-        }
+		public EndianBinaryWriter(Stream stream, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8, bool ascii = false)
+		{
+			if (!stream.CanWrite)
+			{
+				throw new ArgumentOutOfRangeException(nameof(stream), "Stream is not open for writing.");
+			}
 
-        public void Write(bool value)
-        {
-            Write(value, BooleanSize);
-        }
-        public void Write(bool value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, BooleanSize);
-        }
-        public void Write(bool value, BooleanSize booleanSize)
-        {
-            switch (booleanSize)
-            {
-                case BooleanSize.U8:
-                {
-                    SetBufferSize(1);
-                    _buffer[0] = value ? (byte)1 : (byte)0;
-                    WriteBytesFromBuffer(1);
-                    break;
-                }
-                case BooleanSize.U16:
-                {
-                    _buffer = EndianBitConverter.Int16ToBytes(value ? (short)1 : (short)0, Endianness);
-                    WriteBytesFromBuffer(2);
-                    break;
-                }
-                case BooleanSize.U32:
-                {
-                    _buffer = EndianBitConverter.Int32ToBytes(value ? 1 : 0, Endianness);
-                    WriteBytesFromBuffer(4);
-                    break;
-                }
-                default: throw new ArgumentOutOfRangeException(nameof(booleanSize));
-            }
-        }
-        public void Write(bool value, BooleanSize booleanSize, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, booleanSize);
-        }
-        public void Write(bool[] value)
-        {
-            Write(value, 0, value.Length, BooleanSize);
-        }
-        public void Write(bool[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length, BooleanSize);
-        }
-        public void Write(bool[] value, BooleanSize booleanSize)
-        {
-            Write(value, 0, value.Length, booleanSize);
-        }
-        public void Write(bool[] value, BooleanSize booleanSize, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length, booleanSize);
-        }
-        public void Write(bool[] value, int startIndex, int count)
-        {
-            Write(value, startIndex, count, BooleanSize);
-        }
-        public void Write(bool[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, BooleanSize);
-        }
-        public void Write(bool[] value, int startIndex, int count, BooleanSize booleanSize)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            for (int i = startIndex; i < count; i++)
-            {
-                Write(value[i], booleanSize);
-            }
-        }
-        public void Write(bool[] value, int startIndex, int count, BooleanSize booleanSize, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, booleanSize);
-        }
-        public void Write(byte value)
-        {
-            SetBufferSize(1);
-            _buffer[0] = value;
-            WriteBytesFromBuffer(1);
-        }
-        public void Write(byte value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(byte[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(byte[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(byte[] value, int startIndex, int count)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            SetBufferSize(count);
-            for (int i = 0; i < count; i++)
-            {
-                _buffer[i] = value[i + startIndex];
-            }
-            WriteBytesFromBuffer(count);
-        }
-        public void Write(byte[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(sbyte value)
-        {
-            SetBufferSize(1);
-            _buffer[0] = (byte)value;
-            WriteBytesFromBuffer(1);
-        }
-        public void Write(sbyte value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(sbyte[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(sbyte[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(sbyte[] value, int startIndex, int count)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            SetBufferSize(count);
-            for (int i = 0; i < count; i++)
-            {
-                _buffer[i] = (byte)value[i + startIndex];
-            }
-            WriteBytesFromBuffer(count);
-        }
-        public void Write(sbyte[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(char value)
-        {
-            Write(value, Encoding);
-        }
-        public void Write(char value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, Encoding);
-        }
-        public void Write(char value, Encoding encoding)
-        {
-            Utils.ThrowIfCannotUseEncoding(encoding);
-            _buffer = encoding.GetBytes(new[] { value });
-            WriteBytesFromBuffer(_buffer.Length);
-        }
-        public void Write(char value, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, encoding);
-        }
-        public void Write(char[] value)
-        {
-            Write(value, 0, value.Length, Encoding);
-        }
-        public void Write(char[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length, Encoding);
-        }
-        public void Write(char[] value, Encoding encoding)
-        {
-            Write(value, 0, value.Length, encoding);
-        }
-        public void Write(char[] value, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length, encoding);
-        }
-        public void Write(char[] value, int startIndex, int count)
-        {
-            Write(value, startIndex, count, Encoding);
-        }
-        public void Write(char[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, Encoding);
-        }
-        public void Write(char[] value, int startIndex, int count, Encoding encoding)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            Utils.ThrowIfCannotUseEncoding(encoding);
-            _buffer = encoding.GetBytes(value, startIndex, count);
-            WriteBytesFromBuffer(_buffer.Length);
-        }
-        public void Write(char[] value, int startIndex, int count, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, encoding);
-        }
-        public void Write(string value, bool nullTerminated)
-        {
-            Write(value, nullTerminated, Encoding);
-        }
-        public void Write(string value, bool nullTerminated, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, nullTerminated, Encoding);
-        }
-        public void Write(string value, bool nullTerminated, Encoding encoding)
-        {
-            Write(value.ToCharArray(), encoding);
-            if (nullTerminated)
-            {
-                Write('\0', encoding);
-            }
-        }
-        public void Write(string value, bool nullTerminated, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, nullTerminated, encoding);
-        }
-        public void Write(string value, int charCount)
-        {
-            Write(value, charCount, Encoding);
-        }
-        public void Write(string value, int charCount, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, charCount, Encoding);
-        }
-        public void Write(string value, int charCount, Encoding encoding)
-        {
-            Utils.TruncateString(value, charCount, out char[] chars);
-            Write(chars, encoding);
-        }
-        public void Write(string value, int charCount, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, charCount, encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated)
-        {
-            Write(value, startIndex, count, nullTerminated, Encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, nullTerminated, Encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated, Encoding encoding)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                Write(value[i + startIndex], nullTerminated, encoding);
-            }
-        }
-        public void Write(string[] value, int startIndex, int count, bool nullTerminated, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, nullTerminated, encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, int charCount)
-        {
-            Write(value, startIndex, count, charCount, Encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, int charCount, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, charCount, Encoding);
-        }
-        public void Write(string[] value, int startIndex, int count, int charCount, Encoding encoding)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                Write(value[i + startIndex], charCount, encoding);
-            }
-        }
-        public void Write(string[] value, int startIndex, int count, int charCount, Encoding encoding, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count, charCount, encoding);
-        }
-        public void Write(short value)
-        {
-            _buffer = EndianBitConverter.Int16ToBytes(value, Endianness);
-            WriteBytesFromBuffer(2);
-        }
-        public void Write(short value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(short[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(short[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(short[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.Int16sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 2);
-        }
-        public void Write(short[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(ushort value)
-        {
-            _buffer = EndianBitConverter.Int16ToBytes((short)value, Endianness);
-            WriteBytesFromBuffer(2);
-        }
-        public void Write(ushort value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(ushort[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(ushort[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(ushort[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.UInt16sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 2);
-        }
-        public void Write(ushort[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(int value)
-        {
-            _buffer = EndianBitConverter.Int32ToBytes(value, Endianness);
-            WriteBytesFromBuffer(4);
-        }
-        public void Write(int value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(int[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(int[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(int[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.Int32sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 4);
-        }
-        public void Write(int[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(uint value)
-        {
-            _buffer = EndianBitConverter.Int32ToBytes((int)value, Endianness);
-            WriteBytesFromBuffer(4);
-        }
-        public void Write(uint value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(uint[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(uint[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(uint[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.UInt32sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 4);
-        }
-        public void Write(uint[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(long value)
-        {
-            _buffer = EndianBitConverter.Int64ToBytes(value, Endianness);
-            WriteBytesFromBuffer(8);
-        }
-        public void Write(long value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(long[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(long[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(long[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.Int64sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 8);
-        }
-        public void Write(long[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(ulong value)
-        {
-            _buffer = EndianBitConverter.Int64ToBytes((long)value, Endianness);
-            WriteBytesFromBuffer(8);
-        }
-        public void Write(ulong value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(ulong[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(ulong[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(ulong[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.UInt64sToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 8);
-        }
-        public void Write(ulong[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(float value)
-        {
-            _buffer = EndianBitConverter.SingleToBytes(value, Endianness);
-            WriteBytesFromBuffer(4);
-        }
-        public void Write(float value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(float[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(float[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(float[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.SinglesToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 4);
-        }
-        public void Write(float[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(double value)
-        {
-            _buffer = EndianBitConverter.DoubleToBytes(value, Endianness);
-            WriteBytesFromBuffer(8);
-        }
-        public void Write(double value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(double[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(double[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(double[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.DoublesToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 8);
-        }
-        public void Write(double[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
-        public void Write(decimal value)
-        {
-            _buffer = EndianBitConverter.DecimalToBytes(value, Endianness);
-            WriteBytesFromBuffer(16);
-        }
-        public void Write(decimal value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(decimal[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(decimal[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(decimal[] value, int startIndex, int count)
-        {
-            _buffer = EndianBitConverter.DecimalsToBytes(value, startIndex, count, Endianness);
-            WriteBytesFromBuffer(count * 16);
-        }
-        public void Write(decimal[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
+			Stream = stream;
+			Endianness = endianness;
+			BooleanSize = booleanSize;
+			ASCII = ascii;
+			_buffer = new byte[BUF_LEN];
+		}
 
-        // #13 - Handle "Enum" abstract type so we get the correct type in that case
-        // For example, writer.Write((Enum)Enum.Parse(enumType, value))
-        // No "struct" restriction on writes
-        public void Write<TEnum>(TEnum value) where TEnum : Enum
-        {
-            Type underlyingType = Enum.GetUnderlyingType(value.GetType());
-            switch (Type.GetTypeCode(underlyingType))
-            {
-                case TypeCode.Byte: Write(Convert.ToByte(value)); break;
-                case TypeCode.SByte: Write(Convert.ToSByte(value)); break;
-                case TypeCode.Int16: Write(Convert.ToInt16(value)); break;
-                case TypeCode.UInt16: Write(Convert.ToUInt16(value)); break;
-                case TypeCode.Int32: Write(Convert.ToInt32(value)); break;
-                case TypeCode.UInt32: Write(Convert.ToUInt32(value)); break;
-                case TypeCode.Int64: Write(Convert.ToInt64(value)); break;
-                case TypeCode.UInt64: Write(Convert.ToUInt64(value)); break;
-                default: throw new ArgumentOutOfRangeException(nameof(underlyingType));
-            }
-        }
-        public void Write<TEnum>(TEnum value, long offset) where TEnum : Enum
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write<TEnum>(TEnum[] value) where TEnum : Enum
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write<TEnum>(TEnum[] value, long offset) where TEnum : Enum
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write<TEnum>(TEnum[] value, int startIndex, int count) where TEnum : Enum
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                Write(value[i + startIndex]);
-            }
-        }
-        public void Write<TEnum>(TEnum[] value, int startIndex, int count, long offset) where TEnum : Enum
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
+		protected delegate void WriteArrayMethod<TSrc>(Span<byte> dest, ReadOnlySpan<TSrc> src, Endianness endianness);
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		protected void WriteArray<TSrc>(ReadOnlySpan<TSrc> src, int elementSize, WriteArrayMethod<TSrc> writeArray)
+		{
+			int numBytes = src.Length * elementSize;
+			int start = 0;
+			while (numBytes != 0)
+			{
+				int consumeBytes = Math.Min(numBytes, BUF_LEN);
 
-        public void Write(DateTime value)
-        {
-            Write(value.ToBinary());
-        }
-        public void Write(DateTime value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value);
-        }
-        public void Write(DateTime[] value)
-        {
-            Write(value, 0, value.Length);
-        }
-        public void Write(DateTime[] value, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, 0, value.Length);
-        }
-        public void Write(DateTime[] value, int startIndex, int count)
-        {
-            if (Utils.ValidateArrayIndexAndCount(value, startIndex, count))
-            {
-                return;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                Write(value[i + startIndex]);
-            }
-        }
-        public void Write(DateTime[] value, int startIndex, int count, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(value, startIndex, count);
-        }
+				Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
+				writeArray(buffer, src.Slice(start, consumeBytes / elementSize), Endianness);
+				Stream.Write(buffer);
 
-        public void Write(IBinarySerializable obj)
-        {
-            if (obj is null)
-            {
-                throw new ArgumentNullException(nameof(obj));
-            }
-            obj.Write(this);
-        }
-        public void Write(IBinarySerializable obj, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(obj);
-        }
-        public void Write(object obj)
-        {
-            if (obj is null)
-            {
-                throw new ArgumentNullException(nameof(obj));
-            }
-            if (obj is IBinarySerializable bs)
-            {
-                bs.Write(this);
-                return;
-            }
+				numBytes -= consumeBytes;
+				start += consumeBytes / elementSize;
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		private void WriteBoolArray(ReadOnlySpan<bool> src, int elementSize)
+		{
+			int numBytes = src.Length * elementSize;
+			int start = 0;
+			while (numBytes != 0)
+			{
+				int consumeBytes = Math.Min(numBytes, BUF_LEN);
 
-            Type objType = obj.GetType();
-            Utils.ThrowIfCannotReadWriteType(objType);
+				Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
+				EndianBinaryPrimitives.WriteBooleans(buffer, src.Slice(start, consumeBytes / elementSize), Endianness, elementSize);
+				Stream.Write(buffer);
 
-            // Get public non-static properties
-            foreach (PropertyInfo propertyInfo in objType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
-            {
-                if (Utils.AttributeValueOrDefault<BinaryIgnoreAttribute, bool>(propertyInfo, false))
-                {
-                    continue; // Skip properties with BinaryIgnoreAttribute
-                }
+				numBytes -= consumeBytes;
+				start += consumeBytes / elementSize;
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		private void WriteASCIIArray(ReadOnlySpan<char> src)
+		{
+			int numBytes = src.Length;
+			int start = 0;
+			while (numBytes != 0)
+			{
+				int consumeBytes = Math.Min(numBytes, BUF_LEN);
 
-                Type propertyType = propertyInfo.PropertyType;
-                object value = propertyInfo.GetValue(obj);
+				Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
+				for (int i = 0; i < consumeBytes; i++)
+				{
+					buffer[i] = (byte)src[i + start];
+				}
+				Stream.Write(buffer);
 
-                if (propertyType.IsArray)
-                {
-                    int arrayLength = Utils.GetArrayLength(obj, objType, propertyInfo);
-                    if (arrayLength != 0) // Do not need to do anything for length 0
-                    {
-                        // Get array type
-                        Type elementType = propertyType.GetElementType();
-                        if (elementType.IsEnum)
-                        {
-                            elementType = Enum.GetUnderlyingType(elementType);
-                        }
-                        switch (Type.GetTypeCode(elementType))
-                        {
-                            case TypeCode.Boolean:
-                            {
-                                BooleanSize booleanSize = Utils.AttributeValueOrDefault<BinaryBooleanSizeAttribute, BooleanSize>(propertyInfo, BooleanSize);
-                                Write((bool[])value, 0, arrayLength, booleanSize);
-                                break;
-                            }
-                            case TypeCode.Byte: Write((byte[])value, 0, arrayLength); break;
-                            case TypeCode.SByte: Write((sbyte[])value, 0, arrayLength); break;
-                            case TypeCode.Char:
-                            {
-                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
-                                Write((char[])value, 0, arrayLength, encoding);
-                                break;
-                            }
-                            case TypeCode.Int16: Write((short[])value, 0, arrayLength); break;
-                            case TypeCode.UInt16: Write((ushort[])value, 0, arrayLength); break;
-                            case TypeCode.Int32: Write((int[])value, 0, arrayLength); break;
-                            case TypeCode.UInt32: Write((uint[])value, 0, arrayLength); break;
-                            case TypeCode.Int64: Write((long[])value, 0, arrayLength); break;
-                            case TypeCode.UInt64: Write((ulong[])value, 0, arrayLength); break;
-                            case TypeCode.Single: Write((float[])value, 0, arrayLength); break;
-                            case TypeCode.Double: Write((double[])value, 0, arrayLength); break;
-                            case TypeCode.Decimal: Write((decimal[])value, 0, arrayLength); break;
-                            case TypeCode.DateTime: Write((DateTime[])value, 0, arrayLength); break;
-                            case TypeCode.String:
-                            {
-                                Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                                Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
-                                if (nullTerminated.HasValue)
-                                {
-                                    Write((string[])value, 0, arrayLength, nullTerminated.Value, encoding);
-                                }
-                                else
-                                {
-                                    Write((string[])value, 0, arrayLength, stringLength, encoding);
-                                }
-                                break;
-                            }
-                            case TypeCode.Object:
-                            {
-                                if (typeof(IBinarySerializable).IsAssignableFrom(elementType))
-                                {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        var serializable = (IBinarySerializable)((Array)value).GetValue(i);
-                                        serializable.Write(this);
-                                    }
-                                }
-                                else // Element's type is not supported so try to write the array's objects
-                                {
-                                    for (int i = 0; i < arrayLength; i++)
-                                    {
-                                        object elementObj = ((Array)value).GetValue(i);
-                                        Write(elementObj);
-                                    }
-                                }
-                                break;
-                            }
-                            default: throw new ArgumentOutOfRangeException(nameof(elementType));
-                        }
-                    }
-                }
-                else
-                {
-                    if (propertyType.IsEnum)
-                    {
-                        propertyType = Enum.GetUnderlyingType(propertyType);
-                    }
-                    switch (Type.GetTypeCode(propertyType))
-                    {
-                        case TypeCode.Boolean:
-                        {
-                            BooleanSize booleanSize = Utils.AttributeValueOrDefault<BinaryBooleanSizeAttribute, BooleanSize>(propertyInfo, BooleanSize);
-                            Write((bool)value, booleanSize);
-                            break;
-                        }
-                        case TypeCode.Byte: Write((byte)value); break;
-                        case TypeCode.SByte: Write((sbyte)value); break;
-                        case TypeCode.Char:
-                        {
-                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
-                            Write((char)value, encoding);
-                            break;
-                        }
-                        case TypeCode.Int16: Write((short)value); break;
-                        case TypeCode.UInt16: Write((ushort)value); break;
-                        case TypeCode.Int32: Write((int)value); break;
-                        case TypeCode.UInt32: Write((uint)value); break;
-                        case TypeCode.Int64: Write((long)value); break;
-                        case TypeCode.UInt64: Write((ulong)value); break;
-                        case TypeCode.Single: Write((float)value); break;
-                        case TypeCode.Double: Write((double)value); break;
-                        case TypeCode.Decimal: Write((decimal)value); break;
-                        case TypeCode.DateTime: Write((DateTime)value); break;
-                        case TypeCode.String:
-                        {
-                            Utils.GetStringLength(obj, objType, propertyInfo, false, out bool? nullTerminated, out int stringLength);
-                            Encoding encoding = Utils.AttributeValueOrDefault<BinaryEncodingAttribute, Encoding>(propertyInfo, Encoding);
-                            if (nullTerminated.HasValue)
-                            {
-                                Write((string)value, nullTerminated.Value, encoding);
-                            }
-                            else
-                            {
-                                Write((string)value, stringLength, encoding);
-                            }
-                            break;
-                        }
-                        case TypeCode.Object:
-                        {
-                            if (typeof(IBinarySerializable).IsAssignableFrom(propertyType))
-                            {
-                                ((IBinarySerializable)value).Write(this);
-                            }
-                            else // property's type is not supported so try to write the object
-                            {
-                                Write(value);
-                            }
-                            break;
-                        }
-                        default: throw new ArgumentOutOfRangeException(nameof(propertyType));
-                    }
-                }
-            }
-        }
-        public void Write(object obj, long offset)
-        {
-            BaseStream.Position = offset;
-            Write(obj);
-        }
-    }
+				numBytes -= consumeBytes;
+				start += consumeBytes;
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteZeroes(int numBytes)
+		{
+			bool cleared = false;
+			while (numBytes != 0)
+			{
+				int consumeBytes = Math.Min(numBytes, BUF_LEN);
+
+				Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
+				if (!cleared)
+				{
+					buffer.Clear();
+					cleared = true;
+				}
+				Stream.Write(buffer);
+
+				numBytes -= consumeBytes;
+			}
+		}
+
+		public void WriteSByte(sbyte value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 1);
+			buffer[0] = (byte)value;
+			Stream.Write(buffer);
+		}
+		public void WriteSBytes(ReadOnlySpan<sbyte> values)
+		{
+			ReadOnlySpan<byte> buffer = MemoryMarshal.Cast<sbyte, byte>(values);
+			Stream.Write(buffer);
+		}
+		public void WriteByte(byte value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 1);
+			buffer[0] = value;
+			Stream.Write(buffer);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteBytes(ReadOnlySpan<byte> values)
+		{
+			Stream.Write(values);
+		}
+		public void WriteInt16(short value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 2);
+			EndianBinaryPrimitives.WriteInt16(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteInt16s(ReadOnlySpan<short> values)
+		{
+			WriteArray(values, 2, EndianBinaryPrimitives.WriteInt16s);
+		}
+		public void WriteUInt16(ushort value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 2);
+			EndianBinaryPrimitives.WriteUInt16(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteUInt16s(ReadOnlySpan<ushort> values)
+		{
+			WriteArray(values, 2, EndianBinaryPrimitives.WriteUInt16s);
+		}
+		public void WriteInt32(int value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 4);
+			EndianBinaryPrimitives.WriteInt32(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteInt32s(ReadOnlySpan<int> values)
+		{
+			WriteArray(values, 4, EndianBinaryPrimitives.WriteInt32s);
+		}
+		public void WriteUInt32(uint value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 4);
+			EndianBinaryPrimitives.WriteUInt32(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteUInt32s(ReadOnlySpan<uint> values)
+		{
+			WriteArray(values, 4, EndianBinaryPrimitives.WriteUInt32s);
+		}
+		public void WriteInt64(long value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteInt64(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteInt64s(ReadOnlySpan<long> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteInt64s);
+		}
+		public void WriteUInt64(ulong value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteUInt64(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteUInt64s(ReadOnlySpan<ulong> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteUInt64s);
+		}
+
+		public void WriteHalf(Half value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 2);
+			EndianBinaryPrimitives.WriteHalf(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteHalves(ReadOnlySpan<Half> values)
+		{
+			WriteArray(values, 2, EndianBinaryPrimitives.WriteHalves);
+		}
+		public void WriteSingle(float value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 4);
+			EndianBinaryPrimitives.WriteSingle(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteSingles(ReadOnlySpan<float> values)
+		{
+			WriteArray(values, 4, EndianBinaryPrimitives.WriteSingles);
+		}
+		public void WriteDouble(double value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteDouble(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteDoubles(ReadOnlySpan<double> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteDoubles);
+		}
+		public void WriteDecimal(in decimal value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 16);
+			EndianBinaryPrimitives.WriteDecimal(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteDecimals(ReadOnlySpan<decimal> values)
+		{
+			WriteArray(values, 16, EndianBinaryPrimitives.WriteDecimals);
+		}
+
+		public void WriteBoolean(bool value)
+		{
+			int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
+			Span<byte> buffer = _buffer.AsSpan(0, elementSize);
+			EndianBinaryPrimitives.WriteBoolean(buffer, value, Endianness, elementSize);
+			Stream.Write(buffer);
+		}
+		public void WriteBooleans(ReadOnlySpan<bool> values)
+		{
+			int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
+			WriteBoolArray(values, elementSize);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteEnum<TEnum>(TEnum value) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				WriteByte(Unsafe.As<TEnum, byte>(ref value));
+			}
+			else if (size == 2)
+			{
+				WriteUInt16(Unsafe.As<TEnum, ushort>(ref value));
+			}
+			else if (size == 4)
+			{
+				WriteUInt32(Unsafe.As<TEnum, uint>(ref value));
+			}
+			else
+			{
+				WriteUInt64(Unsafe.As<TEnum, ulong>(ref value));
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteEnums<TEnum>(ReadOnlySpan<TEnum> values) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				WriteBytes(MemoryMarshal.Cast<TEnum, byte>(values));
+			}
+			else if (size == 2)
+			{
+				WriteUInt16s(MemoryMarshal.Cast<TEnum, ushort>(values));
+			}
+			else if (size == 4)
+			{
+				WriteUInt32s(MemoryMarshal.Cast<TEnum, uint>(values));
+			}
+			else
+			{
+				WriteUInt64s(MemoryMarshal.Cast<TEnum, ulong>(values));
+			}
+		}
+		// #13 - Allow writing the abstract "Enum" type
+		// For example, writer.Write((Enum)Enum.Parse(enumType, value))
+		// Don't allow writing Enum[] though, since there is no way to read that
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteEnum(Enum value)
+		{
+			Type underlyingType = Enum.GetUnderlyingType(value.GetType());
+			ref byte data = ref Utils.GetRawData(value); // Use memory tricks to skip object header of generic Enum
+			switch (Type.GetTypeCode(underlyingType))
+			{
+				case TypeCode.SByte:
+				case TypeCode.Byte: WriteByte(data); break;
+				case TypeCode.Int16:
+				case TypeCode.UInt16: WriteUInt16(Unsafe.As<byte, ushort>(ref data)); break;
+				case TypeCode.Int32:
+				case TypeCode.UInt32: WriteUInt32(Unsafe.As<byte, uint>(ref data)); break;
+				case TypeCode.Int64:
+				case TypeCode.UInt64: WriteUInt64(Unsafe.As<byte, ulong>(ref data)); break;
+			}
+		}
+
+		public void WriteDateTime(DateTime value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteDateTime(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteDateTimes(ReadOnlySpan<DateTime> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteDateTimes);
+		}
+		public void WriteDateOnly(DateOnly value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 4);
+			EndianBinaryPrimitives.WriteDateOnly(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteDateOnlys(ReadOnlySpan<DateOnly> values)
+		{
+			WriteArray(values, 4, EndianBinaryPrimitives.WriteDateOnlys);
+		}
+		public void WriteTimeOnly(TimeOnly value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteTimeOnly(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteTimeOnlys(ReadOnlySpan<TimeOnly> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteTimeOnlys);
+		}
+
+		public void WriteVector2(Vector2 value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 8);
+			EndianBinaryPrimitives.WriteVector2(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteVector2s(ReadOnlySpan<Vector2> values)
+		{
+			WriteArray(values, 8, EndianBinaryPrimitives.WriteVector2s);
+		}
+		public void WriteVector3(Vector3 value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 12);
+			EndianBinaryPrimitives.WriteVector3(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteVector3s(ReadOnlySpan<Vector3> values)
+		{
+			WriteArray(values, 12, EndianBinaryPrimitives.WriteVector3s);
+		}
+		public void WriteVector4(in Vector4 value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 16);
+			EndianBinaryPrimitives.WriteVector4(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteVector4s(ReadOnlySpan<Vector4> values)
+		{
+			WriteArray(values, 16, EndianBinaryPrimitives.WriteVector4s);
+		}
+		public void WriteQuaternion(in Quaternion value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 16);
+			EndianBinaryPrimitives.WriteQuaternion(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteQuaternions(ReadOnlySpan<Quaternion> values)
+		{
+			WriteArray(values, 16, EndianBinaryPrimitives.WriteQuaternions);
+		}
+		public void WriteMatrix4x4(in Matrix4x4 value)
+		{
+			Span<byte> buffer = _buffer.AsSpan(0, 64);
+			EndianBinaryPrimitives.WriteMatrix4x4(buffer, value, Endianness);
+			Stream.Write(buffer);
+		}
+		public void WriteMatrix4x4s(ReadOnlySpan<Matrix4x4> values)
+		{
+			WriteArray(values, 64, EndianBinaryPrimitives.WriteMatrix4x4s);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteChar(char v)
+		{
+			if (ASCII)
+			{
+				WriteByte((byte)v);
+			}
+			else
+			{
+				WriteUInt16(v);
+			}
+		}
+		public void WriteChars(ReadOnlySpan<char> values)
+		{
+			if (values.Length == 0)
+			{
+				return;
+			}
+			if (ASCII)
+			{
+				WriteASCIIArray(values);
+			}
+			else
+			{
+				ReadOnlySpan<ushort> buffer = MemoryMarshal.Cast<char, ushort>(values);
+				WriteUInt16s(buffer);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteChars_Count(ReadOnlySpan<char> values, int charCount)
+		{
+			if (charCount == 0)
+			{
+				return;
+			}
+			if (values.Length >= charCount)
+			{
+				WriteChars(values.Slice(0, charCount));
+			}
+			else // Less
+			{
+				WriteChars(values);
+
+				// Append '\0'
+				int emptyBytes = charCount - values.Length;
+				if (!ASCII)
+				{
+					emptyBytes *= 2;
+				}
+				WriteZeroes(emptyBytes);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteChars_NullTerminated(ReadOnlySpan<char> values)
+		{
+			WriteChars(values);
+			WriteChar('\0');
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteStrings(ReadOnlySpan<string> values)
+		{
+			for (int i = 0; i < values.Length; i++)
+			{
+				WriteChars(values[i]);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteStrings_Count(ReadOnlySpan<string> values, int charCount)
+		{
+			for (int i = 0; i < values.Length; i++)
+			{
+				WriteChars_Count(values[i], charCount);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public void WriteStrings_NullTerminated(ReadOnlySpan<string> values)
+		{
+			for (int i = 0; i < values.Length; i++)
+			{
+				WriteChars_NullTerminated(values[i]);
+			}
+		}
+	}
 }

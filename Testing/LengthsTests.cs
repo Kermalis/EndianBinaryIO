@@ -6,138 +6,140 @@ using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests
 {
-    public sealed class LengthsTests
-    {
-        private sealed class MyLengthyObj
-        {
-            [BinaryArrayFixedLength(3)]
-            [BinaryEncoding("ASCII")]
-            [BinaryStringNullTerminated(true)]
-            public string[] NullTerminatedStringArray { get; set; }
+	public sealed class LengthsTests
+	{
+		private sealed class MyLengthyObj
+		{
+			[BinaryArrayFixedLength(3)]
+			[BinaryASCII]
+			[BinaryStringNullTerminated]
+			public string[] NullTerminatedStringArray { get; set; }
 
-            [BinaryArrayFixedLength(3)]
-            [BinaryEncoding("ASCII")]
-            [BinaryStringFixedLength(5)]
-            public string[] SizedStringArray { get; set; }
+			[BinaryArrayFixedLength(3)]
+			[BinaryASCII]
+			[BinaryStringFixedLength(5)]
+			public string[] SizedStringArray { get; set; }
 
-            public byte VariableLengthProperty { get; set; }
-            [BinaryArrayVariableLength(nameof(VariableLengthProperty))]
-            public ShortSizedEnum[] VariableSizedArray { get; set; }
-        }
-        private sealed class ZeroLenArrayObj
-        {
-            [BinaryArrayFixedLength(0)]
-            public byte[] SizedArray { get; set; }
+			public byte VariableLengthProperty { get; set; }
+			[BinaryArrayVariableLength(nameof(VariableLengthProperty))]
+			public ShortSizedEnum[] VariableSizedArray { get; set; }
+		}
+		private sealed class ZeroLenArrayObj
+		{
+			[BinaryArrayFixedLength(0)]
+			public byte[] SizedArray { get; set; }
 
-            public byte VariableLength { get; set; }
-            [BinaryArrayVariableLength(nameof(VariableLength))]
-            public byte[] VariableArray { get; set; }
-        }
+			public byte VariableLength { get; set; }
+			[BinaryArrayVariableLength(nameof(VariableLength))]
+			public byte[] VariableArray { get; set; }
+		}
 
-        #region Constants
-        private static readonly byte[] _lengthyObjBytes = new byte[]
-        {
-            0x48, 0x69, 0x00, // "Hi\0"
-            0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, // "Hello\0"
-            0x48, 0x6F, 0x6C, 0x61, 0x00, // "Hola\0"
+		#region Constants
 
-            0x53, 0x65, 0x65, 0x79, 0x61, // "Seeya"
-            0x42, 0x79, 0x65, 0x00, 0x00, // "Bye\0\0"
-            0x41, 0x64, 0x69, 0x6F, 0x73, // "Adios"
+		private static readonly byte[] _lengthyObjBytes = new byte[]
+		{
+			0x48, 0x69, 0x00, // "Hi\0"
+			0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, // "Hello\0"
+			0x48, 0x6F, 0x6C, 0x61, 0x00, // "Hola\0"
 
-            0x02, // (byte)2
-            0x40, 0x00, // ShortSizedEnum.Val1
-            0x00, 0x08, // ShortSizedEnum.Val2
-        };
-        private static readonly byte[] _zeroLenArrayObjBytes = new byte[]
-        {
-            0x00, // (byte)0
-        };
-        #endregion
+			0x53, 0x65, 0x65, 0x79, 0x61, // "Seeya"
+			0x42, 0x79, 0x65, 0x00, 0x00, // "Bye\0\0"
+			0x41, 0x64, 0x69, 0x6F, 0x73, // "Adios"
 
-        [Fact]
-        public void ReadLengthyObject()
-        {
-            MyLengthyObj obj;
-            using (var stream = new MemoryStream(_lengthyObjBytes))
-            {
-                obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<MyLengthyObj>();
-            }
+			0x02, // (byte)2
+			0x40, 0x00, // ShortSizedEnum.Val1
+			0x00, 0x08, // ShortSizedEnum.Val2
+		};
+		private static readonly byte[] _zeroLenArrayObjBytes = new byte[]
+		{
+			0x00, // (byte)0
+		};
 
-            Assert.Equal(3, obj.NullTerminatedStringArray.Length); // Fixed size array works
-            Assert.Equal("Hi", obj.NullTerminatedStringArray[0]); // Null terminated strings
-            Assert.Equal("Hello", obj.NullTerminatedStringArray[1]);
-            Assert.Equal("Hola", obj.NullTerminatedStringArray[2]);
+		#endregion
 
-            Assert.Equal(3, obj.SizedStringArray.Length); // Fixed size array again
-            Assert.Equal("Seeya", obj.SizedStringArray[0]); // Strings 5 chars long
-            Assert.Equal("Bye\0\0", obj.SizedStringArray[1]);
-            Assert.Equal("Adios", obj.SizedStringArray[2]);
+		[Fact]
+		public void ReadLengthyObject()
+		{
+			MyLengthyObj obj;
+			using (var stream = new MemoryStream(_lengthyObjBytes))
+			{
+				obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<MyLengthyObj>();
+			}
 
-            Assert.Equal(2, obj.VariableLengthProperty); // This determines how long the following array is
-            Assert.Equal(2, obj.VariableSizedArray.Length); // Retrieves the proper size
-            Assert.Equal(ShortSizedEnum.Val1, obj.VariableSizedArray[0]);
-            Assert.Equal(ShortSizedEnum.Val2, obj.VariableSizedArray[1]);
-        }
+			Assert.Equal(3, obj.NullTerminatedStringArray.Length); // Fixed size array works
+			Assert.Equal("Hi", obj.NullTerminatedStringArray[0]); // Null terminated strings
+			Assert.Equal("Hello", obj.NullTerminatedStringArray[1]);
+			Assert.Equal("Hola", obj.NullTerminatedStringArray[2]);
 
-        [Fact]
-        public void WriteLengthyObject()
-        {
-            byte[] bytes = new byte[_lengthyObjBytes.Length];
-            using (var stream = new MemoryStream(bytes))
-            {
-                new EndianBinaryWriter(stream, Endianness.LittleEndian).Write(new MyLengthyObj
-                {
-                    NullTerminatedStringArray = new string[3]
-                    {
-                        "Hi", "Hello", "Hola"
-                    },
+			Assert.Equal(3, obj.SizedStringArray.Length); // Fixed size array again
+			Assert.Equal("Seeya", obj.SizedStringArray[0]); // Strings 5 chars long
+			Assert.Equal("Bye\0\0", obj.SizedStringArray[1]);
+			Assert.Equal("Adios", obj.SizedStringArray[2]);
 
-                    SizedStringArray = new string[3]
-                    {
-                        "Seeya", "Bye", "Adios"
-                    },
+			Assert.Equal(2, obj.VariableLengthProperty); // This determines how long the following array is
+			Assert.Equal(2, obj.VariableSizedArray.Length); // Retrieves the proper size
+			Assert.Equal(ShortSizedEnum.Val1, obj.VariableSizedArray[0]);
+			Assert.Equal(ShortSizedEnum.Val2, obj.VariableSizedArray[1]);
+		}
 
-                    VariableLengthProperty = 2,
-                    VariableSizedArray = new ShortSizedEnum[2]
-                    {
-                        ShortSizedEnum.Val1, ShortSizedEnum.Val2
-                    }
-                });
-            }
-            Assert.True(bytes.SequenceEqual(_lengthyObjBytes));
-        }
+		[Fact]
+		public void WriteLengthyObject()
+		{
+			byte[] bytes = new byte[_lengthyObjBytes.Length];
+			using (var stream = new MemoryStream(bytes))
+			{
+				new EndianBinaryWriter(stream, Endianness.LittleEndian).WriteObject(new MyLengthyObj
+				{
+					NullTerminatedStringArray = new string[3]
+					{
+						"Hi", "Hello", "Hola",
+					},
 
-        [Fact]
-        public void ReadZeroLenArrayObject()
-        {
-            ZeroLenArrayObj obj;
-            using (var stream = new MemoryStream(_zeroLenArrayObjBytes))
-            {
-                obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<ZeroLenArrayObj>();
-            }
+					SizedStringArray = new string[3]
+					{
+						"Seeya", "Bye", "Adios",
+					},
 
-            Assert.Empty(obj.SizedArray); // Fixed size array works
+					VariableLengthProperty = 2,
+					VariableSizedArray = new ShortSizedEnum[2]
+					{
+						ShortSizedEnum.Val1, ShortSizedEnum.Val2,
+					},
+				});
+			}
+			Assert.True(bytes.SequenceEqual(_lengthyObjBytes));
+		}
 
-            Assert.Equal(0, obj.VariableLength); // This determines how long the following array is
-            Assert.Empty(obj.VariableArray); // Retrieves the proper size
-        }
+		[Fact]
+		public void ReadZeroLenArrayObject()
+		{
+			ZeroLenArrayObj obj;
+			using (var stream = new MemoryStream(_zeroLenArrayObjBytes))
+			{
+				obj = new EndianBinaryReader(stream, Endianness.LittleEndian).ReadObject<ZeroLenArrayObj>();
+			}
 
-        [Fact]
-        public void WriteZeroLenArrayObject()
-        {
-            byte[] bytes = new byte[_zeroLenArrayObjBytes.Length];
-            using (var stream = new MemoryStream(bytes))
-            {
-                new EndianBinaryWriter(stream, Endianness.LittleEndian).Write(new ZeroLenArrayObj
-                {
-                    SizedArray = Array.Empty<byte>(),
+			Assert.Empty(obj.SizedArray); // Fixed size array works
 
-                    VariableLength = 0,
-                    VariableArray = Array.Empty<byte>()
-                });
-            }
-            Assert.True(bytes.SequenceEqual(_zeroLenArrayObjBytes));
-        }
-    }
+			Assert.Equal(0, obj.VariableLength); // This determines how long the following array is
+			Assert.Empty(obj.VariableArray); // Retrieves the proper size
+		}
+
+		[Fact]
+		public void WriteZeroLenArrayObject()
+		{
+			byte[] bytes = new byte[_zeroLenArrayObjBytes.Length];
+			using (var stream = new MemoryStream(bytes))
+			{
+				new EndianBinaryWriter(stream, Endianness.LittleEndian).WriteObject(new ZeroLenArrayObj
+				{
+					SizedArray = Array.Empty<byte>(),
+
+					VariableLength = 0,
+					VariableArray = Array.Empty<byte>(),
+				});
+			}
+			Assert.True(bytes.SequenceEqual(_zeroLenArrayObjBytes));
+		}
+	}
 }
