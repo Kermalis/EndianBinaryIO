@@ -17,7 +17,7 @@ The `EndianBinaryPrimitives` static class which resembles `System.Buffers.Binary
 
 ----
 ## Changelog For v2.0.0.0
-Be sure to check the comment at #28!
+Be sure to check the comment at https://github.com/Kermalis/EndianBinaryIO/pull/28!
 
 ----
 ## 🚀 Usage:
