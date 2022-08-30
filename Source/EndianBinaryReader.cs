@@ -9,7 +9,7 @@ namespace Kermalis.EndianBinaryIO
 {
 	public partial class EndianBinaryReader
 	{
-		protected const int BUF_LEN = 64; // Must be a power of 64
+		protected const int BUF_LEN = 64; // Must be a multiple of 64
 
 		public Stream Stream { get; }
 		private Endianness _endianness;
