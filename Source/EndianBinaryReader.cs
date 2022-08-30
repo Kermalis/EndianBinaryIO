@@ -51,7 +51,7 @@ namespace Kermalis.EndianBinaryIO
             BaseStream = baseStream;
             Endianness = endianness;
             BooleanSize = booleanSize;
-            Encoding = Encoding.Default;
+            Encoding = Encoding.ASCII;
         }
         public EndianBinaryReader(Stream baseStream, Encoding encoding, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8)
         {
