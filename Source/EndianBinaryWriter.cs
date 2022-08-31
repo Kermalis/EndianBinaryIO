@@ -309,7 +309,7 @@ namespace Kermalis.EndianBinaryIO
 			}
 		}
 		// #13 - Allow writing the abstract "Enum" type
-		// For example, writer.Write((Enum)Enum.Parse(enumType, value))
+		// For example, writer.WriteEnum((Enum)Enum.Parse(enumType, value))
 		// Don't allow writing Enum[] though, since there is no way to read that
 		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 		public void WriteEnum(Enum value)

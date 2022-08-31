@@ -102,6 +102,14 @@ namespace Kermalis.EndianBinaryIO
 			Stream.Position = offset;
 			return buffer[0];
 		}
+		public void PeekBytes(Span<byte> dest)
+		{
+			long offset = Stream.Position;
+
+			ReadBytes(dest);
+
+			Stream.Position = offset;
+		}
 
 		public sbyte ReadSByte()
 		{
@@ -412,7 +420,7 @@ namespace Kermalis.EndianBinaryIO
 		{
 			char[] chars = new char[charCount];
 			ReadChars(chars);
-			Utils.TrimNullTerminators(ref chars);
+			EndianBinaryPrimitives.TrimNullTerminators(ref chars);
 			return chars;
 		}
 		public string ReadString_Count(int charCount)

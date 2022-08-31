@@ -11,19 +11,13 @@ namespace Kermalis.EndianBinaryIO
 		{
 			public byte Data;
 		}
-		public static ref byte GetRawData(object value)
+		// This is a copy of what Enum uses internally
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static ref byte GetRawData<T>(T value) where T : class
 		{
 			return ref Unsafe.As<RawData>(value).Data; // Skip object header
 		}
 
-		public static void TrimNullTerminators(ref char[] chars)
-		{
-			int i = Array.IndexOf(chars, '\0');
-			if (i != -1)
-			{
-				Array.Resize(ref chars, i);
-			}
-		}
 		private static bool TryConvertToInt32(object? obj, out int value)
 		{
 			try

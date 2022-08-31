@@ -192,5 +192,14 @@ namespace Kermalis.EndianBinaryIOTests
 
 			Assert.True(bytes.SequenceEqual(_bytes));
 		}
+
+		[Fact]
+		public void SpanIsProperlyTrimmed()
+		{
+			Span<char> test = stackalloc char[] { 'K', 'e', 'r', 'm', 'a', 'l', 'i', 's', '\0', '\0', };
+			EndianBinaryPrimitives.TrimNullTerminators(ref test);
+
+			Assert.True(test.SequenceEqual("Kermalis"));
+		}
 	}
 }

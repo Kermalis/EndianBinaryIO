@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryIO
 {
@@ -19,7 +21,32 @@ namespace Kermalis.EndianBinaryIO
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void TrimNullTerminators(ref char[] chars)
+		{
+			int i = Array.IndexOf(chars, '\0');
+			if (i != -1)
+			{
+				Array.Resize(ref chars, i);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void TrimNullTerminators(ref Span<char> chars)
+		{
+			int i = chars.IndexOf('\0');
+			if (i != -1)
+			{
+				chars = chars.Slice(0, i);
+			}
+		}
+
 		#region Read
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void ReadSBytes(ReadOnlySpan<byte> src, Span<sbyte> dest)
+		{
+			src.CopyTo(MemoryMarshal.Cast<sbyte, byte>(dest));
+		}
 
 		public static short ReadInt16(ReadOnlySpan<byte> src, Endianness endianness)
 		{
@@ -196,6 +223,68 @@ namespace Kermalis.EndianBinaryIO
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static TEnum ReadEnum<TEnum>(ReadOnlySpan<byte> src, Endianness endianness) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				byte b = src[0];
+				return Unsafe.As<byte, TEnum>(ref b);
+			}
+			if (size == 2)
+			{
+				ushort s = ReadUInt16(src, endianness);
+				return Unsafe.As<ushort, TEnum>(ref s);
+			}
+			if (size == 4)
+			{
+				uint i = ReadUInt32(src, endianness);
+				return Unsafe.As<uint, TEnum>(ref i);
+			}
+			ulong l = ReadUInt64(src, endianness);
+			return Unsafe.As<ulong, TEnum>(ref l);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void ReadEnums<TEnum>(ReadOnlySpan<byte> src, Span<TEnum> dest, Endianness endianness) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				src.CopyTo(MemoryMarshal.Cast<TEnum, byte>(dest));
+			}
+			else if (size == 2)
+			{
+				ReadUInt16s(src, MemoryMarshal.Cast<TEnum, ushort>(dest), endianness);
+			}
+			else if (size == 4)
+			{
+				ReadUInt32s(src, MemoryMarshal.Cast<TEnum, uint>(dest), endianness);
+			}
+			else
+			{
+				ReadUInt64s(src, MemoryMarshal.Cast<TEnum, ulong>(dest), endianness);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static object ReadEnum(ReadOnlySpan<byte> src, Endianness endianness, Type enumType)
+		{
+			// Type.IsEnum is also false for base Enum type, so don't worry about it
+			Type underlyingType = Enum.GetUnderlyingType(enumType);
+			switch (Type.GetTypeCode(underlyingType))
+			{
+				case TypeCode.SByte: return Enum.ToObject(enumType, (sbyte)src[0]);
+				case TypeCode.Byte: return Enum.ToObject(enumType, src[0]);
+				case TypeCode.Int16: return Enum.ToObject(enumType, ReadInt16(src, endianness));
+				case TypeCode.UInt16: return Enum.ToObject(enumType, ReadUInt16(src, endianness));
+				case TypeCode.Int32: return Enum.ToObject(enumType, ReadInt32(src, endianness));
+				case TypeCode.UInt32: return Enum.ToObject(enumType, ReadUInt32(src, endianness));
+				case TypeCode.Int64: return Enum.ToObject(enumType, ReadInt64(src, endianness));
+				case TypeCode.UInt64: return Enum.ToObject(enumType, ReadUInt64(src, endianness));
+			}
+			throw new ArgumentOutOfRangeException(nameof(enumType), enumType, null);
+		}
+
 		public static DateTime ReadDateTime(ReadOnlySpan<byte> src, Endianness endianness)
 		{
 			return DateTime.FromBinary(ReadInt64(src, endianness));
@@ -329,6 +418,12 @@ namespace Kermalis.EndianBinaryIO
 		#endregion
 
 		#region Write
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void WriteSBytes(Span<byte> dest, ReadOnlySpan<sbyte> src)
+		{
+			MemoryMarshal.Cast<sbyte, byte>(src).CopyTo(dest);
+		}
 
 		public static void WriteInt16(Span<byte> dest, short value, Endianness endianness)
 		{
@@ -550,6 +645,69 @@ namespace Kermalis.EndianBinaryIO
 			for (int i = 0; i < src.Length; i++)
 			{
 				WriteBoolean(dest.Slice(i * boolSize, boolSize), src[i], endianness, boolSize);
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void WriteEnum<TEnum>(Span<byte> dest, TEnum value, Endianness endianness) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				dest[0] = Unsafe.As<TEnum, byte>(ref value);
+			}
+			else if (size == 2)
+			{
+				WriteUInt16(dest, Unsafe.As<TEnum, ushort>(ref value), endianness);
+			}
+			else if (size == 4)
+			{
+				WriteUInt32(dest, Unsafe.As<TEnum, uint>(ref value), endianness);
+			}
+			else
+			{
+				WriteUInt64(dest, Unsafe.As<TEnum, ulong>(ref value), endianness);
+			}
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void WriteEnums<TEnum>(Span<byte> dest, ReadOnlySpan<TEnum> src, Endianness endianness) where TEnum : unmanaged, Enum
+		{
+			int size = Unsafe.SizeOf<TEnum>();
+			if (size == 1)
+			{
+				MemoryMarshal.Cast<TEnum, byte>(src).CopyTo(dest);
+			}
+			else if (size == 2)
+			{
+				WriteUInt16s(dest, MemoryMarshal.Cast<TEnum, ushort>(src), endianness);
+			}
+			else if (size == 4)
+			{
+				WriteUInt32s(dest, MemoryMarshal.Cast<TEnum, uint>(src), endianness);
+			}
+			else
+			{
+				WriteUInt64s(dest, MemoryMarshal.Cast<TEnum, ulong>(src), endianness);
+			}
+		}
+		// #13 - Allow writing the abstract "Enum" type
+		// For example, EndianBinaryPrimitives.WriteEnum((Enum)Enum.Parse(enumType, value))
+		// Don't allow writing Enum[] though, since there is no way to read that
+		[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+		public static void WriteEnum(Span<byte> dest, Enum value, Endianness endianness)
+		{
+			Type underlyingType = Enum.GetUnderlyingType(value.GetType());
+			ref byte data = ref Utils.GetRawData(value); // Use memory tricks to skip object header of generic Enum
+			switch (Type.GetTypeCode(underlyingType))
+			{
+				case TypeCode.SByte:
+				case TypeCode.Byte: dest[0] = data; break;
+				case TypeCode.Int16:
+				case TypeCode.UInt16: WriteUInt16(dest, Unsafe.As<byte, ushort>(ref data), endianness); break;
+				case TypeCode.Int32:
+				case TypeCode.UInt32: WriteUInt32(dest, Unsafe.As<byte, uint>(ref data), endianness); break;
+				case TypeCode.Int64:
+				case TypeCode.UInt64: WriteUInt64(dest, Unsafe.As<byte, ulong>(ref data), endianness); break;
 			}
 		}
 
