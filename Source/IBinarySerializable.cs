@@ -1,8 +1,7 @@
-﻿namespace Kermalis.EndianBinaryIO
+﻿namespace Kermalis.EndianBinaryIO;
+
+public interface IBinarySerializable
 {
-	public interface IBinarySerializable
-	{
-		void Read(EndianBinaryReader r);
-		void Write(EndianBinaryWriter w);
-	}
+	void Read(EndianBinaryReader r);
+	void Write(EndianBinaryWriter w);
 }
