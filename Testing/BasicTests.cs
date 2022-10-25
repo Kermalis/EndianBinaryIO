@@ -201,4 +201,13 @@ public sealed class BasicTests
 
 		Assert.True(test.SequenceEqual("Kermalis"));
 	}
+
+	[Fact]
+	public void ReadOnlySpanIsProperlyTrimmed()
+	{
+		ReadOnlySpan<char> test = "Kermalis\0\0";
+		EndianBinaryPrimitives.TrimNullTerminators(ref test);
+
+		Assert.True(test.SequenceEqual("Kermalis"));
+	}
 }

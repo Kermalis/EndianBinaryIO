@@ -39,6 +39,15 @@ public static class EndianBinaryPrimitives
 			chars = chars.Slice(0, i);
 		}
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void TrimNullTerminators(ref ReadOnlySpan<char> chars)
+	{
+		int i = chars.IndexOf('\0');
+		if (i != -1)
+		{
+			chars = chars.Slice(0, i);
+		}
+	}
 
 	#region Read
 
