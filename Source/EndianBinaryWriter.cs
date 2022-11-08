@@ -172,6 +172,26 @@ public partial class EndianBinaryWriter
 	{
 		WriteArray(values, 2, EndianBinaryPrimitives.WriteUInt16s);
 	}
+	public void WriteInt24(int value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 3);
+		EndianBinaryPrimitives.WriteInt24(buffer, value, Endianness);
+		Stream.Write(buffer);
+	}
+	public void WriteInt24s(ReadOnlySpan<int> values)
+	{
+		WriteArray(values, 3, EndianBinaryPrimitives.WriteInt24s);
+	}
+	public void WriteUInt24(uint value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 3);
+		EndianBinaryPrimitives.WriteUInt24(buffer, value, Endianness);
+		Stream.Write(buffer);
+	}
+	public void WriteUInt24s(ReadOnlySpan<uint> values)
+	{
+		WriteArray(values, 3, EndianBinaryPrimitives.WriteUInt24s);
+	}
 	public void WriteInt32(int value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);

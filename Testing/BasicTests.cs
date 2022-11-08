@@ -27,6 +27,15 @@ public sealed class BasicTests
 		[BinaryBooleanSize(BooleanSize.U32)]
 		public bool Bool32 { get; set; }
 
+		// TODO: Add these to the readme
+
+		// 24-bit signed integer value
+		[BinaryInt24]
+		public int S24 { get; set; }
+		// 24-bit unsigned integer value
+		[BinaryInt24]
+		public uint U24 { get; set; }
+
 		// String encoded in ASCII
 		// Reads chars until the stream encounters a '\0'
 		// Writing will append a '\0' at the end of the string
@@ -67,6 +76,9 @@ public sealed class BasicTests
 
 		0x00, 0x00, 0x00, 0x00, // (bool32)false
 
+		0xD7, 0xDC, 0xFF, // (int24)-9001
+		0x00, 0x00, 0x80, // (uint24)0x800000
+
 		0x45, 0x6E, 0x64, 0x69, 0x61, 0x6E, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x49, 0x4F, 0x00, // (ASCII)"EndianBinaryIO\0"
 
 		0x4B, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6D, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x69, 0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, // (UTF16-LE)"Kermalis\0\0"
@@ -87,6 +99,9 @@ public sealed class BasicTests
 			},
 
 			Bool32 = false,
+
+			S24 = -9001,
+			U24 = 0x800000,
 
 			NullTerminatedASCIIString = "EndianBinaryIO",
 			UTF16String = "Kermalis",
@@ -118,6 +133,9 @@ public sealed class BasicTests
 
 		Assert.False(obj.Bool32); // bool32 works
 
+		Assert.Equal(-9001, obj.S24); // int24 works
+		Assert.Equal(0x800000u, obj.U24); // uint24 works
+
 		Assert.Equal("EndianBinaryIO", obj.NullTerminatedASCIIString); // Stops reading at null terminator
 		Assert.Equal("Kermalis", obj.UTF16String); // Fixed size (10 chars) UTF16-LE, with the \0s trimmed
 	}
@@ -146,6 +164,11 @@ public sealed class BasicTests
 
 			obj.Bool32 = reader.ReadBoolean();
 			Assert.False(obj.Bool32); // bool32 works
+
+			obj.S24 = reader.ReadInt24();
+			Assert.Equal(-9001, obj.S24); // int24 works
+			obj.U24 = reader.ReadUInt24();
+			Assert.Equal(0x800000u, obj.U24); // uint24 works
 
 			reader.ASCII = true;
 			obj.NullTerminatedASCIIString = reader.ReadString_NullTerminated();
@@ -183,6 +206,8 @@ public sealed class BasicTests
 			writer.WriteDateTime(obj.Date);
 			writer.WriteUInt32s(obj.ArrayWith16Elements);
 			writer.WriteBoolean(obj.Bool32);
+			writer.WriteInt24(obj.S24);
+			writer.WriteUInt24(obj.U24);
 
 			writer.ASCII = true;
 			writer.WriteChars_NullTerminated(obj.NullTerminatedASCIIString);

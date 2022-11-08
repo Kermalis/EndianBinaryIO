@@ -156,6 +156,26 @@ public partial class EndianBinaryReader
 	{
 		ReadArray(dest, 2, EndianBinaryPrimitives.ReadUInt16s);
 	}
+	public int ReadInt24()
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 3);
+		ReadBytes(buffer);
+		return EndianBinaryPrimitives.ReadInt24(buffer, Endianness);
+	}
+	public void ReadInt24s(Span<int> dest)
+	{
+		ReadArray(dest, 3, EndianBinaryPrimitives.ReadInt24s);
+	}
+	public uint ReadUInt24()
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 3);
+		ReadBytes(buffer);
+		return EndianBinaryPrimitives.ReadUInt24(buffer, Endianness);
+	}
+	public void ReadUInt24s(Span<uint> dest)
+	{
+		ReadArray(dest, 3, EndianBinaryPrimitives.ReadUInt24s);
+	}
 	public int ReadInt32()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);

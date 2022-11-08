@@ -87,6 +87,16 @@ public partial class EndianBinaryReader
 	{
 		switch (propertyType)
 		{
+			case Type t when t == typeof(int):
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				return isInt24 ? ReadInt24() : ReadInt32();
+			}
+			case Type t when t == typeof(uint):
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				return isInt24 ? ReadUInt24() : ReadUInt32();
+			}
 			case Type t when t == typeof(bool):
 			{
 				BooleanSize old = BooleanSize;
@@ -173,13 +183,29 @@ public partial class EndianBinaryReader
 			case Type t when t == typeof(int):
 			{
 				int[] value = new int[arrayLength];
-				ReadInt32s(value);
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				if (isInt24)
+				{
+					ReadInt24s(value);
+				}
+				else
+				{
+					ReadInt32s(value);
+				}
 				return value;
 			}
 			case Type t when t == typeof(uint):
 			{
 				uint[] value = new uint[arrayLength];
-				ReadUInt32s(value);
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				if (isInt24)
+				{
+					ReadUInt24s(value);
+				}
+				else
+				{
+					ReadUInt32s(value);
+				}
 				return value;
 			}
 			case Type t when t == typeof(long):

@@ -32,13 +32,23 @@ public sealed class BinaryBooleanSizeAttribute : Attribute, IBinaryAttribute<Boo
 	}
 }
 [AttributeUsage(AttributeTargets.Property)]
+public sealed class BinaryInt24Attribute : Attribute, IBinaryAttribute<bool>
+{
+	public bool Value { get; }
+
+	public BinaryInt24Attribute(bool isInt24 = true)
+	{
+		Value = isInt24;
+	}
+}
+[AttributeUsage(AttributeTargets.Property)]
 public sealed class BinaryASCIIAttribute : Attribute, IBinaryAttribute<bool>
 {
 	public bool Value { get; }
 
-	public BinaryASCIIAttribute(bool ascii = true)
+	public BinaryASCIIAttribute(bool isAscii = true)
 	{
-		Value = ascii;
+		Value = isAscii;
 	}
 }
 [AttributeUsage(AttributeTargets.Property)]
@@ -46,9 +56,9 @@ public sealed class BinaryStringNullTerminatedAttribute : Attribute, IBinaryAttr
 {
 	public bool Value { get; }
 
-	public BinaryStringNullTerminatedAttribute(bool nullTerminated = true)
+	public BinaryStringNullTerminatedAttribute(bool isNullTerminated = true)
 	{
-		Value = nullTerminated;
+		Value = isNullTerminated;
 	}
 }
 [AttributeUsage(AttributeTargets.Property)]
@@ -104,8 +114,8 @@ public sealed class BinaryStringTrimNullTerminatorsAttribute : Attribute, IBinar
 {
 	public bool Value { get; }
 
-	public BinaryStringTrimNullTerminatorsAttribute(bool trim = true)
+	public BinaryStringTrimNullTerminatorsAttribute(bool shouldTrim = true)
 	{
-		Value = trim;
+		Value = shouldTrim;
 	}
 }

@@ -85,6 +85,41 @@ public static class EndianBinaryPrimitives
 		}
 	}
 
+	public static int ReadInt24(ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		uint val; // Do a "sign extend" to maintain the sign from 24->32 bits
+		if (endianness == Endianness.LittleEndian)
+		{
+			val = ((uint)src[0] << 8) | ((uint)src[1] << 16) | ((uint)src[2] << 24);
+		}
+		else
+		{
+			val = ((uint)src[2] << 8) | ((uint)src[1] << 16) | ((uint)src[0] << 24);
+		}
+		return (int)val >> 8;
+	}
+	public static void ReadInt24s(ReadOnlySpan<byte> src, Span<int> dest, Endianness endianness)
+	{
+		for (int i = 0; i < dest.Length; i++)
+		{
+			dest[i] = ReadInt24(src.Slice(i * 3, 3), endianness);
+		}
+	}
+
+	public static uint ReadUInt24(ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		return endianness == Endianness.LittleEndian
+			? src[0] | ((uint)src[1] << 8) | ((uint)src[2] << 16)
+			: src[2] | ((uint)src[1] << 8) | ((uint)src[0] << 16);
+	}
+	public static void ReadUInt24s(ReadOnlySpan<byte> src, Span<uint> dest, Endianness endianness)
+	{
+		for (int i = 0; i < dest.Length; i++)
+		{
+			dest[i] = ReadUInt24(src.Slice(i * 3, 3), endianness);
+		}
+	}
+
 	public static int ReadInt32(ReadOnlySpan<byte> src, Endianness endianness)
 	{
 		return endianness == Endianness.LittleEndian
@@ -469,6 +504,52 @@ public static class EndianBinaryPrimitives
 		for (int i = 0; i < src.Length; i++)
 		{
 			WriteUInt16(dest.Slice(i * 2, 2), src[i], endianness);
+		}
+	}
+
+	public static void WriteInt24(Span<byte> dest, int value, Endianness endianness)
+	{
+		if (endianness == Endianness.LittleEndian)
+		{
+			dest[0] = (byte)value;
+			dest[1] = (byte)(value >> 8);
+			dest[2] = (byte)(value >> 16);
+		}
+		else
+		{
+			dest[2] = (byte)value;
+			dest[1] = (byte)(value >> 8);
+			dest[0] = (byte)(value >> 16);
+		}
+	}
+	public static void WriteInt24s(Span<byte> dest, ReadOnlySpan<int> src, Endianness endianness)
+	{
+		for (int i = 0; i < src.Length; i++)
+		{
+			WriteInt24(dest.Slice(i * 3, 3), src[i], endianness);
+		}
+	}
+
+	public static void WriteUInt24(Span<byte> dest, uint value, Endianness endianness)
+	{
+		if (endianness == Endianness.LittleEndian)
+		{
+			dest[0] = (byte)value;
+			dest[1] = (byte)(value >> 8);
+			dest[2] = (byte)(value >> 16);
+		}
+		else
+		{
+			dest[2] = (byte)value;
+			dest[1] = (byte)(value >> 8);
+			dest[0] = (byte)(value >> 16);
+		}
+	}
+	public static void WriteUInt24s(Span<byte> dest, ReadOnlySpan<uint> src, Endianness endianness)
+	{
+		for (int i = 0; i < src.Length; i++)
+		{
+			WriteUInt24(dest.Slice(i * 3, 3), src[i], endianness);
 		}
 	}
 

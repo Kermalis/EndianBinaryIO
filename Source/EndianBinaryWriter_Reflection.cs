@@ -133,6 +133,32 @@ public partial class EndianBinaryWriter
 	{
 		switch (value)
 		{
+			case int v:
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				if (isInt24)
+				{
+					WriteInt24(v);
+				}
+				else
+				{
+					WriteInt32(v);
+				}
+				break;
+			}
+			case uint v:
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				if (isInt24)
+				{
+					WriteUInt24(v);
+				}
+				else
+				{
+					WriteUInt32(v);
+				}
+				break;
+			}
 			case bool v:
 			{
 				BooleanSize old = BooleanSize;
@@ -181,6 +207,34 @@ public partial class EndianBinaryWriter
 	{
 		switch (value)
 		{
+			case int[] v:
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				Span<int> values = v.AsSpan(0, arrayLength);
+				if (isInt24)
+				{
+					WriteInt24s(values);
+				}
+				else
+				{
+					WriteInt32s(values);
+				}
+				break;
+			}
+			case uint[] v:
+			{
+				bool isInt24 = Utils.AttributeValueOrDefault<BinaryInt24Attribute, bool>(propertyInfo, false);
+				Span<uint> values = v.AsSpan(0, arrayLength);
+				if (isInt24)
+				{
+					WriteUInt24s(values);
+				}
+				else
+				{
+					WriteUInt32s(values);
+				}
+				break;
+			}
 			case bool[] v:
 			{
 				BooleanSize old = BooleanSize;
@@ -203,17 +257,18 @@ public partial class EndianBinaryWriter
 
 				bool old = ASCII;
 				ASCII = Utils.AttributeValueOrDefault<BinaryASCIIAttribute, bool>(propertyInfo, old);
+				Span<string> values = v.AsSpan(0, arrayLength);
 				if (nullTerminated == true)
 				{
-					WriteStrings_NullTerminated(v.AsSpan(0, arrayLength));
+					WriteStrings_NullTerminated(values);
 				}
 				else if (nullTerminated == false)
 				{
-					WriteStrings(v.AsSpan(0, arrayLength));
+					WriteStrings(values);
 				}
 				else
 				{
-					WriteStrings_Count(v.AsSpan(0, arrayLength), stringLength);
+					WriteStrings_Count(values, stringLength);
 				}
 				ASCII = old;
 				break;
