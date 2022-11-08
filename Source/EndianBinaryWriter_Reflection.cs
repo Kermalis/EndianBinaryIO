@@ -68,6 +68,8 @@ public partial class EndianBinaryWriter
 			case uint v: WriteUInt32(v); return true;
 			case long v: WriteInt64(v); return true;
 			case ulong v: WriteUInt64(v); return true;
+			case Int128 v: WriteInt128(v); return true;
+			case UInt128 v: WriteUInt128(v); return true;
 			case Half v: WriteHalf(v); return true;
 			case float v: WriteSingle(v); return true;
 			case double v: WriteDouble(v); return true;
@@ -110,6 +112,8 @@ public partial class EndianBinaryWriter
 			case uint[] v: WriteUInt32s(v.AsSpan(0, length)); return true;
 			case long[] v: WriteInt64s(v.AsSpan(0, length)); return true;
 			case ulong[] v: WriteUInt64s(v.AsSpan(0, length)); return true;
+			case Int128[] v: WriteInt128s(v.AsSpan(0, length)); return true;
+			case UInt128[] v: WriteUInt128s(v.AsSpan(0, length)); return true;
 			case Half[] v: WriteHalves(v.AsSpan(0, length)); return true;
 			case float[] v: WriteSingles(v.AsSpan(0, length)); return true;
 			case double[] v: WriteDoubles(v.AsSpan(0, length)); return true;

@@ -49,6 +49,24 @@ public static class EndianBinaryPrimitives
 		}
 	}
 
+	// Why are these internal in BinaryPrimitives?
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Int128 ReverseEndianness(Int128 value)
+	{
+		return new Int128(
+			BinaryPrimitives.ReverseEndianness((ulong)value), // _lower
+			BinaryPrimitives.ReverseEndianness((ulong)(value >> 64)) // _upper
+		);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static UInt128 ReverseEndianness(UInt128 value)
+	{
+		return new UInt128(
+			BinaryPrimitives.ReverseEndianness((ulong)value), // _lower
+			BinaryPrimitives.ReverseEndianness((ulong)(value >> 64)) // _upper
+		);
+	}
+
 	#region Read
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -138,6 +156,52 @@ public static class EndianBinaryPrimitives
 		for (int i = 0; i < dest.Length; i++)
 		{
 			dest[i] = ReadUInt64(src.Slice(i * 8, 8), endianness);
+		}
+	}
+
+	public static Int128 ReadInt128(ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		if (src.Length < 16)
+		{
+			throw new ArgumentOutOfRangeException(nameof(src), null, "Length was less than 16");
+		}
+
+		Int128 ret = Unsafe.ReadUnaligned<Int128>(ref MemoryMarshal.GetReference(src));
+		if (endianness != SystemEndianness)
+		{
+			//ret = BinaryPrimitives.ReverseEndianness(ret);
+			ret = ReverseEndianness(ret);
+		}
+		return ret;
+	}
+	public static void ReadInt128s(ReadOnlySpan<byte> src, Span<Int128> dest, Endianness endianness)
+	{
+		for (int i = 0; i < dest.Length; i++)
+		{
+			dest[i] = ReadInt128(src.Slice(i * 16, 16), endianness);
+		}
+	}
+
+	public static UInt128 ReadUInt128(ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		if (src.Length < 16)
+		{
+			throw new ArgumentOutOfRangeException(nameof(src), null, "Length was less than 16");
+		}
+
+		UInt128 ret = Unsafe.ReadUnaligned<UInt128>(ref MemoryMarshal.GetReference(src));
+		if (endianness != SystemEndianness)
+		{
+			//ret = BinaryPrimitives.ReverseEndianness(ret);
+			ret = ReverseEndianness(ret);
+		}
+		return ret;
+	}
+	public static void ReadUInt128s(ReadOnlySpan<byte> src, Span<UInt128> dest, Endianness endianness)
+	{
+		for (int i = 0; i < dest.Length; i++)
+		{
+			dest[i] = ReadUInt128(src.Slice(i * 16, 16), endianness);
 		}
 	}
 
@@ -545,6 +609,50 @@ public static class EndianBinaryPrimitives
 		for (int i = 0; i < src.Length; i++)
 		{
 			WriteUInt64(dest.Slice(i * 8, 8), src[i], endianness);
+		}
+	}
+
+	public static void WriteInt128(Span<byte> dest, Int128 value, Endianness endianness)
+	{
+		if (dest.Length < 16)
+		{
+			throw new ArgumentOutOfRangeException(nameof(dest), null, "Length was less than 16");
+		}
+
+		if (endianness != SystemEndianness)
+		{
+			//value = BinaryPrimitives.ReverseEndianness(value);
+			value = ReverseEndianness(value);
+		}
+		Unsafe.WriteUnaligned(ref MemoryMarshal.GetReference(dest), value);
+	}
+	public static void WriteInt128s(Span<byte> dest, ReadOnlySpan<Int128> src, Endianness endianness)
+	{
+		for (int i = 0; i < src.Length; i++)
+		{
+			WriteInt128(dest.Slice(i * 16, 16), src[i], endianness);
+		}
+	}
+
+	public static void WriteUInt128(Span<byte> dest, UInt128 value, Endianness endianness)
+	{
+		if (dest.Length < 16)
+		{
+			throw new ArgumentOutOfRangeException(nameof(dest), null, "Length was less than 16");
+		}
+
+		if (endianness != SystemEndianness)
+		{
+			//value = BinaryPrimitives.ReverseEndianness(value);
+			value = ReverseEndianness(value);
+		}
+		Unsafe.WriteUnaligned(ref MemoryMarshal.GetReference(dest), value);
+	}
+	public static void WriteUInt128s(Span<byte> dest, ReadOnlySpan<UInt128> src, Endianness endianness)
+	{
+		for (int i = 0; i < src.Length; i++)
+		{
+			WriteUInt128(dest.Slice(i * 16, 16), src[i], endianness);
 		}
 	}
 

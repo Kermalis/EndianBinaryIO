@@ -1,5 +1,6 @@
 ﻿using Kermalis.EndianBinaryIO;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -14,6 +15,7 @@ public sealed class BasicTests
 		public ShortSizedEnum Type { get; set; }
 		public short Version { get; set; }
 		public DateTime Date { get; set; }
+		public Int128 Int128 { get; set; }
 
 		// Property that is ignored when reading and writing
 		[BinaryIgnore]
@@ -42,11 +44,14 @@ public sealed class BasicTests
 
 	#region Constants
 
+	private static readonly DateTime _expectedDateTime = new(1998, 12, 30);
+	private static readonly Int128 _expectedInt128 = Int128.Parse("48,045,707,429,126,174,655,160,174,263,614,327,112", NumberStyles.AllowThousands);
 	private static readonly byte[] _bytes = new byte[]
 	{
 		0x00, 0x08, // ShortSizedEnum.Val2
 		0xFF, 0x01, // (short)511
 		0x00, 0x00, 0x4A, 0x7A, 0x9E, 0x01, 0xC0, 0x08, // (DateTime)Dec. 30, 1998
+		0x48, 0x49, 0x80, 0x44, 0x82, 0x44, 0x88, 0xC0, 0x42, 0x24, 0x88, 0x12, 0x44, 0x44, 0x25, 0x24, // (Int128)48,045,707,429,126,174,655,160,174,263,614,327,112
 
 		0x00, 0x00, 0x00, 0x00, // (uint)0
 		0x01, 0x00, 0x00, 0x00, // (uint)1
@@ -77,7 +82,8 @@ public sealed class BasicTests
 		{
 			Type = ShortSizedEnum.Val2,
 			Version = 511,
-			Date = new DateTime(1998, 12, 30),
+			Date = _expectedDateTime,
+			Int128 = _expectedInt128,
 
 			DoNotReadOrWrite = ByteSizedEnum.Val1,
 
@@ -106,7 +112,8 @@ public sealed class BasicTests
 
 		Assert.Equal(ShortSizedEnum.Val2, obj.Type); // Enum works
 		Assert.Equal(511, obj.Version); // short works
-		Assert.Equal(new DateTime(1998, 12, 30), obj.Date); // DateTime works
+		Assert.Equal(_expectedDateTime, obj.Date); // DateTime works
+		Assert.Equal(_expectedInt128, obj.Int128); // Int128 works
 
 		Assert.Equal(default, obj.DoNotReadOrWrite); // Ignored
 
@@ -135,7 +142,9 @@ public sealed class BasicTests
 			obj.Version = reader.ReadInt16();
 			Assert.Equal(511, obj.Version); // short works
 			obj.Date = reader.ReadDateTime();
-			Assert.Equal(new DateTime(1998, 12, 30), obj.Date); // DateTime works
+			Assert.Equal(_expectedDateTime, obj.Date); // DateTime works
+			obj.Int128 = reader.ReadInt128();
+			Assert.Equal(_expectedInt128, obj.Int128); // Int128 works
 
 			obj.ArrayWith16Elements = new uint[16];
 			reader.ReadUInt32s(obj.ArrayWith16Elements);
@@ -181,7 +190,10 @@ public sealed class BasicTests
 			writer.WriteEnum(obj.Type);
 			writer.WriteInt16(obj.Version);
 			writer.WriteDateTime(obj.Date);
+			writer.WriteInt128(obj.Int128);
+
 			writer.WriteUInt32s(obj.ArrayWith16Elements);
+
 			writer.WriteBoolean(obj.Bool32);
 
 			writer.ASCII = true;

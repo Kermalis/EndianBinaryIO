@@ -9,10 +9,7 @@ public sealed class FloatTests
 {
 	#region Constants
 
-	private const float TEST_VAL_SINGLE = 1234.1234f;
-	private const double TEST_VAL_DOUBLE = 12345678.12345678d;
-	private const decimal TEST_VAL_DECIMAL = 12345678909876543210.123456789m;
-
+	private const float TEST_VAL_SINGLE = 1_234.1234f;
 	private static readonly byte[] _bigEndianBytes_Single = new byte[4]
 	{
 		0x44, 0x9A, 0x43, 0xF3,
@@ -21,6 +18,8 @@ public sealed class FloatTests
 	{
 		0xF3, 0x43, 0x9A, 0x44,
 	};
+
+	private const double TEST_VAL_DOUBLE = 12_345_678.12345678d;
 	private static readonly byte[] _bigEndianBytes_Double = new byte[8]
 	{
 		0x41, 0x67, 0x8C, 0x29, 0xC3, 0xF3, 0x5B, 0xA2,
@@ -29,6 +28,8 @@ public sealed class FloatTests
 	{
 		0xA2, 0x5B, 0xF3, 0xC3, 0x29, 0x8C, 0x67, 0x41,
 	};
+
+	private const decimal TEST_VAL_DECIMAL = 12_345_678_909_876_543_210.123456789m;
 	private static readonly byte[] _bigEndianBytes_Decimal = new byte[16]
 	{
 		0xA0, 0x84, 0x71, 0x15,

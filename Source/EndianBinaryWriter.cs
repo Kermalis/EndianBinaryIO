@@ -212,6 +212,26 @@ public partial class EndianBinaryWriter
 	{
 		WriteArray(values, 8, EndianBinaryPrimitives.WriteUInt64s);
 	}
+	public void WriteInt128(Int128 value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 16);
+		EndianBinaryPrimitives.WriteInt128(buffer, value, Endianness);
+		Stream.Write(buffer);
+	}
+	public void WriteInt128s(ReadOnlySpan<Int128> values)
+	{
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteInt128s);
+	}
+	public void WriteUInt128(UInt128 value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 16);
+		EndianBinaryPrimitives.WriteUInt128(buffer, value, Endianness);
+		Stream.Write(buffer);
+	}
+	public void WriteUInt128s(ReadOnlySpan<UInt128> values)
+	{
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteUInt128s);
+	}
 
 	public void WriteHalf(Half value)
 	{

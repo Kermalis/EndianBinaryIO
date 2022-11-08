@@ -61,6 +61,8 @@ public partial class EndianBinaryReader
 			case Type t when t == typeof(uint): { obj = ReadUInt32(); return true; }
 			case Type t when t == typeof(long): { obj = ReadInt64(); return true; }
 			case Type t when t == typeof(ulong): { obj = ReadUInt64(); return true; }
+			case Type t when t == typeof(Int128): { obj = ReadInt128(); return true; }
+			case Type t when t == typeof(UInt128): { obj = ReadUInt128(); return true; }
 			case Type t when t == typeof(Half): { obj = ReadHalf(); return true; }
 			case Type t when t == typeof(float): { obj = ReadSingle(); return true; }
 			case Type t when t == typeof(double): { obj = ReadDouble(); return true; }
@@ -192,6 +194,18 @@ public partial class EndianBinaryReader
 			{
 				ulong[] value = new ulong[arrayLength];
 				ReadUInt64s(value);
+				return value;
+			}
+			case Type t when t == typeof(Int128):
+			{
+				var value = new Int128[arrayLength];
+				ReadInt128s(value);
+				return value;
+			}
+			case Type t when t == typeof(UInt128):
+			{
+				var value = new UInt128[arrayLength];
+				ReadUInt128s(value);
 				return value;
 			}
 			case Type t when t == typeof(Half):
