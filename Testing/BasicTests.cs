@@ -45,7 +45,7 @@ public sealed class BasicTests
 	#region Constants
 
 	private static readonly DateTime _expectedDateTime = new(1998, 12, 30);
-	private static readonly Int128 _expectedInt128 = Int128.Parse("48,045,707,429,126,174,655,160,174,263,614,327,112", NumberStyles.AllowThousands);
+	private static readonly Int128 _expectedInt128 = Int128.Parse("48,045,707,429,126,174,655,160,174,263,614,327,112", NumberStyles.AllowThousands, NumberFormatInfo.InvariantInfo);
 	private static readonly byte[] _bytes = new byte[]
 	{
 		0x00, 0x08, // ShortSizedEnum.Val2
