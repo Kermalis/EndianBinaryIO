@@ -2,7 +2,6 @@
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kermalis.EndianBinaryIO;
@@ -18,10 +17,7 @@ public partial class EndianBinaryReader
 		get => _endianness;
 		set
 		{
-			if (value >= Endianness.MAX)
-			{
-				throw new ArgumentOutOfRangeException(nameof(value), value, null);
-			}
+			Utils.ThrowIfInvalidEndianness(value);
 			_endianness = value;
 		}
 	}
@@ -57,7 +53,6 @@ public partial class EndianBinaryReader
 	}
 
 	protected delegate void ReadArrayMethod<TDest>(ReadOnlySpan<byte> src, Span<TDest> dest, Endianness endianness);
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	protected void ReadArray<TDest>(Span<TDest> dest, int elementSize, ReadArrayMethod<TDest> readArray)
 	{
 		int numBytes = dest.Length * elementSize;
@@ -74,7 +69,6 @@ public partial class EndianBinaryReader
 			start += consumeBytes / elementSize;
 		}
 	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private void ReadBoolArray(Span<bool> dest, int boolSize)
 	{
 		int numBytes = dest.Length * boolSize;
@@ -85,7 +79,7 @@ public partial class EndianBinaryReader
 
 			Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
 			ReadBytes(buffer);
-			EndianBinaryPrimitives.ReadBooleans(buffer, dest.Slice(start, consumeBytes / boolSize), Endianness, boolSize);
+			EndianBinaryPrimitives.ReadBooleans_Unsafe(buffer, dest.Slice(start, consumeBytes / boolSize), Endianness, boolSize);
 
 			numBytes -= consumeBytes;
 			start += consumeBytes / boolSize;
@@ -102,6 +96,7 @@ public partial class EndianBinaryReader
 		Stream.Position = offset;
 		return buffer[0];
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void PeekBytes(Span<byte> dest)
 	{
 		long offset = Stream.Position;
@@ -111,17 +106,20 @@ public partial class EndianBinaryReader
 		Stream.Position = offset;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public sbyte ReadSByte()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 1);
 		ReadBytes(buffer);
 		return (sbyte)buffer[0];
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadSBytes(Span<sbyte> dest)
 	{
-		Span<byte> buffer = MemoryMarshal.Cast<sbyte, byte>(dest);
+		Span<byte> buffer = dest.WriteCast<sbyte, byte>(dest.Length);
 		ReadBytes(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public byte ReadByte()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 1);
@@ -136,142 +134,201 @@ public partial class EndianBinaryReader
 			throw new EndOfStreamException();
 		}
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public short ReadInt16()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadInt16(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadInt16_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadInt16s(Span<short> dest)
 	{
-		ReadArray(dest, 2, EndianBinaryPrimitives.ReadInt16s);
+		ReadArray(dest, 2, EndianBinaryPrimitives.ReadInt16s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public ushort ReadUInt16()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadUInt16(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadUInt16_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadUInt16s(Span<ushort> dest)
 	{
-		ReadArray(dest, 2, EndianBinaryPrimitives.ReadUInt16s);
+		ReadArray(dest, 2, EndianBinaryPrimitives.ReadUInt16s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public int ReadInt32()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadInt32(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadInt32_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadInt32s(Span<int> dest)
 	{
-		ReadArray(dest, 4, EndianBinaryPrimitives.ReadInt32s);
+		ReadArray(dest, 4, EndianBinaryPrimitives.ReadInt32s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public uint ReadUInt32()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadUInt32(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadUInt32_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadUInt32s(Span<uint> dest)
 	{
-		ReadArray(dest, 4, EndianBinaryPrimitives.ReadUInt32s);
+		ReadArray(dest, 4, EndianBinaryPrimitives.ReadUInt32s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public long ReadInt64()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadInt64(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadInt64_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadInt64s(Span<long> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadInt64s);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadInt64s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public ulong ReadUInt64()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadUInt64(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadUInt64_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadUInt64s(Span<ulong> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadUInt64s);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadUInt64s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Int128 ReadInt128()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadInt128(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadInt128_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadInt128s(Span<Int128> dest)
 	{
-		ReadArray(dest, 16, EndianBinaryPrimitives.ReadInt128s);
+		ReadArray(dest, 16, EndianBinaryPrimitives.ReadInt128s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public UInt128 ReadUInt128()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadUInt128(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadUInt128_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadUInt128s(Span<UInt128> dest)
 	{
-		ReadArray(dest, 16, EndianBinaryPrimitives.ReadUInt128s);
+		ReadArray(dest, 16, EndianBinaryPrimitives.ReadUInt128s_Unsafe);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Half ReadHalf()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadHalf(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadHalf_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadHalves(Span<Half> dest)
 	{
-		ReadArray(dest, 2, EndianBinaryPrimitives.ReadHalves);
+		ReadArray(dest, 2, EndianBinaryPrimitives.ReadHalves_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public float ReadSingle()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadSingle(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadSingle_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadSingles(Span<float> dest)
 	{
-		ReadArray(dest, 4, EndianBinaryPrimitives.ReadSingles);
+		ReadArray(dest, 4, EndianBinaryPrimitives.ReadSingles_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public double ReadDouble()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadDouble(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadDouble_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadDoubles(Span<double> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadDoubles);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadDoubles_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public decimal ReadDecimal()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadDecimal(buffer, Endianness);
-	}
-	public void ReadDecimals(Span<decimal> dest)
-	{
-		ReadArray(dest, 16, EndianBinaryPrimitives.ReadDecimals);
-	}
-
-	public bool ReadBoolean()
-	{
-		int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
-		Span<byte> buffer = _buffer.AsSpan(0, elementSize);
-		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadBoolean(buffer, Endianness, elementSize);
-	}
-	public void ReadBooleans(Span<bool> dest)
-	{
-		int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
-		ReadBoolArray(dest, elementSize);
+		return EndianBinaryPrimitives.ReadDecimal_Unsafe(buffer, Endianness);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public TEnum ReadEnum<TEnum>() where TEnum : unmanaged, Enum
+	public void ReadDecimals(Span<decimal> dest)
+	{
+		ReadArray(dest, 16, EndianBinaryPrimitives.ReadDecimals_Unsafe);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public bool ReadBoolean8()
+	{
+		return ReadByte() != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void ReadBoolean8s(Span<bool> dest)
+	{
+		ReadBoolArray(dest, sizeof(byte));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public bool ReadBoolean16()
+	{
+		return ReadUInt16() != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void ReadBoolean16s(Span<bool> dest)
+	{
+		ReadBoolArray(dest, sizeof(ushort));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public bool ReadBoolean32()
+	{
+		return ReadUInt32() != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void ReadBoolean32s(Span<bool> dest)
+	{
+		ReadBoolArray(dest, sizeof(uint));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public bool ReadBoolean()
+	{
+		switch (BooleanSize)
+		{
+			case BooleanSize.U8: return ReadByte() != 0;
+			case BooleanSize.U16: return ReadUInt16() != 0;
+			case BooleanSize.U32: return ReadUInt32() != 0;
+			default: throw new InvalidOperationException();
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void ReadBooleans(Span<bool> dest)
+	{
+		ReadBoolArray(dest, EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public TEnum ReadEnum<TEnum>()
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
@@ -293,24 +350,25 @@ public partial class EndianBinaryReader
 		return Unsafe.As<ulong, TEnum>(ref l);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public void ReadEnums<TEnum>(Span<TEnum> dest) where TEnum : unmanaged, Enum
+	public void ReadEnums<TEnum>(Span<TEnum> dest)
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
 		{
-			ReadBytes(MemoryMarshal.Cast<TEnum, byte>(dest));
+			ReadBytes(dest.WriteCast<TEnum, byte>(dest.Length));
 		}
 		else if (size == 2)
 		{
-			ReadUInt16s(MemoryMarshal.Cast<TEnum, ushort>(dest));
+			ReadUInt16s(dest.WriteCast<TEnum, ushort>(dest.Length * 2));
 		}
 		else if (size == 4)
 		{
-			ReadUInt32s(MemoryMarshal.Cast<TEnum, uint>(dest));
+			ReadUInt32s(dest.WriteCast<TEnum, uint>(dest.Length * 4));
 		}
 		else
 		{
-			ReadUInt64s(MemoryMarshal.Cast<TEnum, ulong>(dest));
+			ReadUInt64s(dest.WriteCast<TEnum, ulong>(dest.Length * 8));
 		}
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -332,86 +390,102 @@ public partial class EndianBinaryReader
 		throw new ArgumentOutOfRangeException(nameof(enumType), enumType, null);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public DateTime ReadDateTime()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadDateTime(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadDateTime_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadDateTimes(Span<DateTime> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadDateTimes);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadDateTimes_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public DateOnly ReadDateOnly()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadDateOnly(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadDateOnly_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadDateOnlys(Span<DateOnly> dest)
 	{
-		ReadArray(dest, 4, EndianBinaryPrimitives.ReadDateOnlys);
+		ReadArray(dest, 4, EndianBinaryPrimitives.ReadDateOnlys_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public TimeOnly ReadTimeOnly()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadTimeOnly(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadTimeOnly_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadTimeOnlys(Span<TimeOnly> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadTimeOnlys);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadTimeOnlys_Unsafe);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Vector2 ReadVector2()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadVector2(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadVector2_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadVector2s(Span<Vector2> dest)
 	{
-		ReadArray(dest, 8, EndianBinaryPrimitives.ReadVector2s);
+		ReadArray(dest, 8, EndianBinaryPrimitives.ReadVector2s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Vector3 ReadVector3()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 12);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadVector3(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadVector3_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadVector3s(Span<Vector3> dest)
 	{
-		ReadArray(dest, 12, EndianBinaryPrimitives.ReadVector3s);
+		ReadArray(dest, 12, EndianBinaryPrimitives.ReadVector3s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Vector4 ReadVector4()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadVector4(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadVector4_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadVector4s(Span<Vector4> dest)
 	{
-		ReadArray(dest, 16, EndianBinaryPrimitives.ReadVector4s);
+		ReadArray(dest, 16, EndianBinaryPrimitives.ReadVector4s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Quaternion ReadQuaternion()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadQuaternion(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadQuaternion_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadQuaternions(Span<Quaternion> dest)
 	{
-		ReadArray(dest, 16, EndianBinaryPrimitives.ReadQuaternions);
+		ReadArray(dest, 16, EndianBinaryPrimitives.ReadQuaternions_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public Matrix4x4 ReadMatrix4x4()
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 64);
 		ReadBytes(buffer);
-		return EndianBinaryPrimitives.ReadMatrix4x4(buffer, Endianness);
+		return EndianBinaryPrimitives.ReadMatrix4x4_Unsafe(buffer, Endianness);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadMatrix4x4s(Span<Matrix4x4> dest)
 	{
-		ReadArray(dest, 64, EndianBinaryPrimitives.ReadMatrix4x4s);
+		ReadArray(dest, 64, EndianBinaryPrimitives.ReadMatrix4x4s_Unsafe);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -423,7 +497,8 @@ public partial class EndianBinaryReader
 	{
 		if (ASCII)
 		{
-			Span<byte> buffer = MemoryMarshal.Cast<char, byte>(dest).Slice(dest.Length);
+			// Read ASCII chars into 2nd half of dest, then populate first half with those buffered chars
+			Span<byte> buffer = dest.WriteCast<char, byte>(dest.Length * 2).Slice(dest.Length);
 			ReadBytes(buffer);
 			for (int i = 0; i < dest.Length; i++)
 			{
@@ -432,10 +507,11 @@ public partial class EndianBinaryReader
 		}
 		else
 		{
-			Span<ushort> buffer = MemoryMarshal.Cast<char, ushort>(dest);
+			Span<ushort> buffer = dest.WriteCast<char, ushort>(dest.Length);
 			ReadUInt16s(buffer);
 		}
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public char[] ReadChars_TrimNullTerminators(int charCount)
 	{
 		char[] chars = new char[charCount];
@@ -443,6 +519,7 @@ public partial class EndianBinaryReader
 		EndianBinaryPrimitives.TrimNullTerminators(ref chars);
 		return chars;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public string ReadString_Count(int charCount)
 	{
 		void Create(Span<char> dest, byte _)
@@ -451,6 +528,7 @@ public partial class EndianBinaryReader
 		}
 		return string.Create(charCount, byte.MinValue, Create);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadStrings_Count(Span<string> dest, int charCount)
 	{
 		for (int i = 0; i < dest.Length; i++)
@@ -458,10 +536,15 @@ public partial class EndianBinaryReader
 			dest[i] = ReadString_Count(charCount);
 		}
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public string ReadString_Count_TrimNullTerminators(int charCount)
 	{
-		return new string(ReadChars_TrimNullTerminators(charCount));
+		char[] chars = new char[charCount];
+		ReadChars(chars);
+		EndianBinaryPrimitives.TrimNullTerminators(ref chars);
+		return new string(chars);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadStrings_Count_TrimNullTerminators(Span<string> dest, int charCount)
 	{
 		for (int i = 0; i < dest.Length; i++)
@@ -483,6 +566,7 @@ public partial class EndianBinaryReader
 		}
 		return v.ToString(); // Returns string.Empty if length is 0
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadStrings_NullTerminated(Span<string> dest)
 	{
 		for (int i = 0; i < dest.Length; i++)

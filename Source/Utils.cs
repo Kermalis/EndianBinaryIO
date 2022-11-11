@@ -66,6 +66,27 @@ internal static class Utils
 			throw new ArgumentException($"Cannot read/write \"{type.FullName}\" objects.", nameof(type));
 		}
 	}
+	public static void ThrowIfDestTooSmall(int dst, int req)
+	{
+		if (dst < req)
+		{
+			throw new ArgumentException("Destination length was less than " + req);
+		}
+	}
+	public static void ThrowIfSrcTooSmall(int src, int req)
+	{
+		if (src < req)
+		{
+			throw new ArgumentException("Source length was less than " + req);
+		}
+	}
+	public static void ThrowIfInvalidEndianness(Endianness endianness)
+	{
+		if (endianness >= Endianness.MAX)
+		{
+			throw new ArgumentOutOfRangeException(nameof(endianness), endianness, null);
+		}
+	}
 
 	public static int GetArrayLength(object obj, Type objType, PropertyInfo propertyInfo)
 	{
