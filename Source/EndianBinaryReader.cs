@@ -541,7 +541,13 @@ public partial class EndianBinaryReader
 	{
 		char[] chars = new char[charCount];
 		ReadChars(chars);
-		EndianBinaryPrimitives.TrimNullTerminators(ref chars);
+
+		// Trim '\0's
+		int i = Array.IndexOf(chars, '\0');
+		if (i != -1)
+		{
+			return new string(chars, 0, i);
+		}
 		return new string(chars);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
