@@ -6,13 +6,9 @@ using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
 
-public sealed class EncodingTests
+public sealed class CharTests
 {
-	private interface ICharObj
-	{
-		string Str { get; set; }
-	}
-	private sealed class CharObj : ICharObj
+	private sealed class CharObj
 	{
 		public byte Len { get; set; }
 		[BinaryStringVariableLength(nameof(Len))]
@@ -29,16 +25,7 @@ public sealed class EncodingTests
 		0x0D, 0x0A, // "\r\n"
 		0x46, 0x75, 0x6E, 0x6E, 0x69, 0x65, 0x73 // "Funnies"
 	};
-	private const string TEST_STR_UTF = "Jummy😀\r\n😳Funnies";
-	private static readonly byte[] _testBytes_UTF8 = new byte[]
-	{
-		0x12, // Len
-		0x4A, 0x75, 0x6D, 0x6D, 0x79, // "Jummy"
-		0xF0, 0x9F, 0x98, 0x80, // "😀"
-		0x0D, 0x0A, // "\r\n"
-		0xF0, 0x9F, 0x98, 0xB3, // "😳"
-		0x46, 0x75, 0x6E, 0x6E, 0x69, 0x65, 0x73 // "Funnies"
-	};
+	private const string TEST_STR_UTF16LE = "Jummy😀\r\n😳Funnies";
 	private static readonly byte[] _testBytes_UTF16LE = new byte[]
 	{
 		0x12, // Len
@@ -55,18 +42,20 @@ public sealed class EncodingTests
 	{
 		if (ascii)
 		{
-			input = _testBytes_ASCII; str = TEST_STR_ASCII;
+			input = _testBytes_ASCII;
+			str = TEST_STR_ASCII;
 		}
 		else
 		{
-			input = _testBytes_UTF16LE; str = TEST_STR_UTF;
+			input = _testBytes_UTF16LE;
+			str = TEST_STR_UTF16LE;
 		}
 	}
-	private static void TestRead<T>(bool ascii, byte[] input, string str) where T : ICharObj, new()
+	private static void TestRead(bool ascii, byte[] input, string str)
 	{
 		using (var stream = new MemoryStream(input))
 		{
-			T obj = new EndianBinaryReader(stream, endianness: Endianness.LittleEndian, ascii: ascii).ReadObject<T>();
+			CharObj obj = new EndianBinaryReader(stream, ascii: ascii).ReadObject<CharObj>();
 			Assert.Equal(str, obj.Str);
 		}
 	}
@@ -80,7 +69,7 @@ public sealed class EncodingTests
 				Len = (byte)str.Length,
 				Str = str,
 			};
-			new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian, ascii: ascii).WriteObject(obj);
+			new EndianBinaryWriter(stream, ascii: ascii).WriteObject(obj);
 		}
 		Assert.True(bytes.SequenceEqual(input));
 	}
@@ -91,7 +80,7 @@ public sealed class EncodingTests
 	public void ReadDefaults(bool ascii)
 	{
 		Get(ascii, out byte[] input, out string str);
-		TestRead<CharObj>(ascii, input, str);
+		TestRead(ascii, input, str);
 	}
 
 	[Theory]

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<OutputType>Library</OutputType>
 		<RootNamespace>Kermalis.EndianBinaryIO</RootNamespace>
@@ -13,7 +13,7 @@
 		<Title>EndianBinaryIO</Title>
 		<PackageId>EndianBinaryIO</PackageId>
 		<AssemblyName>EndianBinaryIO</AssemblyName>
-		<Version>2.0.1</Version>
+		<Version>2.1.0</Version>
 		<RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Description>This .NET library provides a simple API to read/write bytes from/to streams and spans using user-specified endianness.
@@ -28,13 +28,13 @@ Project URL and Samples ― https://github.com/Kermalis/EndianBinaryIO</Descript
 		<PackageTags>Serialization;Reflection;Endianness;LittleEndian;BigEndian;EndianBinaryIO</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<PackageReleaseNotes>Version 2.0.1 Changelog:
-* Added TrimNullTerminators(ref char[] chars) and TrimNullTerminators(ref Span&lt;char&gt; chars) to EndianBinaryPrimitives which will remove all '\0' from the end
-* Added ReadSBytes(ReadOnlySpan&lt;byte&gt; src, Span&lt;sbyte&gt; dest) and WriteSBytes(Span&lt;byte&gt; dest, ReadOnlySpan&lt;sbyte&gt; src) to EndianBinaryPrimitives
-* Added heavily optimized enum methods to EndianBinaryPrimitives that use the same optimization techniques as the ones in EndianBinaryReader and EndianBinaryWriter
-* Added PeekBytes(Span&lt;byte&gt; dest) to EndianBinaryReader
+		<PackageReleaseNotes># Version 2.1.0 Changelog:
+* .NET 7.0 support only.
+* Added methods for reading/writing `Int128`/`UInt128`.
+* Added `TrimNullTerminators(ref ReadOnlySpan&lt;char&gt; chars)` to `EndianBinaryPrimitives`.
+* Added "unsafe" methods to `EndianBinaryPrimitives` that read/write to/from `ReadOnlySpan&lt;T&gt;`/`Span&lt;T&gt;`. These are similar to their non-`_Unsafe` counterparts, aside from the fact that they don't check for errors. Their goal is performance.
 
-No breaking changes from v2.0.0</PackageReleaseNotes>
+No breaking changes from v2.0.1</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryIO;
 
-public static class EndianBinaryPrimitives
+public static partial class EndianBinaryPrimitives
 {
 	public static readonly Endianness SystemEndianness = BitConverter.IsLittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
 
@@ -52,375 +50,571 @@ public static class EndianBinaryPrimitives
 	#region Read
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void ReadSBytes(ReadOnlySpan<byte> src, Span<sbyte> dest)
+	public static void ReadSBytes(this ReadOnlySpan<byte> src, Span<sbyte> dest)
 	{
-		src.CopyTo(MemoryMarshal.Cast<sbyte, byte>(dest));
+		Utils.ThrowIfSrcTooSmall(src.Length, dest.Length);
+		src.ReadSBytes_Unsafe(dest);
 	}
 
-	public static short ReadInt16(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static short ReadInt16(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadInt16LittleEndian(src)
-			: BinaryPrimitives.ReadInt16BigEndian(src);
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(short));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadInt16_Unsafe(endianness);
 	}
-	public static void ReadInt16s(ReadOnlySpan<byte> src, Span<short> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadInt16s(this ReadOnlySpan<byte> src, Span<short> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadInt16(src.Slice(i * 2, 2), endianness);
-		}
-	}
-
-	public static ushort ReadUInt16(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadUInt16LittleEndian(src)
-			: BinaryPrimitives.ReadUInt16BigEndian(src);
-	}
-	public static void ReadUInt16s(ReadOnlySpan<byte> src, Span<ushort> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadUInt16(src.Slice(i * 2, 2), endianness);
-		}
-	}
-
-	public static int ReadInt32(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadInt32LittleEndian(src)
-			: BinaryPrimitives.ReadInt32BigEndian(src);
-	}
-	public static void ReadInt32s(ReadOnlySpan<byte> src, Span<int> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadInt32(src.Slice(i * 4, 4), endianness);
-		}
-	}
-
-	public static uint ReadUInt32(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadUInt32LittleEndian(src)
-			: BinaryPrimitives.ReadUInt32BigEndian(src);
-	}
-	public static void ReadUInt32s(ReadOnlySpan<byte> src, Span<uint> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadUInt32(src.Slice(i * 4, 4), endianness);
-		}
-	}
-
-	public static long ReadInt64(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadInt64LittleEndian(src)
-			: BinaryPrimitives.ReadInt64BigEndian(src);
-	}
-	public static void ReadInt64s(ReadOnlySpan<byte> src, Span<long> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadInt64(src.Slice(i * 8, 8), endianness);
-		}
-	}
-
-	public static ulong ReadUInt64(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadUInt64LittleEndian(src)
-			: BinaryPrimitives.ReadUInt64BigEndian(src);
-	}
-	public static void ReadUInt64s(ReadOnlySpan<byte> src, Span<ulong> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadUInt64(src.Slice(i * 8, 8), endianness);
-		}
-	}
-
-	public static Half ReadHalf(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadHalfLittleEndian(src)
-			: BinaryPrimitives.ReadHalfBigEndian(src);
-	}
-	public static void ReadHalves(ReadOnlySpan<byte> src, Span<Half> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadHalf(src.Slice(i * 2, 2), endianness);
-		}
-	}
-
-	public static float ReadSingle(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadSingleLittleEndian(src)
-			: BinaryPrimitives.ReadSingleBigEndian(src);
-	}
-	public static void ReadSingles(ReadOnlySpan<byte> src, Span<float> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadSingle(src.Slice(i * 4, 4), endianness);
-		}
-	}
-
-	public static double ReadDouble(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		return endianness == Endianness.LittleEndian
-			? BinaryPrimitives.ReadDoubleLittleEndian(src)
-			: BinaryPrimitives.ReadDoubleBigEndian(src);
-	}
-	public static void ReadDoubles(ReadOnlySpan<byte> src, Span<double> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadDouble(src.Slice(i * 8, 8), endianness);
-		}
-	}
-
-	public static decimal ReadDecimal(ReadOnlySpan<byte> src, Endianness endianness)
-	{
-		Span<int> buffer = stackalloc int[4];
-		ReadInt32s(src, buffer, endianness);
-		return new decimal(buffer);
-	}
-	public static void ReadDecimals(ReadOnlySpan<byte> src, Span<decimal> dest, Endianness endianness)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadDecimal(src.Slice(i * 16, 16), endianness);
-		}
-	}
-
-	public static bool ReadBoolean(ReadOnlySpan<byte> src, Endianness endianness, BooleanSize boolSize)
-	{
-		return ReadBoolean(src, endianness, GetBytesForBooleanSize(boolSize));
-	}
-	public static void ReadBooleans(ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness, BooleanSize boolSize)
-	{
-		ReadBooleans(src, dest, endianness, GetBytesForBooleanSize(boolSize));
-	}
-	public static bool ReadBoolean(ReadOnlySpan<byte> src, Endianness endianness, int boolSize)
-	{
-		switch (boolSize)
-		{
-			case 1:
-			{
-				return src[0] != 0;
-			}
-			case 2:
-			{
-				return ReadUInt16(src, endianness) != 0;
-			}
-			case 4:
-			{
-				return ReadUInt32(src, endianness) != 0;
-			}
-			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
-		}
-	}
-	public static void ReadBooleans(ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness, int boolSize)
-	{
-		for (int i = 0; i < dest.Length; i++)
-		{
-			dest[i] = ReadBoolean(src.Slice(i * boolSize, boolSize), endianness, boolSize);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(short));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadInt16s_Unsafe(dest, endianness);
 		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static TEnum ReadEnum<TEnum>(ReadOnlySpan<byte> src, Endianness endianness) where TEnum : unmanaged, Enum
+	public static ushort ReadUInt16(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(ushort));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadUInt16_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadUInt16s(this ReadOnlySpan<byte> src, Span<ushort> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadUInt16s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static int ReadInt32(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(int));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadInt32_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadInt32s(this ReadOnlySpan<byte> src, Span<int> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(int));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadInt32s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static uint ReadUInt32(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(uint));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadUInt32_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadUInt32s(this ReadOnlySpan<byte> src, Span<uint> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadUInt32s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static long ReadInt64(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadInt64_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadInt64s(this ReadOnlySpan<byte> src, Span<long> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadInt64s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static ulong ReadUInt64(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadUInt64_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadUInt64s(this ReadOnlySpan<byte> src, Span<ulong> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadUInt64s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Int128 ReadInt128(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, 2 * sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadInt128_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadInt128s(this ReadOnlySpan<byte> src, Span<Int128> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 2 * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadInt128s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static UInt128 ReadUInt128(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, 2 * sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadUInt128_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadUInt128s(this ReadOnlySpan<byte> src, Span<UInt128> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 2 * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadUInt128s_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Half ReadHalf(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(ushort));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadHalf_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadHalves(this ReadOnlySpan<byte> src, Span<Half> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadHalves_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static float ReadSingle(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadSingle_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadSingles(this ReadOnlySpan<byte> src, Span<float> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadSingles_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static double ReadDouble(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(double));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadDouble_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadDoubles(this ReadOnlySpan<byte> src, Span<double> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(double));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadDoubles_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static decimal ReadDecimal(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(decimal));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadDecimal_Unsafe(endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadDecimals(this ReadOnlySpan<byte> src, Span<decimal> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(decimal));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadDecimals_Unsafe(dest, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool ReadBoolean8(this ReadOnlySpan<byte> src)
+	{
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(byte));
+		return src[0] != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadBoolean8s(this ReadOnlySpan<byte> src, Span<bool> dest)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length);
+			src.ReadBoolean8s_Unsafe(dest);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool ReadBoolean16(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		return src.ReadUInt16(endianness) != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadBoolean16s(this ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadBoolean16s_Unsafe(dest, endianness);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool ReadBoolean32(this ReadOnlySpan<byte> src, Endianness endianness)
+	{
+		return src.ReadUInt32(endianness) != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadBoolean32s(this ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness)
+	{
+		if (dest.Length != 0)
+		{
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadBoolean32s_Unsafe(dest, endianness);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool ReadBoolean(this ReadOnlySpan<byte> src, Endianness endianness, BooleanSize boolSize)
+	{
+		return src.ReadBoolean(endianness, GetBytesForBooleanSize(boolSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadBooleans(this ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness, BooleanSize boolSize)
+	{
+		src.ReadBooleans(dest, endianness, GetBytesForBooleanSize(boolSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool ReadBoolean(this ReadOnlySpan<byte> src, Endianness endianness, int boolSize)
+	{
+		switch (boolSize)
+		{
+			case 1: return src.ReadBoolean8();
+			case 2: return src.ReadBoolean16(endianness);
+			case 4: return src.ReadBoolean32(endianness);
+			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadBooleans(this ReadOnlySpan<byte> src, Span<bool> dest, Endianness endianness, int boolSize)
+	{
+		switch (boolSize)
+		{
+			case 1: src.ReadBoolean8s(dest); break;
+			case 2: src.ReadBoolean16s(dest, endianness); break;
+			case 4: src.ReadBoolean32s(dest, endianness); break;
+			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static TEnum ReadEnum<TEnum>(this ReadOnlySpan<byte> src, Endianness endianness)
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
 		{
+			Utils.ThrowIfSrcTooSmall(src.Length, sizeof(byte));
 			byte b = src[0];
 			return Unsafe.As<byte, TEnum>(ref b);
 		}
 		if (size == 2)
 		{
-			ushort s = ReadUInt16(src, endianness);
+			ushort s = src.ReadUInt16(endianness);
 			return Unsafe.As<ushort, TEnum>(ref s);
 		}
 		if (size == 4)
 		{
-			uint i = ReadUInt32(src, endianness);
+			uint i = src.ReadUInt32(endianness);
 			return Unsafe.As<uint, TEnum>(ref i);
 		}
-		ulong l = ReadUInt64(src, endianness);
+		ulong l = src.ReadUInt64(endianness);
 		return Unsafe.As<ulong, TEnum>(ref l);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void ReadEnums<TEnum>(ReadOnlySpan<byte> src, Span<TEnum> dest, Endianness endianness) where TEnum : unmanaged, Enum
+	public static void ReadEnums<TEnum>(this ReadOnlySpan<byte> src, Span<TEnum> dest, Endianness endianness)
+		where TEnum : unmanaged, Enum
 	{
+		if (dest.Length == 0)
+		{
+			return;
+		}
+
 		int size = Unsafe.SizeOf<TEnum>();
-		if (size == 1)
+		if (size == sizeof(byte))
 		{
-			src.CopyTo(MemoryMarshal.Cast<TEnum, byte>(dest));
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length);
+			src.ReadCast<byte, TEnum>(dest.Length).CopyTo(dest);
 		}
-		else if (size == 2)
+		else if (size == sizeof(ushort))
 		{
-			ReadUInt16s(src, MemoryMarshal.Cast<TEnum, ushort>(dest), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.ReadCast<byte, TEnum>(dest.Length).CopyTo(dest);
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<byte, ushort>(dest.Length), dest.WriteCast<TEnum, ushort>(dest.Length));
+			}
 		}
-		else if (size == 4)
+		else if (size == sizeof(uint))
 		{
-			ReadUInt32s(src, MemoryMarshal.Cast<TEnum, uint>(dest), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.ReadCast<byte, TEnum>(dest.Length).CopyTo(dest);
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<byte, uint>(dest.Length), dest.WriteCast<TEnum, uint>(dest.Length));
+			}
 		}
 		else
 		{
-			ReadUInt64s(src, MemoryMarshal.Cast<TEnum, ulong>(dest), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.ReadCast<byte, TEnum>(dest.Length).CopyTo(dest);
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<byte, ulong>(dest.Length), dest.WriteCast<TEnum, ulong>(dest.Length));
+			}
 		}
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static object ReadEnum(ReadOnlySpan<byte> src, Endianness endianness, Type enumType)
+	public static object ReadEnum(this ReadOnlySpan<byte> src, Endianness endianness, Type enumType)
 	{
 		// Type.IsEnum is also false for base Enum type, so don't worry about it
 		Type underlyingType = Enum.GetUnderlyingType(enumType);
 		switch (Type.GetTypeCode(underlyingType))
 		{
-			case TypeCode.SByte: return Enum.ToObject(enumType, (sbyte)src[0]);
-			case TypeCode.Byte: return Enum.ToObject(enumType, src[0]);
-			case TypeCode.Int16: return Enum.ToObject(enumType, ReadInt16(src, endianness));
-			case TypeCode.UInt16: return Enum.ToObject(enumType, ReadUInt16(src, endianness));
-			case TypeCode.Int32: return Enum.ToObject(enumType, ReadInt32(src, endianness));
-			case TypeCode.UInt32: return Enum.ToObject(enumType, ReadUInt32(src, endianness));
-			case TypeCode.Int64: return Enum.ToObject(enumType, ReadInt64(src, endianness));
-			case TypeCode.UInt64: return Enum.ToObject(enumType, ReadUInt64(src, endianness));
+			case TypeCode.SByte:
+			{
+				Utils.ThrowIfSrcTooSmall(src.Length, sizeof(sbyte));
+				return Enum.ToObject(enumType, (sbyte)src[0]);
+			}
+			case TypeCode.Byte:
+			{
+				Utils.ThrowIfSrcTooSmall(src.Length, sizeof(byte));
+				return Enum.ToObject(enumType, src[0]);
+			}
+			case TypeCode.Int16:
+			{
+				return Enum.ToObject(enumType, src.ReadInt16(endianness));
+			}
+			case TypeCode.UInt16:
+			{
+				return Enum.ToObject(enumType, src.ReadUInt16(endianness));
+			}
+			case TypeCode.Int32:
+			{
+				return Enum.ToObject(enumType, src.ReadInt32(endianness));
+			}
+			case TypeCode.UInt32:
+			{
+				return Enum.ToObject(enumType, src.ReadUInt32(endianness));
+			}
+			case TypeCode.Int64:
+			{
+				return Enum.ToObject(enumType, src.ReadInt64(endianness));
+			}
+			case TypeCode.UInt64:
+			{
+				return Enum.ToObject(enumType, src.ReadUInt64(endianness));
+			}
 		}
 		throw new ArgumentOutOfRangeException(nameof(enumType), enumType, null);
 	}
 
-	public static DateTime ReadDateTime(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static DateTime ReadDateTime(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		return DateTime.FromBinary(ReadInt64(src, endianness));
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadDateTime_Unsafe(endianness);
 	}
-	public static void ReadDateTimes(ReadOnlySpan<byte> src, Span<DateTime> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadDateTimes(this ReadOnlySpan<byte> src, Span<DateTime> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadDateTime(src.Slice(i * 8, 8), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadDateTimes_Unsafe(dest, endianness);
 		}
 	}
 
-	public static DateOnly ReadDateOnly(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static DateOnly ReadDateOnly(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		return DateOnly.FromDayNumber(ReadInt32(src, endianness));
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(int));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadDateOnly_Unsafe(endianness);
 	}
-	public static void ReadDateOnlys(ReadOnlySpan<byte> src, Span<DateOnly> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadDateOnlys(this ReadOnlySpan<byte> src, Span<DateOnly> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadDateOnly(src.Slice(i * 4, 4), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(int));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadDateOnlys_Unsafe(dest, endianness);
 		}
 	}
 
-	public static TimeOnly ReadTimeOnly(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static TimeOnly ReadTimeOnly(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		return new TimeOnly(ReadInt64(src, endianness));
+		Utils.ThrowIfSrcTooSmall(src.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadTimeOnly_Unsafe(endianness);
 	}
-	public static void ReadTimeOnlys(ReadOnlySpan<byte> src, Span<TimeOnly> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadTimeOnlys(this ReadOnlySpan<byte> src, Span<TimeOnly> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadTimeOnly(src.Slice(i * 8, 8), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadTimeOnlys_Unsafe(dest, endianness);
 		}
 	}
 
-	public static Vector2 ReadVector2(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector2 ReadVector2(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		Vector2 v;
-		v.X = ReadSingle(src.Slice(0, 4), endianness);
-		v.Y = ReadSingle(src.Slice(4, 4), endianness);
-		return v;
+		Utils.ThrowIfSrcTooSmall(src.Length, 2 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadVector2_Unsafe(endianness);
 	}
-	public static void ReadVector2s(ReadOnlySpan<byte> src, Span<Vector2> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadVector2s(this ReadOnlySpan<byte> src, Span<Vector2> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadVector2(src.Slice(i * 8, 8), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 2 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadVector2s_Unsafe(dest, endianness);
 		}
 	}
 
-	public static Vector3 ReadVector3(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector3 ReadVector3(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		Vector3 v;
-		v.X = ReadSingle(src.Slice(0, 4), endianness);
-		v.Y = ReadSingle(src.Slice(4, 4), endianness);
-		v.Z = ReadSingle(src.Slice(8, 4), endianness);
-		return v;
+		Utils.ThrowIfSrcTooSmall(src.Length, 3 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadVector3_Unsafe(endianness);
 	}
-	public static void ReadVector3s(ReadOnlySpan<byte> src, Span<Vector3> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadVector3s(this ReadOnlySpan<byte> src, Span<Vector3> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadVector3(src.Slice(i * 12, 12), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 3 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadVector3s_Unsafe(dest, endianness);
 		}
 	}
 
-	public static Vector4 ReadVector4(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector4 ReadVector4(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		Vector4 v;
-		v.W = ReadSingle(src.Slice(0, 4), endianness);
-		v.X = ReadSingle(src.Slice(4, 4), endianness);
-		v.Y = ReadSingle(src.Slice(8, 4), endianness);
-		v.Z = ReadSingle(src.Slice(12, 4), endianness);
-		return v;
+		Utils.ThrowIfSrcTooSmall(src.Length, 4 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadVector4_Unsafe(endianness);
 	}
-	public static void ReadVector4s(ReadOnlySpan<byte> src, Span<Vector4> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadVector4s(this ReadOnlySpan<byte> src, Span<Vector4> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadVector4(src.Slice(i * 16, 16), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 4 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadVector4s_Unsafe(dest, endianness);
 		}
 	}
 
-	public static Quaternion ReadQuaternion(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Quaternion ReadQuaternion(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		Quaternion v;
-		v.W = ReadSingle(src.Slice(0, 4), endianness);
-		v.X = ReadSingle(src.Slice(4, 4), endianness);
-		v.Y = ReadSingle(src.Slice(8, 4), endianness);
-		v.Z = ReadSingle(src.Slice(12, 4), endianness);
-		return v;
+		Utils.ThrowIfSrcTooSmall(src.Length, 4 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadQuaternion_Unsafe(endianness);
 	}
-	public static void ReadQuaternions(ReadOnlySpan<byte> src, Span<Quaternion> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadQuaternions(this ReadOnlySpan<byte> src, Span<Quaternion> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadQuaternion(src.Slice(i * 16, 16), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 4 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadQuaternions_Unsafe(dest, endianness);
 		}
 	}
 
-	public static Matrix4x4 ReadMatrix4x4(ReadOnlySpan<byte> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Matrix4x4 ReadMatrix4x4(this ReadOnlySpan<byte> src, Endianness endianness)
 	{
-		Matrix4x4 v;
-		v.M11 = ReadSingle(src.Slice(0, 4), endianness);
-		v.M12 = ReadSingle(src.Slice(4, 4), endianness);
-		v.M13 = ReadSingle(src.Slice(8, 4), endianness);
-		v.M14 = ReadSingle(src.Slice(12, 4), endianness);
-		v.M21 = ReadSingle(src.Slice(16, 4), endianness);
-		v.M22 = ReadSingle(src.Slice(20, 4), endianness);
-		v.M23 = ReadSingle(src.Slice(24, 4), endianness);
-		v.M24 = ReadSingle(src.Slice(28, 4), endianness);
-		v.M31 = ReadSingle(src.Slice(32, 4), endianness);
-		v.M32 = ReadSingle(src.Slice(36, 4), endianness);
-		v.M33 = ReadSingle(src.Slice(40, 4), endianness);
-		v.M34 = ReadSingle(src.Slice(44, 4), endianness);
-		v.M41 = ReadSingle(src.Slice(48, 4), endianness);
-		v.M42 = ReadSingle(src.Slice(52, 4), endianness);
-		v.M43 = ReadSingle(src.Slice(56, 4), endianness);
-		v.M44 = ReadSingle(src.Slice(60, 4), endianness);
-		return v;
+		Utils.ThrowIfSrcTooSmall(src.Length, 16 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		return src.ReadMatrix4x4_Unsafe(endianness);
 	}
-	public static void ReadMatrix4x4s(ReadOnlySpan<byte> src, Span<Matrix4x4> dest, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void ReadMatrix4x4s(this ReadOnlySpan<byte> src, Span<Matrix4x4> dest, Endianness endianness)
 	{
-		for (int i = 0; i < dest.Length; i++)
+		if (dest.Length != 0)
 		{
-			dest[i] = ReadMatrix4x4(src.Slice(i * 64, 64), endianness);
+			Utils.ThrowIfSrcTooSmall(src.Length, dest.Length * 16 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			src.ReadMatrix4x4s_Unsafe(dest, endianness);
 		}
 	}
 
@@ -429,414 +623,563 @@ public static class EndianBinaryPrimitives
 	#region Write
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void WriteSBytes(Span<byte> dest, ReadOnlySpan<sbyte> src)
+	public static void WriteSBytes(this Span<byte> dest, ReadOnlySpan<sbyte> src)
 	{
-		MemoryMarshal.Cast<sbyte, byte>(src).CopyTo(dest);
+		Utils.ThrowIfDestTooSmall(dest.Length, src.Length);
+		dest.WriteSBytes_Unsafe(src);
 	}
 
-	public static void WriteInt16(Span<byte> dest, short value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt16(this Span<byte> dest, short value, Endianness endianness)
 	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteInt16LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteInt16BigEndian(dest, value);
-		}
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(short));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteInt16_Unsafe(value, endianness);
 	}
-	public static void WriteInt16s(Span<byte> dest, ReadOnlySpan<short> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt16s(this Span<byte> dest, ReadOnlySpan<short> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteInt16(dest.Slice(i * 2, 2), src[i], endianness);
-		}
-	}
-
-	public static void WriteUInt16(Span<byte> dest, ushort value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteUInt16LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteUInt16BigEndian(dest, value);
-		}
-	}
-	public static void WriteUInt16s(Span<byte> dest, ReadOnlySpan<ushort> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteUInt16(dest.Slice(i * 2, 2), src[i], endianness);
-		}
-	}
-
-	public static void WriteInt32(Span<byte> dest, int value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteInt32LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteInt32BigEndian(dest, value);
-		}
-	}
-	public static void WriteInt32s(Span<byte> dest, ReadOnlySpan<int> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteInt32(dest.Slice(i * 4, 4), src[i], endianness);
-		}
-	}
-
-	public static void WriteUInt32(Span<byte> dest, uint value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteUInt32LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteUInt32BigEndian(dest, value);
-		}
-	}
-	public static void WriteUInt32s(Span<byte> dest, ReadOnlySpan<uint> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteUInt32(dest.Slice(i * 4, 4), src[i], endianness);
-		}
-	}
-
-	public static void WriteInt64(Span<byte> dest, long value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteInt64LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteInt64BigEndian(dest, value);
-		}
-	}
-	public static void WriteInt64s(Span<byte> dest, ReadOnlySpan<long> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteInt64(dest.Slice(i * 8, 8), src[i], endianness);
-		}
-	}
-
-	public static void WriteUInt64(Span<byte> dest, ulong value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteUInt64LittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteUInt64BigEndian(dest, value);
-		}
-	}
-	public static void WriteUInt64s(Span<byte> dest, ReadOnlySpan<ulong> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteUInt64(dest.Slice(i * 8, 8), src[i], endianness);
-		}
-	}
-
-	public static void WriteHalf(Span<byte> dest, Half value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteHalfLittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteHalfBigEndian(dest, value);
-		}
-	}
-	public static void WriteHalves(Span<byte> dest, ReadOnlySpan<Half> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteHalf(dest.Slice(i * 2, 2), src[i], endianness);
-		}
-	}
-
-	public static void WriteSingle(Span<byte> dest, float value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteSingleLittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteSingleBigEndian(dest, value);
-		}
-	}
-	public static void WriteSingles(Span<byte> dest, ReadOnlySpan<float> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteSingle(dest.Slice(i * 4, 4), src[i], endianness);
-		}
-	}
-
-	public static void WriteDouble(Span<byte> dest, double value, Endianness endianness)
-	{
-		if (endianness == Endianness.LittleEndian)
-		{
-			BinaryPrimitives.WriteDoubleLittleEndian(dest, value);
-		}
-		else
-		{
-			BinaryPrimitives.WriteDoubleBigEndian(dest, value);
-		}
-	}
-	public static void WriteDoubles(Span<byte> dest, ReadOnlySpan<double> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteDouble(dest.Slice(i * 8, 8), src[i], endianness);
-		}
-	}
-
-	public static void WriteDecimal(Span<byte> dest, in decimal value, Endianness endianness)
-	{
-		Span<int> buffer = stackalloc int[4];
-		decimal.GetBits(value, buffer);
-		WriteInt32s(dest, buffer, endianness);
-	}
-	public static void WriteDecimals(Span<byte> dest, ReadOnlySpan<decimal> src, Endianness endianness)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteDecimal(dest.Slice(i * 16, 16), src[i], endianness);
-		}
-	}
-
-	public static void WriteBoolean(Span<byte> dest, bool value, Endianness endianness, BooleanSize boolSize)
-	{
-		WriteBoolean(dest, value, endianness, GetBytesForBooleanSize(boolSize));
-	}
-	public static void WriteBooleans(Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness, BooleanSize boolSize)
-	{
-		WriteBooleans(dest, src, endianness, GetBytesForBooleanSize(boolSize));
-	}
-	public static void WriteBoolean(Span<byte> dest, bool value, Endianness endianness, int boolSize)
-	{
-		switch (boolSize)
-		{
-			case 1:
-			{
-				dest[0] = (byte)(value ? 1 : 0);
-				break;
-			}
-			case 2:
-			{
-				WriteUInt16(dest.Slice(0, 2), (ushort)(value ? 1 : 0), endianness);
-				break;
-			}
-			case 4:
-			{
-				WriteUInt32(dest.Slice(0, 4), value ? 1u : 0, endianness);
-				break;
-			}
-			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
-		}
-	}
-	public static void WriteBooleans(Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness, int boolSize)
-	{
-		for (int i = 0; i < src.Length; i++)
-		{
-			WriteBoolean(dest.Slice(i * boolSize, boolSize), src[i], endianness, boolSize);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(short));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteInt16s_Unsafe(src, endianness);
 		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void WriteEnum<TEnum>(Span<byte> dest, TEnum value, Endianness endianness) where TEnum : unmanaged, Enum
+	public static void WriteUInt16(this Span<byte> dest, ushort value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(ushort));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteUInt16_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt16s(this Span<byte> dest, ReadOnlySpan<ushort> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteUInt16s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt32(this Span<byte> dest, int value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(int));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteInt32_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt32s(this Span<byte> dest, ReadOnlySpan<int> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(int));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteInt32s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt32(this Span<byte> dest, uint value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(uint));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteUInt32_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt32s(this Span<byte> dest, ReadOnlySpan<uint> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteUInt32s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt64(this Span<byte> dest, long value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteInt64_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt64s(this Span<byte> dest, ReadOnlySpan<long> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteInt64s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt64(this Span<byte> dest, ulong value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteUInt64_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt64s(this Span<byte> dest, ReadOnlySpan<ulong> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteUInt64s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt128(this Span<byte> dest, Int128 value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, 2 * sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteInt128_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteInt128s(this Span<byte> dest, ReadOnlySpan<Int128> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 2 * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteInt128s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt128(this Span<byte> dest, UInt128 value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, 2 * sizeof(ulong));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteUInt128_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteUInt128s(this Span<byte> dest, ReadOnlySpan<UInt128> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 2 * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteUInt128s_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteHalf(this Span<byte> dest, Half value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(ushort));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteHalf_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteHalves(this Span<byte> dest, ReadOnlySpan<Half> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteHalves_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteSingle(this Span<byte> dest, float value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteSingle_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteSingles(this Span<byte> dest, ReadOnlySpan<float> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteSingles_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDouble(this Span<byte> dest, double value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(double));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteDouble_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDoubles(this Span<byte> dest, ReadOnlySpan<double> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(double));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteDoubles_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDecimal(this Span<byte> dest, in decimal value, Endianness endianness)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(decimal));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteDecimal_Unsafe(value, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDecimals(this Span<byte> dest, ReadOnlySpan<decimal> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(decimal));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteDecimals_Unsafe(src, endianness);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean8(this Span<byte> dest, bool value)
+	{
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(byte));
+		dest[0] = (byte)(value ? 1 : 0);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean8s(this Span<byte> dest, ReadOnlySpan<bool> src)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length);
+			dest.WriteBoolean8s_Unsafe(src);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean16(this Span<byte> dest, bool value, Endianness endianness)
+	{
+		dest.WriteUInt16((ushort)(value ? 1 : 0), endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean16s(this Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteBoolean16s_Unsafe(src, endianness);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean32(this Span<byte> dest, bool value, Endianness endianness)
+	{
+		dest.WriteUInt32(value ? 1u : 0, endianness);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean32s(this Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness)
+	{
+		if (src.Length != 0)
+		{
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteBoolean32s_Unsafe(src, endianness);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean(this Span<byte> dest, bool value, Endianness endianness, BooleanSize boolSize)
+	{
+		dest.WriteBoolean(value, endianness, GetBytesForBooleanSize(boolSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBooleans(this Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness, BooleanSize boolSize)
+	{
+		dest.WriteBooleans(src, endianness, GetBytesForBooleanSize(boolSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBoolean(this Span<byte> dest, bool value, Endianness endianness, int boolSize)
+	{
+		switch (boolSize)
+		{
+			case 1: dest.WriteBoolean8(value); break;
+			case 2: dest.WriteBoolean16(value, endianness); break;
+			case 4: dest.WriteBoolean32(value, endianness); break;
+			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteBooleans(this Span<byte> dest, ReadOnlySpan<bool> src, Endianness endianness, int boolSize)
+	{
+		switch (boolSize)
+		{
+			case 1: dest.WriteBoolean8s(src); break;
+			case 2: dest.WriteBoolean16s(src, endianness); break;
+			case 4: dest.WriteBoolean32s(src, endianness); break;
+			default: throw new ArgumentOutOfRangeException(nameof(boolSize), boolSize, null);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteEnum<TEnum>(this Span<byte> dest, TEnum value, Endianness endianness)
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
 		{
+			Utils.ThrowIfDestTooSmall(dest.Length, sizeof(byte));
 			dest[0] = Unsafe.As<TEnum, byte>(ref value);
 		}
 		else if (size == 2)
 		{
-			WriteUInt16(dest, Unsafe.As<TEnum, ushort>(ref value), endianness);
+			dest.WriteUInt16(Unsafe.As<TEnum, ushort>(ref value), endianness);
 		}
 		else if (size == 4)
 		{
-			WriteUInt32(dest, Unsafe.As<TEnum, uint>(ref value), endianness);
+			dest.WriteUInt32(Unsafe.As<TEnum, uint>(ref value), endianness);
 		}
 		else
 		{
-			WriteUInt64(dest, Unsafe.As<TEnum, ulong>(ref value), endianness);
+			dest.WriteUInt64(Unsafe.As<TEnum, ulong>(ref value), endianness);
 		}
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void WriteEnums<TEnum>(Span<byte> dest, ReadOnlySpan<TEnum> src, Endianness endianness) where TEnum : unmanaged, Enum
+	public static void WriteEnums<TEnum>(this Span<byte> dest, ReadOnlySpan<TEnum> src, Endianness endianness)
+		where TEnum : unmanaged, Enum
 	{
+		if (src.Length == 0)
+		{
+			return;
+		}
+
 		int size = Unsafe.SizeOf<TEnum>();
-		if (size == 1)
+		if (size == sizeof(byte))
 		{
-			MemoryMarshal.Cast<TEnum, byte>(src).CopyTo(dest);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length);
+			src.CopyTo(dest.WriteCast<byte, TEnum>(src.Length));
 		}
-		else if (size == 2)
+		else if (size == sizeof(ushort))
 		{
-			WriteUInt16s(dest, MemoryMarshal.Cast<TEnum, ushort>(src), endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ushort));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.CopyTo(dest.WriteCast<byte, TEnum>(src.Length));
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<TEnum, ushort>(src.Length), dest.WriteCast<byte, ushort>(src.Length));
+			}
 		}
-		else if (size == 4)
+		else if (size == sizeof(uint))
 		{
-			WriteUInt32s(dest, MemoryMarshal.Cast<TEnum, uint>(src), endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(uint));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.CopyTo(dest.WriteCast<byte, TEnum>(src.Length));
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<TEnum, uint>(src.Length), dest.WriteCast<byte, uint>(src.Length));
+			}
 		}
 		else
 		{
-			WriteUInt64s(dest, MemoryMarshal.Cast<TEnum, ulong>(src), endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(ulong));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			if (endianness == SystemEndianness)
+			{
+				src.CopyTo(dest.WriteCast<byte, TEnum>(src.Length));
+			}
+			else
+			{
+				ReverseEndianness(src.ReadCast<TEnum, ulong>(src.Length), dest.WriteCast<byte, ulong>(src.Length));
+			}
 		}
 	}
 	// #13 - Allow writing the abstract "Enum" type
 	// For example, EndianBinaryPrimitives.WriteEnum((Enum)Enum.Parse(enumType, value))
 	// Don't allow writing Enum[] though, since there is no way to read that
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public static void WriteEnum(Span<byte> dest, Enum value, Endianness endianness)
+	public static void WriteEnum(this Span<byte> dest, Enum value, Endianness endianness)
 	{
 		Type underlyingType = Enum.GetUnderlyingType(value.GetType());
 		ref byte data = ref Utils.GetRawData(value); // Use memory tricks to skip object header of generic Enum
 		switch (Type.GetTypeCode(underlyingType))
 		{
 			case TypeCode.SByte:
-			case TypeCode.Byte: dest[0] = data; break;
+			case TypeCode.Byte:
+			{
+				Utils.ThrowIfDestTooSmall(dest.Length, sizeof(byte));
+				dest[0] = data;
+				break;
+			}
 			case TypeCode.Int16:
-			case TypeCode.UInt16: WriteUInt16(dest, Unsafe.As<byte, ushort>(ref data), endianness); break;
+			case TypeCode.UInt16:
+			{
+				dest.WriteUInt16(Unsafe.As<byte, ushort>(ref data), endianness);
+				break;
+			}
 			case TypeCode.Int32:
-			case TypeCode.UInt32: WriteUInt32(dest, Unsafe.As<byte, uint>(ref data), endianness); break;
+			case TypeCode.UInt32:
+			{
+				dest.WriteUInt32(Unsafe.As<byte, uint>(ref data), endianness);
+				break;
+			}
 			case TypeCode.Int64:
-			case TypeCode.UInt64: WriteUInt64(dest, Unsafe.As<byte, ulong>(ref data), endianness); break;
+			case TypeCode.UInt64:
+			{
+				dest.WriteUInt64(Unsafe.As<byte, ulong>(ref data), endianness);
+				break;
+			}
 		}
 	}
 
-	public static void WriteDateTime(Span<byte> dest, DateTime value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDateTime(this Span<byte> dest, DateTime value, Endianness endianness)
 	{
-		WriteInt64(dest, value.ToBinary(), endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteDateTime_Unsafe(value, endianness);
 	}
-	public static void WriteDateTimes(Span<byte> dest, ReadOnlySpan<DateTime> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDateTimes(this Span<byte> dest, ReadOnlySpan<DateTime> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteDateTime(dest.Slice(i * 8, 8), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteDateTimes_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteDateOnly(Span<byte> dest, DateOnly value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDateOnly(this Span<byte> dest, DateOnly value, Endianness endianness)
 	{
-		WriteInt32(dest, value.DayNumber, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(int));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteDateOnly_Unsafe(value, endianness);
 	}
-	public static void WriteDateOnlys(Span<byte> dest, ReadOnlySpan<DateOnly> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteDateOnlys(this Span<byte> dest, ReadOnlySpan<DateOnly> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteDateOnly(dest.Slice(i * 4, 4), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(int));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteDateOnlys_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteTimeOnly(Span<byte> dest, TimeOnly value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteTimeOnly(this Span<byte> dest, TimeOnly value, Endianness endianness)
 	{
-		WriteInt64(dest, value.Ticks, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, sizeof(long));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteTimeOnly_Unsafe(value, endianness);
 	}
-	public static void WriteTimeOnlys(Span<byte> dest, ReadOnlySpan<TimeOnly> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteTimeOnlys(this Span<byte> dest, ReadOnlySpan<TimeOnly> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteTimeOnly(dest.Slice(i * 8, 8), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * sizeof(long));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteTimeOnlys_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteVector2(Span<byte> dest, Vector2 value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector2(this Span<byte> dest, Vector2 value, Endianness endianness)
 	{
-		WriteSingle(dest.Slice(0, 4), value.X, endianness);
-		WriteSingle(dest.Slice(4, 4), value.Y, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, 2 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteVector2_Unsafe(value, endianness);
 	}
-	public static void WriteVector2s(Span<byte> dest, ReadOnlySpan<Vector2> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector2s(this Span<byte> dest, ReadOnlySpan<Vector2> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteVector2(dest.Slice(i * 8, 8), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 2 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteVector2s_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteVector3(Span<byte> dest, Vector3 value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector3(this Span<byte> dest, Vector3 value, Endianness endianness)
 	{
-		WriteSingle(dest.Slice(0, 4), value.X, endianness);
-		WriteSingle(dest.Slice(4, 4), value.Y, endianness);
-		WriteSingle(dest.Slice(8, 4), value.Z, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, 3 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteVector3_Unsafe(value, endianness);
 	}
-	public static void WriteVector3s(Span<byte> dest, ReadOnlySpan<Vector3> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector3s(this Span<byte> dest, ReadOnlySpan<Vector3> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteVector3(dest.Slice(i * 12, 12), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 3 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteVector3s_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteVector4(Span<byte> dest, in Vector4 value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector4(this Span<byte> dest, in Vector4 value, Endianness endianness)
 	{
-		WriteSingle(dest.Slice(0, 4), value.W, endianness);
-		WriteSingle(dest.Slice(4, 4), value.X, endianness);
-		WriteSingle(dest.Slice(8, 4), value.Y, endianness);
-		WriteSingle(dest.Slice(12, 4), value.Z, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, 4 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteVector4_Unsafe(value, endianness);
 	}
-	public static void WriteVector4s(Span<byte> dest, ReadOnlySpan<Vector4> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteVector4s(this Span<byte> dest, ReadOnlySpan<Vector4> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteVector4(dest.Slice(i * 16, 16), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 4 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteVector4s_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteQuaternion(Span<byte> dest, in Quaternion value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteQuaternion(this Span<byte> dest, in Quaternion value, Endianness endianness)
 	{
-		WriteSingle(dest.Slice(0, 4), value.W, endianness);
-		WriteSingle(dest.Slice(4, 4), value.X, endianness);
-		WriteSingle(dest.Slice(8, 4), value.Y, endianness);
-		WriteSingle(dest.Slice(12, 4), value.Z, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, 4 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteQuaternion_Unsafe(value, endianness);
 	}
-	public static void WriteQuaternions(Span<byte> dest, ReadOnlySpan<Quaternion> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteQuaternions(this Span<byte> dest, ReadOnlySpan<Quaternion> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteQuaternion(dest.Slice(i * 16, 16), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 4 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteQuaternions_Unsafe(src, endianness);
 		}
 	}
 
-	public static void WriteMatrix4x4(Span<byte> dest, in Matrix4x4 value, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteMatrix4x4(this Span<byte> dest, in Matrix4x4 value, Endianness endianness)
 	{
-		WriteSingle(dest.Slice(0, 4), value.M11, endianness);
-		WriteSingle(dest.Slice(4, 4), value.M12, endianness);
-		WriteSingle(dest.Slice(8, 4), value.M13, endianness);
-		WriteSingle(dest.Slice(12, 4), value.M14, endianness);
-		WriteSingle(dest.Slice(16, 4), value.M21, endianness);
-		WriteSingle(dest.Slice(20, 4), value.M22, endianness);
-		WriteSingle(dest.Slice(24, 4), value.M23, endianness);
-		WriteSingle(dest.Slice(28, 4), value.M24, endianness);
-		WriteSingle(dest.Slice(32, 4), value.M31, endianness);
-		WriteSingle(dest.Slice(36, 4), value.M32, endianness);
-		WriteSingle(dest.Slice(40, 4), value.M33, endianness);
-		WriteSingle(dest.Slice(44, 4), value.M34, endianness);
-		WriteSingle(dest.Slice(48, 4), value.M41, endianness);
-		WriteSingle(dest.Slice(52, 4), value.M42, endianness);
-		WriteSingle(dest.Slice(56, 4), value.M43, endianness);
-		WriteSingle(dest.Slice(60, 4), value.M44, endianness);
+		Utils.ThrowIfDestTooSmall(dest.Length, 16 * sizeof(float));
+		Utils.ThrowIfInvalidEndianness(endianness);
+		dest.WriteMatrix4x4_Unsafe(value, endianness);
 	}
-	public static void WriteMatrix4x4s(Span<byte> dest, ReadOnlySpan<Matrix4x4> src, Endianness endianness)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static void WriteMatrix4x4s(this Span<byte> dest, ReadOnlySpan<Matrix4x4> src, Endianness endianness)
 	{
-		for (int i = 0; i < src.Length; i++)
+		if (src.Length != 0)
 		{
-			WriteMatrix4x4(dest.Slice(i * 64, 64), src[i], endianness);
+			Utils.ThrowIfDestTooSmall(dest.Length, src.Length * 16 * sizeof(float));
+			Utils.ThrowIfInvalidEndianness(endianness);
+			dest.WriteMatrix4x4s_Unsafe(src, endianness);
 		}
 	}
 

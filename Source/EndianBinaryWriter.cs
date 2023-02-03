@@ -2,7 +2,6 @@
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Kermalis.EndianBinaryIO;
 
@@ -17,10 +16,7 @@ public partial class EndianBinaryWriter
 		get => _endianness;
 		set
 		{
-			if (value >= Endianness.MAX)
-			{
-				throw new ArgumentOutOfRangeException(nameof(value), value, null);
-			}
+			Utils.ThrowIfInvalidEndianness(value);
 			_endianness = value;
 		}
 	}
@@ -56,7 +52,6 @@ public partial class EndianBinaryWriter
 	}
 
 	protected delegate void WriteArrayMethod<TSrc>(Span<byte> dest, ReadOnlySpan<TSrc> src, Endianness endianness);
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	protected void WriteArray<TSrc>(ReadOnlySpan<TSrc> src, int elementSize, WriteArrayMethod<TSrc> writeArray)
 	{
 		int numBytes = src.Length * elementSize;
@@ -73,7 +68,6 @@ public partial class EndianBinaryWriter
 			start += consumeBytes / elementSize;
 		}
 	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private void WriteBoolArray(ReadOnlySpan<bool> src, int elementSize)
 	{
 		int numBytes = src.Length * elementSize;
@@ -83,14 +77,13 @@ public partial class EndianBinaryWriter
 			int consumeBytes = Math.Min(numBytes, BUF_LEN);
 
 			Span<byte> buffer = _buffer.AsSpan(0, consumeBytes);
-			EndianBinaryPrimitives.WriteBooleans(buffer, src.Slice(start, consumeBytes / elementSize), Endianness, elementSize);
+			buffer.WriteBooleans_Unsafe(src.Slice(start, consumeBytes / elementSize), Endianness, elementSize);
 			Stream.Write(buffer);
 
 			numBytes -= consumeBytes;
 			start += consumeBytes / elementSize;
 		}
 	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private void WriteASCIIArray(ReadOnlySpan<char> src)
 	{
 		int numBytes = src.Length;
@@ -130,17 +123,20 @@ public partial class EndianBinaryWriter
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteSByte(sbyte value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 1);
 		buffer[0] = (byte)value;
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteSBytes(ReadOnlySpan<sbyte> values)
 	{
-		ReadOnlySpan<byte> buffer = MemoryMarshal.Cast<sbyte, byte>(values);
+		ReadOnlySpan<byte> buffer = values.ReadCast<sbyte, byte>(values.Length);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteByte(byte value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 1);
@@ -152,122 +148,201 @@ public partial class EndianBinaryWriter
 	{
 		Stream.Write(values);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt16(short value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
-		EndianBinaryPrimitives.WriteInt16(buffer, value, Endianness);
+		buffer.WriteInt16_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt16s(ReadOnlySpan<short> values)
 	{
-		WriteArray(values, 2, EndianBinaryPrimitives.WriteInt16s);
+		WriteArray(values, 2, EndianBinaryPrimitives.WriteInt16s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt16(ushort value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
-		EndianBinaryPrimitives.WriteUInt16(buffer, value, Endianness);
+		buffer.WriteUInt16_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt16s(ReadOnlySpan<ushort> values)
 	{
-		WriteArray(values, 2, EndianBinaryPrimitives.WriteUInt16s);
+		WriteArray(values, 2, EndianBinaryPrimitives.WriteUInt16s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt32(int value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
-		EndianBinaryPrimitives.WriteInt32(buffer, value, Endianness);
+		buffer.WriteInt32_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt32s(ReadOnlySpan<int> values)
 	{
-		WriteArray(values, 4, EndianBinaryPrimitives.WriteInt32s);
+		WriteArray(values, 4, EndianBinaryPrimitives.WriteInt32s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt32(uint value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
-		EndianBinaryPrimitives.WriteUInt32(buffer, value, Endianness);
+		buffer.WriteUInt32_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt32s(ReadOnlySpan<uint> values)
 	{
-		WriteArray(values, 4, EndianBinaryPrimitives.WriteUInt32s);
+		WriteArray(values, 4, EndianBinaryPrimitives.WriteUInt32s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt64(long value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteInt64(buffer, value, Endianness);
+		buffer.WriteInt64_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteInt64s(ReadOnlySpan<long> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteInt64s);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteInt64s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt64(ulong value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteUInt64(buffer, value, Endianness);
+		buffer.WriteUInt64_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteUInt64s(ReadOnlySpan<ulong> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteUInt64s);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteUInt64s_Unsafe);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteInt128(in Int128 value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 16);
+		buffer.WriteInt128_Unsafe(value, Endianness);
+		Stream.Write(buffer);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteInt128s(ReadOnlySpan<Int128> values)
+	{
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteInt128s_Unsafe);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteUInt128(in UInt128 value)
+	{
+		Span<byte> buffer = _buffer.AsSpan(0, 16);
+		buffer.WriteUInt128_Unsafe(value, Endianness);
+		Stream.Write(buffer);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteUInt128s(ReadOnlySpan<UInt128> values)
+	{
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteUInt128s_Unsafe);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteHalf(Half value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 2);
-		EndianBinaryPrimitives.WriteHalf(buffer, value, Endianness);
+		buffer.WriteHalf_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteHalves(ReadOnlySpan<Half> values)
 	{
-		WriteArray(values, 2, EndianBinaryPrimitives.WriteHalves);
+		WriteArray(values, 2, EndianBinaryPrimitives.WriteHalves_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteSingle(float value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
-		EndianBinaryPrimitives.WriteSingle(buffer, value, Endianness);
+		buffer.WriteSingle_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteSingles(ReadOnlySpan<float> values)
 	{
-		WriteArray(values, 4, EndianBinaryPrimitives.WriteSingles);
+		WriteArray(values, 4, EndianBinaryPrimitives.WriteSingles_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDouble(double value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteDouble(buffer, value, Endianness);
+		buffer.WriteDouble_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDoubles(ReadOnlySpan<double> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteDoubles);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteDoubles_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDecimal(in decimal value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
-		EndianBinaryPrimitives.WriteDecimal(buffer, value, Endianness);
+		buffer.WriteDecimal_Unsafe(value, Endianness);
 		Stream.Write(buffer);
-	}
-	public void WriteDecimals(ReadOnlySpan<decimal> values)
-	{
-		WriteArray(values, 16, EndianBinaryPrimitives.WriteDecimals);
-	}
-
-	public void WriteBoolean(bool value)
-	{
-		int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
-		Span<byte> buffer = _buffer.AsSpan(0, elementSize);
-		EndianBinaryPrimitives.WriteBoolean(buffer, value, Endianness, elementSize);
-		Stream.Write(buffer);
-	}
-	public void WriteBooleans(ReadOnlySpan<bool> values)
-	{
-		int elementSize = EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize);
-		WriteBoolArray(values, elementSize);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public void WriteEnum<TEnum>(TEnum value) where TEnum : unmanaged, Enum
+	public void WriteDecimals(ReadOnlySpan<decimal> values)
+	{
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteDecimals_Unsafe);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean8(bool value)
+	{
+		WriteByte((byte)(value ? 1 : 0));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean8s(ReadOnlySpan<bool> values)
+	{
+		WriteBoolArray(values, sizeof(byte));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean16(bool value)
+	{
+		WriteUInt16((ushort)(value ? 1 : 0));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean16s(ReadOnlySpan<bool> values)
+	{
+		WriteBoolArray(values, sizeof(ushort));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean32(bool value)
+	{
+		WriteUInt32(value ? 1u : 0);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean32s(ReadOnlySpan<bool> values)
+	{
+		WriteBoolArray(values, sizeof(uint));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBoolean(bool value)
+	{
+		switch (BooleanSize)
+		{
+			case BooleanSize.U8: WriteByte((byte)(value ? 1 : 0)); break;
+			case BooleanSize.U16: WriteUInt16((ushort)(value ? 1 : 0)); break;
+			case BooleanSize.U32: WriteUInt32(value ? 1u : 0); break;
+			default: throw new InvalidOperationException();
+		}
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteBooleans(ReadOnlySpan<bool> values)
+	{
+		WriteBoolArray(values, EndianBinaryPrimitives.GetBytesForBooleanSize(BooleanSize));
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void WriteEnum<TEnum>(TEnum value)
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
@@ -288,24 +363,25 @@ public partial class EndianBinaryWriter
 		}
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	public void WriteEnums<TEnum>(ReadOnlySpan<TEnum> values) where TEnum : unmanaged, Enum
+	public void WriteEnums<TEnum>(ReadOnlySpan<TEnum> values)
+		where TEnum : unmanaged, Enum
 	{
 		int size = Unsafe.SizeOf<TEnum>();
 		if (size == 1)
 		{
-			WriteBytes(MemoryMarshal.Cast<TEnum, byte>(values));
+			WriteBytes(values.ReadCast<TEnum, byte>(values.Length));
 		}
 		else if (size == 2)
 		{
-			WriteUInt16s(MemoryMarshal.Cast<TEnum, ushort>(values));
+			WriteUInt16s(values.ReadCast<TEnum, ushort>(values.Length * 2));
 		}
 		else if (size == 4)
 		{
-			WriteUInt32s(MemoryMarshal.Cast<TEnum, uint>(values));
+			WriteUInt32s(values.ReadCast<TEnum, uint>(values.Length * 4));
 		}
 		else
 		{
-			WriteUInt64s(MemoryMarshal.Cast<TEnum, ulong>(values));
+			WriteUInt64s(values.ReadCast<TEnum, ulong>(values.Length * 8));
 		}
 	}
 	// #13 - Allow writing the abstract "Enum" type
@@ -329,86 +405,102 @@ public partial class EndianBinaryWriter
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDateTime(DateTime value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteDateTime(buffer, value, Endianness);
+		buffer.WriteDateTime_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDateTimes(ReadOnlySpan<DateTime> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteDateTimes);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteDateTimes_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDateOnly(DateOnly value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 4);
-		EndianBinaryPrimitives.WriteDateOnly(buffer, value, Endianness);
+		buffer.WriteDateOnly_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteDateOnlys(ReadOnlySpan<DateOnly> values)
 	{
-		WriteArray(values, 4, EndianBinaryPrimitives.WriteDateOnlys);
+		WriteArray(values, 4, EndianBinaryPrimitives.WriteDateOnlys_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteTimeOnly(TimeOnly value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteTimeOnly(buffer, value, Endianness);
+		buffer.WriteTimeOnly_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteTimeOnlys(ReadOnlySpan<TimeOnly> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteTimeOnlys);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteTimeOnlys_Unsafe);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector2(Vector2 value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 8);
-		EndianBinaryPrimitives.WriteVector2(buffer, value, Endianness);
+		buffer.WriteVector2_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector2s(ReadOnlySpan<Vector2> values)
 	{
-		WriteArray(values, 8, EndianBinaryPrimitives.WriteVector2s);
+		WriteArray(values, 8, EndianBinaryPrimitives.WriteVector2s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector3(Vector3 value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 12);
-		EndianBinaryPrimitives.WriteVector3(buffer, value, Endianness);
+		buffer.WriteVector3_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector3s(ReadOnlySpan<Vector3> values)
 	{
-		WriteArray(values, 12, EndianBinaryPrimitives.WriteVector3s);
+		WriteArray(values, 12, EndianBinaryPrimitives.WriteVector3s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector4(in Vector4 value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
-		EndianBinaryPrimitives.WriteVector4(buffer, value, Endianness);
+		buffer.WriteVector4_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteVector4s(ReadOnlySpan<Vector4> values)
 	{
-		WriteArray(values, 16, EndianBinaryPrimitives.WriteVector4s);
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteVector4s_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteQuaternion(in Quaternion value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 16);
-		EndianBinaryPrimitives.WriteQuaternion(buffer, value, Endianness);
+		buffer.WriteQuaternion_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteQuaternions(ReadOnlySpan<Quaternion> values)
 	{
-		WriteArray(values, 16, EndianBinaryPrimitives.WriteQuaternions);
+		WriteArray(values, 16, EndianBinaryPrimitives.WriteQuaternions_Unsafe);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteMatrix4x4(in Matrix4x4 value)
 	{
 		Span<byte> buffer = _buffer.AsSpan(0, 64);
-		EndianBinaryPrimitives.WriteMatrix4x4(buffer, value, Endianness);
+		buffer.WriteMatrix4x4_Unsafe(value, Endianness);
 		Stream.Write(buffer);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteMatrix4x4s(ReadOnlySpan<Matrix4x4> values)
 	{
-		WriteArray(values, 64, EndianBinaryPrimitives.WriteMatrix4x4s);
+		WriteArray(values, 64, EndianBinaryPrimitives.WriteMatrix4x4s_Unsafe);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -423,6 +515,7 @@ public partial class EndianBinaryWriter
 			WriteUInt16(v);
 		}
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void WriteChars(ReadOnlySpan<char> values)
 	{
 		if (values.Length == 0)
@@ -435,7 +528,7 @@ public partial class EndianBinaryWriter
 		}
 		else
 		{
-			ReadOnlySpan<ushort> buffer = MemoryMarshal.Cast<char, ushort>(values);
+			ReadOnlySpan<ushort> buffer = values.ReadCast<char, ushort>(values.Length);
 			WriteUInt16s(buffer);
 		}
 	}
