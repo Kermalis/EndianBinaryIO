@@ -28,8 +28,11 @@ Project URL and Samples ― https://github.com/Kermalis/EndianBinaryIO</Descript
 		<PackageTags>Serialization;Reflection;Endianness;LittleEndian;BigEndian;EndianBinaryIO</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<PackageReleaseNotes>Version 2.1.0 Changelog:
-* TODO
+		<PackageReleaseNotes># Version 2.1.0 Changelog:
+* .NET 7.0 support only.
+* Added methods for reading/writing `Int128`/`UInt128`.
+* Added `TrimNullTerminators(ref ReadOnlySpan&lt;char&gt; chars)` to `EndianBinaryPrimitives`.
+* Added "unsafe" methods to `EndianBinaryPrimitives` that read/write to/from `ReadOnlySpan&lt;T&gt;`/`Span&lt;T&gt;`. These are similar to their non-`_Unsafe` counterparts, aside from the fact that they don't check for errors. Their goal is performance.
 
 No breaking changes from v2.0.1</PackageReleaseNotes>
 	</PropertyGroup>

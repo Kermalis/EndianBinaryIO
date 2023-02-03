@@ -16,11 +16,8 @@ For example, classes and structs in C# cannot have ignored members when marshall
 The `EndianBinaryPrimitives` static class which resembles `System.Buffers.Binary.BinaryPrimitives` is an API that converts to/from data types using `Span<T>`/`ReadOnlySpan<T>` with specific endianness, rather than streams.
 
 ----
-## Changelog For v2.0.1
-Check the comment on [the release page](https://github.com/Kermalis/EndianBinaryIO/releases/tag/v2.0.1)!
-
-## Changelog For v2.0.0
-Check the comment on [the release page](https://github.com/Kermalis/EndianBinaryIO/releases/tag/v2.0.0)!
+## Changelog For v2.1.0
+Check the comment on [the release page](https://github.com/Kermalis/EndianBinaryIO/releases/tag/v2.1.0)!
 
 ----
 ## 🚀 Usage:
@@ -48,6 +45,7 @@ class MyBasicObj
 	public ShortSizedEnum Type { get; set; }
 	public short Version { get; set; }
 	public DateTime Date { get; set; }
+	public Int128 Int128 { get; set; }
 
 	// Property that is ignored when reading and writing
 	[BinaryIgnore]
@@ -81,6 +79,7 @@ And assume these are our input bytes (in little endian):
 0x00, 0x08, // ShortSizedEnum.Val2
 0xFF, 0x01, // (short)511
 0x00, 0x00, 0x4A, 0x7A, 0x9E, 0x01, 0xC0, 0x08, // (DateTime)Dec. 30, 1998
+0x48, 0x49, 0x80, 0x44, 0x82, 0x44, 0x88, 0xC0, 0x42, 0x24, 0x88, 0x12, 0x44, 0x44, 0x25, 0x24, // (Int128)48,045,707,429,126,174,655,160,174,263,614,327,112
 
 0x00, 0x00, 0x00, 0x00, // (uint)0
 0x01, 0x00, 0x00, 0x00, // (uint)1
@@ -115,6 +114,7 @@ var obj = new MyBasicObj();
 obj.Type = reader.ReadEnum<ShortSizedEnum>(); // Reads the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
 obj.Version = reader.ReadInt16(); // Reads a 'short' (2 bytes)
 obj.Date = reader.ReadDateTime(); // Reads a 'DateTime' (8 bytes)
+obj.Int128 = reader.ReadInt128(); // Reads an 'Int128' (16 bytes)
 
 obj.ArrayWith16Elements = new uint[16];
 reader.ReadUInt32s(obj.ArrayWith16Elements); // Reads 16 'uint's (4 bytes each)
@@ -141,6 +141,7 @@ var obj = new MyBasicObj
 	Type = ShortSizedEnum.Val2,
 	Version = 511,
 	Date = new DateTime(1998, 12, 30),
+	Int128 = Int128.Parse("48,045,707,429,126,174,655,160,174,263,614,327,112", NumberStyles.AllowThousands, NumberFormatInfo.InvariantInfo),
 
 	DoNotReadOrWrite = ByteSizedEnum.Val1,
 
@@ -159,6 +160,7 @@ var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian,
 writer.WriteEnum(obj.Type); // Writes the enum type based on the amount of bytes of the enum's underlying type (short/2 in this case)
 writer.WriteInt16(obj.Version); // Writes a 'short' (2 bytes)
 writer.WriteDateTime(obj.Date); // Writes a 'DateTime' (8 bytes)
+writer.WriteInt128(obj.Int128); // Writes an 'Int128' (16 bytes)
 writer.WriteUInt32s(obj.ArrayWith16Elements); // Writes 16 'uint's (4 bytes each)
 writer.WriteBoolean(obj.Bool32); // Writes a 'bool' (4 bytes in this case, since the reader's current bool state is BooleanSize.U32)
 
@@ -170,25 +172,6 @@ writer.WriteChars_Count(obj.UTF16String, 10); // Writes 10 UTF16-LE chars as a '
 ```
 ### Writing Automatically (With Reflection):
 ```cs
-var obj = new MyBasicObj
-{
-	Type = ShortSizedEnum.Val2,
-	Version = 511,
-	Date = new DateTime(1998, 12, 30),
-
-	DoNotReadOrWrite = ByteSizedEnum.Val1,
-
-	ArrayWith16Elements = new uint[16]
-	{
-		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-	},
-
-	Bool32 = false,
-
-	NullTerminatedASCIIString = "EndianBinaryIO",
-	UTF16String = "Kermalis",
-};
-
 var writer = new EndianBinaryWriter(stream, endianness: Endianness.LittleEndian);
 writer.Write(obj); // Write all properties in the 'MyBasicObj' in order, ignoring any with a 'BinaryIgnoreAttribute'
 // Other objects that are properties in this object will also be written in the same way recursively
