@@ -6,6 +6,7 @@
 		<RootNamespace>Kermalis.EndianBinaryIOTests</RootNamespace>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+		<NoWarn>IDE0230</NoWarn>
 
 		<Authors>Kermalis</Authors>
 		<Copyright>Kermalis</Copyright>

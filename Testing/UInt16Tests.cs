@@ -1,7 +1,4 @@
-﻿using Kermalis.EndianBinaryIO;
-using System.IO;
-using System.Linq;
-using Xunit;
+﻿using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
 
@@ -48,59 +45,31 @@ public sealed class UInt16Tests
 	[InlineData(false)]
 	public void ReadUInt16(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		ushort val;
-		using (var stream = new MemoryStream(input))
-		{
-			val = new EndianBinaryReader(stream, endianness: e).ReadUInt16();
-		}
-		Assert.Equal(TEST_VAL, val);
+		NumTestUtils.ReadValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE,
+			(r) => r.ReadUInt16());
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void ReadUInt16s(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		ushort[] arr = new ushort[4];
-		using (var stream = new MemoryStream(input))
-		{
-			new EndianBinaryReader(stream, endianness: e).ReadUInt16s(arr);
-		}
-		Assert.True(arr.SequenceEqual(_testArr));
+		NumTestUtils.ReadValues(le, _testArr, _testArrBytesLE, _testArrBytesBE,
+			(r, v) => r.ReadUInt16s(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteUInt16(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[sizeof(ushort)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteUInt16(TEST_VAL);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE, sizeof(ushort),
+			(w, v) => w.WriteUInt16(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteUInt16s(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[4 * sizeof(ushort)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteUInt16s(_testArr);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValues(le, _testArr, _testArrBytesLE, _testArrBytesBE, sizeof(ushort),
+			(w, v) => w.WriteUInt16s(v));
 	}
 }

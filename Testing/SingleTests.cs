@@ -1,7 +1,4 @@
-﻿using Kermalis.EndianBinaryIO;
-using System.IO;
-using System.Linq;
-using Xunit;
+﻿using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
 
@@ -48,59 +45,31 @@ public sealed class SingleTests
 	[InlineData(false)]
 	public void ReadSingle(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		float val;
-		using (var stream = new MemoryStream(input))
-		{
-			val = new EndianBinaryReader(stream, endianness: e).ReadSingle();
-		}
-		Assert.Equal(TEST_VAL, val);
+		NumTestUtils.ReadValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE,
+			(r) => r.ReadSingle());
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void ReadSingles(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		float[] arr = new float[4];
-		using (var stream = new MemoryStream(input))
-		{
-			new EndianBinaryReader(stream, endianness: e).ReadSingles(arr);
-		}
-		Assert.True(arr.SequenceEqual(_testArr));
+		NumTestUtils.ReadValues(le, _testArr, _testArrBytesLE, _testArrBytesBE,
+			(r, v) => r.ReadSingles(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteSingle(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[sizeof(float)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteSingle(TEST_VAL);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE, sizeof(float),
+			(w, v) => w.WriteSingle(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteSingles(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[4 * sizeof(float)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteSingles(_testArr);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValues(le, _testArr, _testArrBytesLE, _testArrBytesBE, sizeof(float),
+			(w, v) => w.WriteSingles(v));
 	}
 }

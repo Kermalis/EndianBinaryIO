@@ -1,7 +1,4 @@
-﻿using Kermalis.EndianBinaryIO;
-using System.IO;
-using System.Linq;
-using Xunit;
+﻿using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
 
@@ -48,59 +45,31 @@ public sealed class DecimalTests
 	[InlineData(false)]
 	public void ReadDecimal(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		decimal val;
-		using (var stream = new MemoryStream(input))
-		{
-			val = new EndianBinaryReader(stream, endianness: e).ReadDecimal();
-		}
-		Assert.Equal(TEST_VAL, val);
+		NumTestUtils.ReadValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE,
+			(r) => r.ReadDecimal());
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void ReadDecimals(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		decimal[] arr = new decimal[4];
-		using (var stream = new MemoryStream(input))
-		{
-			new EndianBinaryReader(stream, endianness: e).ReadDecimals(arr);
-		}
-		Assert.True(arr.SequenceEqual(_testArr));
+		NumTestUtils.ReadValues(le, _testArr, _testArrBytesLE, _testArrBytesBE,
+			(r, v) => r.ReadDecimals(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteDecimal(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[sizeof(decimal)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteDecimal(TEST_VAL);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValue(le, TEST_VAL, _testValBytesLE, _testValBytesBE, sizeof(decimal),
+			(w, v) => w.WriteDecimal(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteDecimals(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[4 * sizeof(decimal)];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteDecimals(_testArr);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValues(le, _testArr, _testArrBytesLE, _testArrBytesBE, sizeof(decimal),
+			(w, v) => w.WriteDecimals(v));
 	}
 }

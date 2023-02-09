@@ -1,8 +1,4 @@
-﻿using Kermalis.EndianBinaryIO;
-using System;
-using System.IO;
-using System.Linq;
-using Xunit;
+﻿using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
 
@@ -36,41 +32,25 @@ public sealed class SByteTests
 	[Fact]
 	public void ReadSByte()
 	{
-		sbyte val;
-		using (var stream = new MemoryStream(_testValBytes))
-		{
-			val = new EndianBinaryReader(stream).ReadSByte();
-		}
-		Assert.Equal(TEST_VAL, val);
+		NumTestUtils.ReadValue(TEST_VAL, _testValBytes,
+			(r) => r.ReadSByte());
 	}
 	[Fact]
 	public void ReadSBytes()
 	{
-		sbyte[] arr = new sbyte[4];
-		using (var stream = new MemoryStream(_testArrBytes))
-		{
-			new EndianBinaryReader(stream).ReadSBytes(arr);
-		}
-		Assert.True(arr.SequenceEqual(_testArr));
+		NumTestUtils.ReadValues(_testArr, _testArrBytes,
+			(r, v) => r.ReadSBytes(v));
 	}
 	[Fact]
 	public void WriteSByte()
 	{
-		byte[] bytes = new byte[1];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream).WriteSByte(TEST_VAL);
-		}
-		Assert.True(bytes.SequenceEqual(_testValBytes));
+		NumTestUtils.WriteValue(TEST_VAL, _testValBytes,
+			(w, v) => w.WriteSByte(v));
 	}
 	[Fact]
 	public void WriteSBytes()
 	{
-		byte[] bytes = new byte[4];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream).WriteSBytes(_testArr);
-		}
-		Assert.True(bytes.SequenceEqual(_testArrBytes));
+		NumTestUtils.WriteValues(_testArr, _testArrBytes,
+			(w, v) => w.WriteSBytes(v));
 	}
 }

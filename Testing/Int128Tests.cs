@@ -1,8 +1,5 @@
-﻿using Kermalis.EndianBinaryIO;
-using System;
+﻿using System;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using Xunit;
 
 namespace Kermalis.EndianBinaryIOTests;
@@ -13,7 +10,7 @@ public sealed class Int128Tests
 
 	private const int SIZEOF_INT128 = sizeof(ulong) * 2;
 
-	private static readonly Int128 TEST_VAL = Parse("-9,183,616,886,827,840,433,572,302");
+	private static readonly Int128 _testVal = Parse("-9,183,616,886,827,840,433,572,302");
 	private static readonly byte[] _testValBytesLE = new byte[SIZEOF_INT128]
 	{
 		0x32, 0xB6, 0x07, 0x84, 0xAF, 0x4D, 0x89, 0x21, 0x4B, 0x67, 0xF8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -57,59 +54,31 @@ public sealed class Int128Tests
 	[InlineData(false)]
 	public void ReadInt128(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		Int128 val;
-		using (var stream = new MemoryStream(input))
-		{
-			val = new EndianBinaryReader(stream, endianness: e).ReadInt128();
-		}
-		Assert.Equal(TEST_VAL, val);
+		NumTestUtils.ReadValue(le, _testVal, _testValBytesLE, _testValBytesBE,
+			(r) => r.ReadInt128());
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void ReadInt128s(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		var arr = new Int128[4];
-		using (var stream = new MemoryStream(input))
-		{
-			new EndianBinaryReader(stream, endianness: e).ReadInt128s(arr);
-		}
-		Assert.True(arr.SequenceEqual(_testArr));
+		NumTestUtils.ReadValues(le, _testArr, _testArrBytesLE, _testArrBytesBE,
+			(r, v) => r.ReadInt128s(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteInt128(bool le)
 	{
-		byte[] input = le ? _testValBytesLE : _testValBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[SIZEOF_INT128];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteInt128(TEST_VAL);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValue(le, _testVal, _testValBytesLE, _testValBytesBE, SIZEOF_INT128,
+			(w, v) => w.WriteInt128(v));
 	}
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
 	public void WriteInt128s(bool le)
 	{
-		byte[] input = le ? _testArrBytesLE : _testArrBytesBE;
-		Endianness e = le ? Endianness.LittleEndian : Endianness.BigEndian;
-
-		byte[] bytes = new byte[4 * SIZEOF_INT128];
-		using (var stream = new MemoryStream(bytes))
-		{
-			new EndianBinaryWriter(stream, endianness: e).WriteInt128s(_testArr);
-		}
-		Assert.True(bytes.SequenceEqual(input));
+		NumTestUtils.WriteValues(le, _testArr, _testArrBytesLE, _testArrBytesBE, SIZEOF_INT128,
+			(w, v) => w.WriteInt128s(v));
 	}
 }
