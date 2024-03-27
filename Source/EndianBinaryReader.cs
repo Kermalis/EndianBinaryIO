@@ -514,6 +514,11 @@ public partial class EndianBinaryReader
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public char[] ReadChars_TrimNullTerminators(int charCount)
 	{
+		if (charCount == 0)
+		{
+			return [];
+		}
+
 		char[] chars = new char[charCount];
 		ReadChars(chars);
 		EndianBinaryPrimitives.TrimNullTerminators(ref chars);
@@ -522,6 +527,11 @@ public partial class EndianBinaryReader
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public string ReadString_Count(int charCount)
 	{
+		if (charCount == 0)
+		{
+			return string.Empty;
+		}
+
 		void Create(Span<char> dest, byte _)
 		{
 			ReadChars(dest);
@@ -539,6 +549,11 @@ public partial class EndianBinaryReader
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public string ReadString_Count_TrimNullTerminators(int charCount)
 	{
+		if (charCount == 0)
+		{
+			return string.Empty;
+		}
+
 		char[] chars = new char[charCount];
 		ReadChars(chars);
 
