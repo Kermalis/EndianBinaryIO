@@ -32,6 +32,7 @@ Project URL and Samples ― https://github.com/Kermalis/EndianBinaryIO</Descript
 		<PackageReleaseNotes># Version 2.1.1 Changelog:
 * .NET 7.0 and .NET 8.0 support.
 * Small optimization when reading empty strings.
+* Can set the `Stream` on `EndianBinaryReader` and `EndianBinaryWriter`.
 
 No breaking changes from v2.1.0</PackageReleaseNotes>
 	</PropertyGroup>
