@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFrameworks>net7.0;net8.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<OutputType>Library</OutputType>
 		<RootNamespace>Kermalis.EndianBinaryIO</RootNamespace>
 		<Nullable>enable</Nullable>
+		<NoWarn>IDE0270,IDE0290</NoWarn>
 
 		<Authors>Kermalis</Authors>
 		<Copyright>Kermalis</Copyright>
@@ -13,7 +14,7 @@
 		<Title>EndianBinaryIO</Title>
 		<PackageId>EndianBinaryIO</PackageId>
 		<AssemblyName>EndianBinaryIO</AssemblyName>
-		<Version>2.1.0</Version>
+		<Version>2.1.1</Version>
 		<RepositoryUrl>https://github.com/Kermalis/EndianBinaryIO</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Description>This .NET library provides a simple API to read/write bytes from/to streams and spans using user-specified endianness.
@@ -28,13 +29,11 @@ Project URL and Samples ― https://github.com/Kermalis/EndianBinaryIO</Descript
 		<PackageTags>Serialization;Reflection;Endianness;LittleEndian;BigEndian;EndianBinaryIO</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<PackageReleaseNotes># Version 2.1.0 Changelog:
-* .NET 7.0 support only.
-* Added methods for reading/writing `Int128`/`UInt128`.
-* Added `TrimNullTerminators(ref ReadOnlySpan&lt;char&gt; chars)` to `EndianBinaryPrimitives`.
-* Added "unsafe" methods to `EndianBinaryPrimitives` that read/write to/from `ReadOnlySpan&lt;T&gt;`/`Span&lt;T&gt;`. These are similar to their non-`_Unsafe` counterparts, aside from the fact that they don't check for errors. Their goal is performance.
+		<PackageReleaseNotes># Version 2.1.1 Changelog:
+* .NET 7.0 and .NET 8.0 support.
+* Small optimization when reading empty strings.
 
-No breaking changes from v2.0.1</PackageReleaseNotes>
+No breaking changes from v2.1.0</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
