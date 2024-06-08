@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,7 +11,20 @@ public partial class EndianBinaryReader
 {
 	protected const int BUF_LEN = 64; // Must be a multiple of 64
 
-	public Stream Stream { get; }
+	private Stream _stream;
+	public Stream Stream
+	{
+		get => _stream;
+		[MemberNotNull(nameof(_stream))]
+		set
+		{
+			if (!value.CanRead)
+			{
+				throw new ArgumentOutOfRangeException(nameof(value), "Stream is not open for reading.");
+			}
+			_stream = value;
+		}
+	}
 	private Endianness _endianness;
 	public Endianness Endianness
 	{
@@ -40,11 +54,6 @@ public partial class EndianBinaryReader
 
 	public EndianBinaryReader(Stream stream, Endianness endianness = Endianness.LittleEndian, BooleanSize booleanSize = BooleanSize.U8, bool ascii = false)
 	{
-		if (!stream.CanRead)
-		{
-			throw new ArgumentOutOfRangeException(nameof(stream), "Stream is not open for reading.");
-		}
-
 		Stream = stream;
 		Endianness = endianness;
 		BooleanSize = booleanSize;
@@ -88,22 +97,22 @@ public partial class EndianBinaryReader
 
 	public byte PeekByte()
 	{
-		long offset = Stream.Position;
+		long offset = _stream.Position;
 
 		Span<byte> buffer = _buffer.AsSpan(0, 1);
 		ReadBytes(buffer);
 
-		Stream.Position = offset;
+		_stream.Position = offset;
 		return buffer[0];
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void PeekBytes(Span<byte> dest)
 	{
-		long offset = Stream.Position;
+		long offset = _stream.Position;
 
 		ReadBytes(dest);
 
-		Stream.Position = offset;
+		_stream.Position = offset;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -129,7 +138,7 @@ public partial class EndianBinaryReader
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public void ReadBytes(Span<byte> dest)
 	{
-		if (Stream.Read(dest) != dest.Length)
+		if (_stream.Read(dest) != dest.Length)
 		{
 			throw new EndOfStreamException();
 		}
